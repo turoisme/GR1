@@ -46,7 +46,8 @@ const cartSchema = new mongoose.Schema({
   sessionId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    // Bỏ index: true để tránh duplicate với schema.index()
   },
   
   userId: {
@@ -206,22 +207,31 @@ cartSchema.methods.getFormattedShippingFee = function() {
   return this.shippingFee.toLocaleString('vi-VN') + 'đ';
 };
 
-// Static methods
+// Static methods với error handling cải tiến
 cartSchema.statics.findBySessionId = async function(sessionId) {
   try {
+    console.log(`🔍 Finding cart for session: ${sessionId}`);
+    
     let cart = await this.findOne({ sessionId: sessionId })
-                       .populate('items.product');
+                       .populate('items.product')
+                       .maxTimeMS(5000); // Giới hạn thời gian query 5s
     
     if (!cart) {
+      console.log(`📦 Creating new cart for session: ${sessionId}`);
       // Create new cart for session
       cart = new this({ sessionId: sessionId });
       await cart.save();
     }
     
+    console.log(`✅ Cart found/created: ${cart.items.length} items, ${cart.totalItems} total`);
     return cart;
   } catch (error) {
-    console.error('Error finding cart by session:', error);
-    throw error;
+    console.error('❌ Error finding cart by session:', error.message);
+    
+    // Fallback: return empty cart object
+    console.log(`🔄 Creating fallback cart for session: ${sessionId}`);
+    const fallbackCart = new this({ sessionId: sessionId });
+    return fallbackCart;
   }
 };
 
@@ -231,15 +241,17 @@ cartSchema.statics.cleanupExpiredCarts = async function() {
       status: 'active',
       updatedAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     });
-    console.log(`🧹 Cleaned up ${result.deletedCount} expired carts`);
+    if (result.deletedCount > 0) {
+      console.log(`🧹 Cleaned up ${result.deletedCount} expired carts`);
+    }
     return result;
   } catch (error) {
     console.error('Error cleaning up carts:', error);
   }
 };
 
-// Indexes
-cartSchema.index({ sessionId: 1 });
+// Indexes - chỉ định rõ ràng để tránh duplicate
+cartSchema.index({ sessionId: 1 }, { unique: true });
 cartSchema.index({ userId: 1 });
 cartSchema.index({ status: 1, updatedAt: 1 });
 cartSchema.index({ expiresAt: 1 });

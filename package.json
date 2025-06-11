@@ -1,11 +1,17 @@
 {
   "name": "sportshop",
   "version": "1.0.0",
-  "description": "Trang web bán quần áo thể thao",
+  "description": "Trang web bán quần áo thể thao với hệ thống quản lý hình ảnh",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "seed": "node scripts/seedData.js",
+    "seed:images": "node scripts/seedDataWithImages.js",
+    "setup:data": "mkdir -p data/images/products data/images/qr-codes data/images/banners data/images/icons data/uploads",
+    "check:images": "node -e \"const fs=require('fs'); const path=require('path'); const dirs=['products','qr-codes','banners','icons']; dirs.forEach(d=>{const p=path.join('data/images',d); const files=fs.existsSync(p)?fs.readdirSync(p).filter(f=>!/^\\./.test(f)):[];console.log(d+':',files.length,'files');});\"",
+    "clean:uploads": "rm -rf data/uploads/* && touch data/uploads/.gitkeep",
+    "backup:data": "tar -czf data-backup-$(date +%Y%m%d-%H%M%S).tar.gz data/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -25,8 +31,21 @@
     "sportshop",
     "nodejs",
     "express",
-    "ecommerce"
+    "ecommerce",
+    "images",
+    "qr-payment"
   ],
-  "author": "Tan",
-  "license": "MIT"
+  "author": {
+    "name": "Nguyễn Thanh Tân",
+    "email": "Tan.NT225923@sis.hust.edu.vn"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/sportshop.git"
+  }
 }
