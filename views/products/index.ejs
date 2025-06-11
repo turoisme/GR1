@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .cart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 60px 0;
+            text-align: center;
+            margin: 40px 0;
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .filters-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .filter-group select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin: 40px 0;
+        }
+        
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .products-count {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .product-card:hover::before {
+            left: 100%;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-image::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .product-card:hover .product-image::after {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .product-info {
+            text-align: center;
+        }
+        
+        .product-brand {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .product-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .add-to-cart {
+            flex: 1;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .add-to-cart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .view-detail {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .view-detail:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+        
+        .pagination a,
+        .pagination span {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .pagination .current {
+            background: #667eea;
+            color: white;
+        }
+        
+        .no-products {
+            text-align: center;
+            color: #666;
+            font-size: 1.2rem;
+            padding: 60px 0;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            backdrop-filter: blur(10px);
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .products-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">SportShop</div>
+            <ul class="nav-links">
+                <li><a href="/">Trang chủ</a></li>
+                <li><a href="/products" class="active">Sản phẩm</a></li>
+                <li><a href="/about">Giới thiệu</a></li>
+                <li><a href="/contact">Liên hệ</a></li>
+            </ul>
+            <a href="/cart" class="cart-btn">
+                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+            </a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h1>Sản Phẩm Thể Thao</h1>
+            <p>Khám phá bộ sưu tập đa dạng với chất lượng cao</p>
+        </section>
+
+        <section class="filters-section">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="category">Danh mục:</label>
+                    <select id="category" onchange="filterProducts()">
+                        <option value="">Tất cả danh mục</option>
+                        <% if (typeof categories !== 'undefined') { %>
+                            <% categories.forEach(category => { %>
+                                <option value="<%= category.id %>" <%= (typeof filters !== 'undefined' && filters.category === category.id) ? 'selected' : '' %>>
+                                    <%= category.name %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="brand">Thương hiệu:</label>
+                    <select id="brand" onchange="filterProducts()">
+                        <option value="">Tất cả thương hiệu</option>
+                        <% if (typeof brands !== 'undefined') { %>
+                            <% brands.forEach(brand => { %>
+                                <option value="<%= brand %>" <%= (typeof filters !== 'undefined' && filters.brand === brand) ? 'selected' : '' %>>
+                                    <%= brand %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sort">Sắp xếp:</label>
+                    <select id="sort" onchange="filterProducts()">
+                        <option value="name-asc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'name-asc') ? 'selected' : '' %>>Tên A-Z</option>
+                        <option value="name-desc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'name-desc') ? 'selected' : '' %>>Tên Z-A</option>
+                        <option value="price-asc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'price-asc') ? 'selected' : '' %>>Giá thấp đến cao</option>
+                        <option value="price-desc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'price-desc') ? 'selected' : '' %>>Giá cao đến thấp</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="products-section">
+            <div class="products-header">
+                <div class="products-count">
+                    <% if (typeof products !== 'undefined') { %>
+                        Hiển thị <%= products.length %> sản phẩm
+                        <% if (typeof pagination !== 'undefined' && pagination.totalProducts) { %>
+                            (tổng <%= pagination.totalProducts %> sản phẩm)
+                        <% } %>
+                    <% } %>
+                </div>
+            </div>
+            
+            <div class="products-grid">
+                <% if (typeof products !== 'undefined' && products.length > 0) { %>
+                    <% products.forEach(product => { %>
+                        <div class="product-card">
+                            <div class="product-image"><%= product.image %></div>
+                            <div class="product-info">
+                                <div class="product-brand"><%= product.brand %></div>
+                                <h3 class="product-name"><%= product.name %></h3>
+                                <p class="product-description"><%= product.description.substring(0, 80) %>...</p>
+                                <p class="product-price"><%= product.getFormattedPrice() %></p>
+                                <div class="product-actions">
+                                    <button class="add-to-cart" onclick="addToCart(<%= product.id %>)">
+                                        Thêm vào giỏ
+                                    </button>
+                                    <a href="/products/<%= product.id %>" class="view-detail">
+                                        Chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="no-products">
+                        <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc của bạn.</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (pagination.hasPrev) { %>
+                        <a href="?page=<%= pagination.prevPage %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
+                            ← Trước
+                        </a>
+                    <% } %>
+                    
+                    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                        <% if (i === pagination.currentPage) { %>
+                            <span class="current"><%= i %></span>
+                        <% } else { %>
+                            <a href="?page=<%= i %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (pagination.hasNext) { %>
+                        <a href="?page=<%= pagination.nextPage %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
+                            Sau →
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </section>
+    </main>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+      <footer>
+        <div class="container">
+            <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
+            <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
+        </div>
+    </footer>
+
+    <script>
+        function addToCart(productId) {
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    // Update cart count
+                    updateCartCount(data.data.cartItemCount);
+                } else {
+                    showNotification('Lỗi: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra', 'error');
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? 
+                'linear-gradient(45deg, #dc3545, #c82333)' : 
+                'linear-gradient(45deg, #28a745, #20c997)';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateCartCount(count) {
+            const cartBtn = document.querySelector('.cart-btn');
+            if (cartBtn) {
+                cartBtn.innerHTML = `🛒 Giỏ hàng (${count})`;
+            }
+        }
+
+        function filterProducts() {
+            const category = document.getElementById('category').value;
+            const brand = document.getElementById('brand').value;
+            const sort = document.getElementById('sort').value;
+            
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (brand) params.append('brand', brand);
+            if (sort) params.append('sort', sort);
+            
+            window.location.href = '/products?' + params.toString();
+        }
+    </script>
+</body>
+</html>

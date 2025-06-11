@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Lỗi - SportShop' %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 60px 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            margin: 20px;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .error-message {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-color: transparent;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a42a0);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .error-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        
+        .error-details pre {
+            color: #ffcccb;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">😕</div>
+        
+        <h1 class="error-title">Oops!</h1>
+        
+        <p class="error-message">
+            <%= error || 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.' %>
+        </p>
+        
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary">🏠 Về trang chủ</a>
+            <a href="/products" class="btn">🛍️ Xem sản phẩm</a>
+            <a href="javascript:history.back()" class="btn">← Quay lại</a>
+        </div>
+        
+        <% if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') { %>
+            <div class="error-details">
+                <strong>Chi tiết lỗi (Development mode):</strong>
+                <pre><%= typeof error === 'object' ? JSON.stringify(error, null, 2) : error %></pre>
+            </div>
+        <% } %>
+    </div>
+    
+    <script>
+        // Auto refresh after 10 seconds
+        setTimeout(() => {
+            if (confirm('Tự động làm mới trang sau 10 giây. Bạn có muốn về trang chủ không?')) {
+                window.location.href = '/';
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

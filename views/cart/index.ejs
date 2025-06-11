@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .cart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .hero {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 60px 0;
+            text-align: center;
+            margin: 40px 0;
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .cart-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 60px 0;
+            border-radius: 20px;
+            margin: 40px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-cart-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-cart h3 {
+            font-size: 1.8rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .empty-cart p {
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .cart-items {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .cart-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .cart-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .item-image {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .item-info {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        
+        .item-price {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            padding: 8px 15px;
+        }
+        
+        .quantity-btn {
+            width: 35px;
+            height: 35px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .quantity {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .remove-btn {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+        
+        .cart-summary {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .summary-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 25px;
+            color: #667eea;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            font-size: 1.1rem;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #667eea;
+            padding-top: 20px;
+            margin-top: 10px;
+            border-top: 2px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .checkout-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+        
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            backdrop-filter: blur(10px);
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .cart-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .item-controls {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .checkout-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">SportShop</div>
+            <ul class="nav-links">
+                <li><a href="/">Trang chủ</a></li>
+                <li><a href="/products">Sản phẩm</a></li>
+                <li><a href="/about">Giới thiệu</a></li>
+                <li><a href="/contact">Liên hệ</a></li>
+            </ul>
+            <a href="/cart" class="cart-btn">
+                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+            </a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>🛒 Giỏ Hàng Của Bạn</h1>
+            <p>Xem lại các sản phẩm thể thao bạn đã chọn</p>
+        </section>
+
+        <section class="cart-section">
+            <% if (!cart || cart.isEmpty()) { %>
+                <!-- Empty Cart -->
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <h3>Giỏ hàng trống</h3>
+                    <p>Hãy khám phá bộ sưu tập thời trang thể thao của chúng tôi</p>
+                    <a href="/products" class="btn">🏃‍♂️ Khám phá sản phẩm</a>
+                </div>
+            <% } else { %>
+                <h2 class="section-title">Sản Phẩm Đã Chọn</h2>
+                
+                <!-- Cart Items -->
+                <div class="cart-items">
+                    <% cart.items.forEach(item => { %>
+                        <div class="cart-item">
+                            <div class="item-image"><%= item.product.image %></div>
+                            <div class="item-details">
+                                <div class="item-name"><%= item.product.name %></div>
+                                <div class="item-info">
+                                    <span>🎨 Màu: <strong><%= item.color %></strong></span> | 
+                                    <span>📏 Size: <strong><%= item.size %></strong></span>
+                                </div>
+                                <div class="item-price">💰 <%= item.subtotal.toLocaleString('vi-VN') %>đ</div>
+                            </div>
+                            <div class="item-controls">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="updateQuantity('<%= item._id %>', <%= item.quantity - 1 %>)">−</button>
+                                    <span class="quantity"><%= item.quantity %></span>
+                                    <button class="quantity-btn" onclick="updateQuantity('<%= item._id %>', <%= item.quantity + 1 %>)">+</button>
+                                </div>
+                                <button class="remove-btn" onclick="removeItem('<%= item._id %>')">🗑️ Xóa</button>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                    <div class="summary-title">📊 Tổng Kết Đơn Hàng</div>
+                    <div class="summary-row">
+                        <span>🛍️ Tạm tính (<%= cart.totalItems %> sản phẩm):</span>
+                        <span><%= cart.totalPrice.toLocaleString('vi-VN') %>đ</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>🚚 Phí vận chuyển:</span>
+                        <span><%= cart.shippingFee === 0 ? 'Miễn phí' : cart.shippingFee.toLocaleString('vi-VN') + 'đ' %></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>💎 Tổng cộng:</span>
+                        <span><%= cart.finalTotal.toLocaleString('vi-VN') %>đ</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="checkout-actions">
+                    <a href="/products" class="btn btn-secondary">🔙 Tiếp tục mua sắm</a>
+                    <button class="btn btn-danger" onclick="clearCart()">🗑️ Xóa tất cả</button>
+                    <a href="/cart/checkout" class="btn">💳 Thanh toán ngay</a>
+                </div>
+            <% } %>
+        </section>
+    </main>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
+            <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
+        </div>
+    </footer>
+
+    <script>
+        function updateQuantity(itemId, newQuantity) {
+            if (newQuantity < 1 || newQuantity > 10) return;
+            
+            fetch(`/cart/update/${itemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: newQuantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra', 'error');
+            });
+        }
+
+        function removeItem(itemId) {
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) return;
+            
+            fetch(`/cart/remove/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra', 'error');
+            });
+        }
+
+        function clearCart() {
+            if (!confirm('Bạn có chắc muốn xóa tất cả sản phẩm khỏi giỏ hàng?')) return;
+            
+            fetch('/cart/clear', {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra', 'error');
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = type === 'error' ? 'notification error show' : 'notification show';
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

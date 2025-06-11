@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Giới thiệu - SportShop' %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 25px;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .cart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .cart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Main Content */
+        main {
+            padding: 40px 0;
+        }
+        
+        /* About Section */
+        .about-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 80px 60px;
+            text-align: center;
+            border-radius: 25px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .about-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
+            animation: float 10s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        
+        .about-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .about-icon {
+            font-size: 5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .about-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .about-description {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 40px;
+        }
+        
+        .about-description p {
+            margin-bottom: 20px;
+        }
+        
+        /* Tech Stack */
+        .tech-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 60px 40px;
+            border-radius: 25px;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .tech-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+        
+        .tech-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px 20px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .tech-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .tech-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        
+        /* Contact Section */
+        .contact-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 60px 40px;
+            border-radius: 25px;
+            text-align: center;
+        }
+        
+        .contact-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .contact-description {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .contact-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .contact-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .contact-btn.secondary {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            box-shadow: none;
+        }
+        
+        .contact-btn.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .about-section {
+                padding: 60px 40px;
+            }
+            
+            .about-title {
+                font-size: 2.5rem;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .contact-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="/" class="logo">SportShop</a>
+            <ul class="nav-links">
+                <li><a href="/">Trang chủ</a></li>
+                <li><a href="/products">Sản phẩm</a></li>
+                <li><a href="/about" class="active">Giới thiệu</a></li>
+                <li><a href="/contact">Liên hệ</a></li>
+            </ul>
+            <a href="/cart" class="cart-btn">
+                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+            </a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- About Section -->
+        <section class="about-section">
+            <div class="about-content">
+                <div class="about-icon">🏃‍♂️</div>
+                <h1 class="about-title">Về Dự Án SportShop</h1>
+                <div class="about-description">
+                    <p>
+                        <strong>SportShop</strong> là một dự án cá nhân được phát triển nhằm tạo ra một trang web 
+                        bán hàng thể thao hiện đại và thân thiện với người dùng.
+                    </p>
+                    <p>
+                        Dự án này được xây dựng với mục đích học tập và thực hành các công nghệ web hiện đại, 
+                        đồng thời tạo ra một trải nghiệm mua sắm trực tuyến mượt mà và chuyên nghiệp.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack Section -->
+        <section class="tech-section">
+            <h2 class="tech-title">🛠️ Công Nghệ Sử Dụng</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-icon">🟢</div>
+                    <h3 class="tech-name">Node.js</h3>
+                    <p class="tech-description">Backend JavaScript runtime environment</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🚀</div>
+                    <h3 class="tech-name">Express.js</h3>
+                    <p class="tech-description">Web framework cho Node.js</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">📄</div>
+                    <h3 class="tech-name">EJS</h3>
+                    <p class="tech-description">Template engine để render HTML</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🎨</div>
+                    <h3 class="tech-name">CSS3</h3>
+                    <p class="tech-description">Styling với gradient và animations</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">⚡</div>
+                    <h3 class="tech-name">JavaScript</h3>
+                    <p class="tech-description">Frontend interactivity</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🏗️</div>
+                    <h3 class="tech-name">MVC Pattern</h3>
+                    <p class="tech-description">Kiến trúc Model-View-Controller</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section class="contact-section">
+            <h2 class="contact-title">💬 Liên Hệ & Phản Hồi</h2>
+            <p class="contact-description">
+                Đây là dự án học tập và thực hành. Nếu bạn có góp ý hoặc muốn trao đổi về code, 
+                đừng ngần ngại liên hệ với tôi!
+            </p>
+            <div class="contact-buttons">
+                <a href="/products" class="contact-btn">🛍️ Xem sản phẩm</a>
+                <a href="/contact" class="contact-btn secondary">📧 Gửi phản hồi</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
+            <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
+        </div>
+    </footer>
+</body>
+</html>
