@@ -1,3 +1,5 @@
+// app.js - Updated với User Authentication System
+
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -5,6 +7,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const flash = require('connect-flash'); // 📦 NEW: Flash messages
 
 // Import database connection
 const connectDB = require('./config/database');
@@ -13,6 +16,8 @@ const connectDB = require('./config/database');
 const homeRoutes = require('./routes/home');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
+const authRoutes = require('./routes/auth');     // 🔐 NEW: Auth routes
+const userRoutes = require('./routes/user');     // 👤 NEW: User routes
 
 const app = express();
 
@@ -63,24 +68,25 @@ createDataDirectories();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Trust proxy for proper IP detection
+app.set('trust proxy', 1);
+
 // Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files serving
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 🖼️ STATIC FILE SERVING FOR DATA FOLDER
-// Serve images from data/images as /assets
 app.use('/assets', express.static(path.join(__dirname, 'data/images'), {
-  maxAge: '1d', // Cache for 1 day
+  maxAge: '1d',
   etag: true,
   lastModified: true
 }));
 
-// Serve uploads from data/uploads as /uploads
 app.use('/uploads', express.static(path.join(__dirname, 'data/uploads'), {
-  maxAge: '1h', // Cache for 1 hour (uploads change more frequently)
+  maxAge: '1h',
   etag: true,
   lastModified: true
 }));
@@ -94,251 +100,340 @@ app.use('/assets', (req, res, next) => {
   next();
 });
 
-// Session configuration with MongoDB store
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
+// 🗂️ SESSION CONFIGURATION
+const sessionConfig = {
+  secret: process.env.SESSION_SECRET || 'sportshop-super-secret-key-change-in-production',
+  name: 'sportshop.sid', // Custom session name
   resave: false,
-  saveUninitialized: true,
-  name: 'sportshop.sid',
+  saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI,
-    touchAfter: 24 * 3600,
-    ttl: 7 * 24 * 60 * 60
+    touchAfter: 24 * 3600, // lazy session update
+    crypto: {
+      secret: process.env.SESSION_SECRET || 'sportshop-crypto-secret'
+    },
+    dbName: 'sportshop',
+    collectionName: 'sessions'
   }),
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax'
-  }
-}));
+  },
+  rolling: true // Reset expiration on activity
+};
 
-// Custom middleware to make cart available in all views with fallback
-app.use(async (req, res, next) => {
-  try {
-    // Ensure session exists and has ID
-    if (!req.session.id || !req.sessionID) {
-      console.log('⚠️  No session ID, regenerating session');
-      req.session.regenerate((err) => {
-        if (err) console.error('Session regeneration error:', err);
-      });
-    }
-    
-    // Use sessionID (more reliable than session.id)
-    const sessionId = req.sessionID || req.session.id;
-    
-    // Try to find cart with timeout
-    const Cart = require('./models/Cart');
-    let cart = null;
-    
-    try {
-      // Set a shorter timeout for cart operations
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Cart timeout')), 3000); // 3s timeout
-      });
-      
-      const cartPromise = Cart.findBySessionId(sessionId);
-      cart = await Promise.race([cartPromise, timeoutPromise]);
-      
-    } catch (cartError) {
-      console.log('⚠️  Cart operation failed, using fallback:', cartError.message);
-      
-      // Fallback: create empty cart object
-      cart = {
-        sessionId: sessionId,
-        items: [],
-        totalItems: 0,
-        totalPrice: 0,
-        shippingFee: 0,
-        finalTotal: 0,
-        isEmpty: () => true,
-        getFormattedTotal: () => '0đ',
-        getFormattedFinalTotal: () => '0đ'
-      };
-    }
-    
-    res.locals.cartItemCount = cart ? cart.totalItems : 0;
-    res.locals.cart = cart;
-    
-    next();
-    
-  } catch (error) {
-    console.error('Cart middleware error:', error.message);
-    
-    // Fallback for any error
-    res.locals.cartItemCount = 0;
-    res.locals.cart = {
-      items: [],
-      totalItems: 0,
-      isEmpty: () => true
-    };
-    next();
-  }
-});
+// Apply session middleware
+app.use(session(sessionConfig));
 
-// Request logging middleware
+// 📨 FLASH MESSAGES MIDDLEWARE
+app.use(flash());
+
+// 📊 REQUEST LOGGING MIDDLEWARE
 app.use((req, res, next) => {
-  // Only log non-asset requests to reduce noise
-  if (!req.path.startsWith('/assets') && !req.path.startsWith('/css') && !req.path.startsWith('/js')) {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  }
+  const timestamp = new Date().toISOString();
+  const userInfo = req.session?.user ? 
+    `${req.session.user.email} (${req.session.user.role})` : 
+    'Guest';
+  
+  console.log(`${timestamp} | ${req.method} ${req.path} | ${userInfo} | ${req.ip}`);
   next();
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  const dataStats = {
-    productsImages: fs.readdirSync(path.join(__dirname, 'data/images/products')).length,
-    qrCodes: fs.readdirSync(path.join(__dirname, 'data/images/qr-codes')).length,
-    banners: fs.readdirSync(path.join(__dirname, 'data/images/banners')).length,
-    uploads: fs.readdirSync(path.join(__dirname, 'data/uploads')).length
+// 🔐 GLOBAL USER CONTEXT MIDDLEWARE
+// Make user information available in all views
+app.use((req, res, next) => {
+  // User information
+  res.locals.user = req.session.user || null;
+  res.locals.isLoggedIn = !!req.session.user;
+  res.locals.isAdmin = req.session.user?.role === 'admin';
+  res.locals.isVerified = req.session.user?.isVerified || false;
+  
+  // Flash messages
+  res.locals.flashMessages = {
+    error: req.flash('error'),
+    success: req.flash('success'),
+    info: req.flash('info'),
+    warning: req.flash('warning')
   };
   
+  // Current year for footer
+  res.locals.currentYear = new Date().getFullYear();
+  
+  // Environment info
+  res.locals.isDevelopment = process.env.NODE_ENV !== 'production';
+  
+  next();
+});
+
+// 🛒 CART CONTEXT MIDDLEWARE
+// Get cart item count for header
+app.use(async (req, res, next) => {
+  try {
+    const Cart = require('./models/Cart');
+    const sessionId = req.sessionID;
+    const userId = req.session.user?.id || null;
+    
+    const cart = await Cart.findBySessionId(sessionId, userId);
+    res.locals.cartItemCount = cart ? cart.totalItems : 0;
+    res.locals.cartTotal = cart ? cart.getFormattedFinalTotal() : '0₫';
+    
+  } catch (error) {
+    console.error('❌ Cart context error:', error);
+    res.locals.cartItemCount = 0;
+    res.locals.cartTotal = '0₫';
+  }
+  
+  next();
+});
+
+// 🔒 SECURITY HEADERS MIDDLEWARE
+app.use((req, res, next) => {
+  // Basic security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Remove powered by header
+  res.removeHeader('X-Powered-By');
+  
+  next();
+});
+
+// 🌐 ROUTES CONFIGURATION
+console.log('🚀 Configuring routes...');
+
+// Main application routes
+app.use('/', homeRoutes);
+app.use('/products', productRoutes);
+app.use('/cart', cartRoutes);
+
+// 🔐 Authentication routes
+app.use('/auth', authRoutes);
+console.log('✅ Auth routes mounted at /auth');
+
+// 👤 User account routes
+app.use('/user', userRoutes);
+console.log('✅ User routes mounted at /user');
+
+// 📱 API routes
+app.use('/api/auth', authRoutes); // Auth API endpoints
+app.use('/api/user', userRoutes); // User API endpoints
+
+// 🏠 UTILITY ROUTES
+
+// Health check endpoint
+app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
+    version: require('./package.json').version || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    dataFolder: dataStats
+    database: 'Connected',
+    session: req.session ? 'Active' : 'Inactive',
+    user: req.session?.user ? 'Authenticated' : 'Guest'
   });
 });
 
-// 🖼️ API ENDPOINT: Get available images
-app.get('/api/images', (req, res) => {
-  try {
-    const { category = 'products' } = req.query;
-    const validCategories = ['products', 'qr-codes', 'banners', 'icons'];
-    
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid category'
-      });
-    }
-    
-    const imagesDir = path.join(__dirname, 'data/images', category);
-    const files = fs.readdirSync(imagesDir)
-      .filter(file => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file))
-      .map(file => ({
-        name: file,
-        url: `/assets/${category}/${file}`,
-        size: fs.statSync(path.join(imagesDir, file)).size,
-        modified: fs.statSync(path.join(imagesDir, file)).mtime
-      }));
-    
-    res.json({
-      success: true,
-      category: category,
-      images: files,
-      count: files.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error reading images directory',
-      error: error.message
-    });
-  }
+// Robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /cart/
+Allow: /
+Allow: /products/
+Allow: /about
+Allow: /contact
+
+Sitemap: ${req.protocol}://${req.get('host')}/sitemap.xml`);
 });
 
-// Routes
-app.use('/products', productRoutes);
-app.use('/cart', cartRoutes);
-app.use('/', homeRoutes);
+// Basic sitemap
+app.get('/sitemap.xml', (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/products</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+  
+  res.type('application/xml');
+  res.send(sitemap);
+});
 
-// 404 Error Handler
-app.use((req, res) => {
-  // Check if it's a missing asset
-  if (req.path.startsWith('/assets/')) {
-    console.log(`❌ Missing asset: ${req.path}`);
-    return res.status(404).json({
-      error: 'Asset not found',
-      path: req.path,
-      suggestion: 'Check if the file exists in data/images/ folder'
+// 🔧 ADMIN PANEL ROUTES (Placeholder)
+app.get('/admin', (req, res) => {
+  // TODO: Implement admin panel
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).render('error', {
+      title: 'Không có quyền truy cập - SportShop',
+      error: 'Bạn không có quyền truy cập trang quản trị',
+      currentPage: 'error'
     });
   }
   
-  res.status(404).render('404', { 
+  res.render('admin/dashboard', {
+    title: 'Quản trị - SportShop',
+    currentPage: 'admin'
+  });
+});
+
+// 📄 STATIC PAGES
+app.get('/about', (req, res) => {
+  res.render('pages/about', {
+    title: 'Giới thiệu - SportShop',
+    currentPage: 'about'
+  });
+});
+
+app.get('/contact', (req, res) => {
+  res.render('pages/contact', {
+    title: 'Liên hệ - SportShop',
+    currentPage: 'contact'
+  });
+});
+
+app.get('/privacy', (req, res) => {
+  res.render('pages/privacy', {
+    title: 'Chính sách bảo mật - SportShop',
+    currentPage: 'privacy'
+  });
+});
+
+app.get('/terms', (req, res) => {
+  res.render('pages/terms', {
+    title: 'Điều khoản sử dụng - SportShop',
+    currentPage: 'terms'
+  });
+});
+
+// 🚫 ERROR HANDLING MIDDLEWARE
+
+// 404 Handler - Must be after all route definitions
+app.use((req, res) => {
+  console.log(`❌ 404 - Page not found: ${req.method} ${req.originalUrl}`);
+  
+  res.status(404);
+  
+  // API 404
+  if (req.originalUrl.startsWith('/api/')) {
+    return res.json({
+      success: false,
+      message: 'API endpoint không tồn tại',
+      path: req.originalUrl
+    });
+  }
+  
+  // Regular 404 page
+  res.render('404', {
     title: 'Trang không tìm thấy - SportShop',
-    currentPage: '404'
+    currentPage: '404',
+    requestedUrl: req.originalUrl
   });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('Global Error:', err);
+  console.error('💥 Unhandled Error:', {
+    error: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    user: req.session?.user?.email || 'Guest',
+    timestamp: new Date().toISOString()
+  });
   
-  if (res.headersSent) {
-    return next(err);
+  // Don't leak error details in production
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
+  res.status(err.status || 500);
+  
+  // API Error Response
+  if (req.originalUrl.startsWith('/api/')) {
+    return res.json({
+      success: false,
+      message: isDevelopment ? err.message : 'Có lỗi xảy ra trên máy chủ',
+      ...(isDevelopment && { stack: err.stack })
+    });
   }
   
-  const statusCode = err.statusCode || 500;
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Đã xảy ra lỗi server' 
-    : err.message;
-    
-  res.status(statusCode).render('error', {
-    title: `Lỗi ${statusCode} - SportShop`,
-    error: message,
-    statusCode: statusCode
+  // Regular Error Page
+  res.render('error', {
+    title: 'Lỗi hệ thống - SportShop',
+    currentPage: 'error',
+    error: isDevelopment ? err.message : 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+    ...(isDevelopment && { stack: err.stack })
   });
 });
 
-// Start server with improved error handling
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
-
-const server = app.listen(PORT, HOST, () => {
-  console.log('🚀 SportShop server đang chạy:');
-  console.log(`📍 Local: http://localhost:${PORT}`);
-  console.log(`📍 Network: http://127.0.0.1:${PORT}`);
-  console.log(`📂 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🕐 Started at: ${new Date().toLocaleString('vi-VN')}`);
-  console.log(`💾 Session Store: MongoDB`);
-  console.log(`🗄️  Database: Connected`);
-  console.log(`📁 Static Assets: /assets -> data/images/`);
-  console.log(`📤 Upload Folder: /uploads -> data/uploads/`);
-  
-  // Cleanup expired carts every hour
-  setInterval(async () => {
-    try {
-      const Cart = require('./models/Cart');
-      await Cart.cleanupExpiredCarts();
-    } catch (error) {
-      console.error('Cart cleanup error:', error);
-    }
-  }, 60 * 60 * 1000);
-});
-
-// Server error handling
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} đã được sử dụng!`);
-    console.log('💡 Thử các giải pháp sau:');
-    console.log('1. Chạy: PORT=3001 npm run dev');
-    console.log('2. Hoặc tìm và tắt process đang dùng port 3000');
-  } else if (err.code === 'EACCES') {
-    console.error(`❌ Không có quyền truy cập port ${PORT}`);
-    console.log('💡 Thử port khác: PORT=8080 npm run dev');
-  } else {
-    console.error('❌ Server error:', err);
-  }
-  process.exit(1);
-});
-
-// Graceful shutdown
+// 🔄 GRACEFUL SHUTDOWN
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('💤 Process terminated');
-  });
+  console.log('🛑 SIGTERM received. Shutting down gracefully...');
+  process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('\n🛑 SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('💤 Process terminated');
-    process.exit(0);
-  });
+  console.log('🛑 SIGINT received. Shutting down gracefully...');
+  process.exit(0);
 });
+
+// 🎯 STARTUP
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || 'localhost';
+
+app.listen(PORT, HOST, () => {
+  console.log('\n🎉 SportShop Server Started Successfully!');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`🌐 Server: http://${HOST}:${PORT}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🗄️  Database: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}`);
+  console.log(`🔐 Session Store: MongoDB`);
+  console.log(`📦 Static Assets: /assets -> ./data/images`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n🔗 Available Routes:');
+  console.log('   🏠 Homepage: /');
+  console.log('   🛍️  Products: /products');
+  console.log('   🛒 Cart: /cart');
+  console.log('   🔐 Auth: /auth/login, /auth/register');
+  console.log('   👤 User: /user/account, /user/profile');
+  console.log('   ⚡ Admin: /admin (admin only)');
+  console.log('   🏥 Health: /health');
+  console.log('   📚 API Docs: /api/docs (coming soon)');
+  console.log('\n✨ New Features:');
+  console.log('   ✅ User Registration & Login');
+  console.log('   ✅ Session Management');
+  console.log('   ✅ Cart Persistence (Guest + User)');
+  console.log('   ✅ Role-based Access Control');
+  console.log('   ✅ Password Security');
+  console.log('   ✅ Flash Messages');
+  console.log('   ✅ User Profile Management');
+  console.log('   ✅ Address Management');
+  console.log('   ✅ Favorites System');
+  console.log('\n🚀 Ready for connections!');
+});
+
+module.exports = app;

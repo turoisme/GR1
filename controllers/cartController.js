@@ -1,5 +1,5 @@
 /**
- * Cart Controller - MongoDB Version - Đầy đủ
+ * Cart Controller - MongoDB Version - Đã sửa lỗi validation
  * Xử lý giỏ hàng với MongoDB và checkout chỉ giao hàng Hà Nội
  */
 
@@ -437,7 +437,24 @@ class CartController {
   }
 
   /**
-   * Xử lý thanh toán - CHỈ GIAO HÀNG HÀ NỘI
+   * Function để normalize district - XỬ LÝ DẤU TIẾNG VIỆT
+   */
+  static normalizeDistrict(district) {
+    return district
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '')           // Remove spaces
+      .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+      .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+      .replace(/[ìíịỉĩ]/g, 'i')
+      .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+      .replace(/[ùúụủũưừứựửữ]/g, 'u')
+      .replace(/[ỳýỵỷỹ]/g, 'y')
+      .replace(/đ/g, 'd');
+  }
+
+  /**
+   * Xử lý thanh toán - CHỈ GIAO HÀNG HÀ NỘI - ĐÃ SỬA LỖI VALIDATION
    * POST /cart/checkout
    */
   static async processCheckout(req, res) {
@@ -445,10 +462,11 @@ class CartController {
       const sessionId = req.sessionID || req.session.id;
       const cart = await Cart.findBySessionId(sessionId);
       
-      console.log('🏪 Process checkout:', {
+      console.log('🏪 Process checkout started:', {
         sessionId: sessionId,
         items: cart.totalItems,
-        total: cart.finalTotal
+        total: cart.finalTotal,
+        body: req.body
       });
       
       if (cart.isEmpty()) {
@@ -468,6 +486,18 @@ class CartController {
         paymentMethod = 'cod',
         notes = ''
       } = req.body;
+      
+      // LOG DỮ LIỆU THÔ ĐỂ DEBUG
+      console.log('📋 Raw form data:', {
+        customerName: `"${customerName}"`,
+        customerEmail: `"${customerEmail}"`,
+        customerPhone: `"${customerPhone}"`,
+        shippingAddress: `"${shippingAddress}"`,
+        city: `"${city}"`,
+        district: `"${district}"`,
+        paymentMethod: `"${paymentMethod}"`,
+        notes: `"${notes}"`
+      });
       
       // Validation đầy đủ
       if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !district) {
@@ -504,7 +534,7 @@ class CartController {
         });
       }
       
-      // Validate Hà Nội districts
+      // ✅ VALIDATE HÀ NỘI DISTRICTS - ĐÃ SỬA LỖI
       const hanoiDistricts = [
         'badinh', 'hoankiem', 'tayho', 'longbien', 'caugiay', 'dongda', 
         'haibatrung', 'hoangmai', 'thanhxuan', 'namtulem', 'bactulem', 
@@ -513,13 +543,27 @@ class CartController {
         'thachthat', 'thanhoai', 'thuynguyen', 'unghoa'
       ];
       
-      const normalizedDistrict = district.toLowerCase().replace(/\s+/g, '');
+      const normalizedDistrict = CartController.normalizeDistrict(district);
+      
+      // LOGGING CHI TIẾT ĐỂ DEBUG
+      console.log('🔍 District validation:', {
+        originalDistrict: `"${district}"`,
+        normalizedDistrict: `"${normalizedDistrict}"`,
+        isValid: hanoiDistricts.includes(normalizedDistrict),
+        expectedDistricts: hanoiDistricts.slice(0, 8) + '... (total: ' + hanoiDistricts.length + ')'
+      });
+      
       if (!hanoiDistricts.includes(normalizedDistrict)) {
+        console.log('❌ District validation failed!');
+        console.log('Available districts:', hanoiDistricts);
+        
         return res.status(400).json({
           success: false,
-          message: 'Quận/huyện không hợp lệ hoặc không nằm trong khu vực giao hàng'
+          message: `Quận/huyện "${district}" không hợp lệ hoặc không nằm trong khu vực giao hàng Hà Nội`
         });
       }
+      
+      console.log('✅ District validation passed:', normalizedDistrict);
       
       // Validate payment method
       const validPaymentMethods = ['cod', 'bank', 'momo'];
@@ -535,7 +579,7 @@ class CartController {
       
       // Calculate delivery date (1-2 days for Hanoi)
       const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + (district.includes('noi') ? 1 : 2));
+      deliveryDate.setDate(deliveryDate.getDate() + (normalizedDistrict.includes('noi') ? 1 : 2));
       
       // Create comprehensive order data
       const orderData = {
@@ -584,9 +628,14 @@ class CartController {
           method: paymentMethod,
           status: paymentMethod === 'cod' ? 'pending' : 'waiting_payment',
           bankInfo: paymentMethod === 'bank' ? {
-            bankName: 'Vietcombank',
-            accountNumber: '1234567890',
+            bankName: 'Viettinbank',
+            accountNumber: '101875664600',
             accountName: 'Nguyễn Thanh Tân',
+            transferContent: `SportShop ${customerName.split(' ').pop()}`
+          } : null,
+          momoInfo: paymentMethod === 'momo' ? {
+            phone: '0866387718',
+            name: 'Nguyễn Thanh Tân',
             transferContent: `SportShop ${customerName.split(' ').pop()}`
           } : null
         },
@@ -659,12 +708,19 @@ class CartController {
           break;
           
         case 'momo':
-          responseMessage = `🎉 Đặt hàng thành công! Mã đơn hàng: ${orderId}. Vui lòng thanh toán qua MoMo. Chúng tôi sẽ xử lý đơn hàng ngay sau khi nhận được thanh toán.`;
+          responseMessage = `🎉 Đặt hàng thành công! Mã đơn hàng: ${orderId}. Vui lòng thanh toán qua MoMo theo thông tin đã cung cấp. Chúng tôi sẽ xử lý đơn hàng ngay sau khi nhận được thanh toán.`;
           additionalInfo = {
+            momoInfo: orderData.payment.momoInfo,
             paymentNote: 'Thanh toán qua ví MoMo'
           };
           break;
       }
+      
+      console.log('✅ Checkout completed successfully:', {
+        orderId: orderData.orderId,
+        paymentMethod: orderData.payment.method,
+        total: orderData.pricing.finalTotal
+      });
       
       // Success response
       res.json({
@@ -688,6 +744,8 @@ class CartController {
       
     } catch (error) {
       console.error('❌ Cart Controller ProcessCheckout Error:', error);
+      console.error('Error stack:', error.stack);
+      
       res.status(500).json({
         success: false,
         message: 'Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại sau.',

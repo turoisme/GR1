@@ -1,0 +1,532 @@
+<!-- views/auth/login.ejs -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 50px 40px;
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+            animation: float 10s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        
+        .login-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .form-input.error {
+            border-color: #e74c3c;
+            background-color: #fff5f5;
+        }
+        
+        .password-group {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+            padding: 5px;
+        }
+        
+        .password-toggle:hover {
+            color: #667eea;
+        }
+        
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+        
+        .forgot-password {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-password:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .login-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .login-btn .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        .login-btn.loading .loading-spinner {
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+            color: #999;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 20px;
+        }
+        
+        .social-login {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .social-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .social-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .google-btn {
+            color: #db4437;
+        }
+        
+        .facebook-btn {
+            color: #3b5998;
+        }
+        
+        .register-link {
+            text-align: center;
+            color: #666;
+        }
+        
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .alert-error {
+            background: #fff5f5;
+            color: #e74c3c;
+            border: 1px solid #faddd8;
+        }
+        
+        .alert-success {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .back-home:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 25px;
+                margin: 10px;
+            }
+            
+            .logo h1 {
+                font-size: 2rem;
+            }
+            
+            .social-login {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-home">← Về trang chủ</a>
+    
+    <div class="login-container">
+        <div class="login-content">
+            <div class="logo">
+                <h1>SportShop</h1>
+                <p>Đăng nhập vào tài khoản của bạn</p>
+            </div>
+            
+            <!-- Flash Messages -->
+            <% if (error && error.length > 0) { %>
+                <div class="alert alert-error">
+                    ❌ <%= error %>
+                </div>
+            <% } %>
+            
+            <% if (success && success.length > 0) { %>
+                <div class="alert alert-success">
+                    ✅ <%= success %>
+                </div>
+            <% } %>
+            
+            <!-- Login Form -->
+            <form id="loginForm" action="/auth/login" method="POST">
+                <input type="hidden" name="returnTo" value="<%= returnTo %>">
+                
+                <div class="form-group">
+                    <label for="email">Email <span style="color: #e74c3c;">*</span></label>
+                    <input type="email" id="email" name="email" class="form-input" required 
+                           placeholder="Nhập email của bạn" autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Mật khẩu <span style="color: #e74c3c;">*</span></label>
+                    <div class="password-group">
+                        <input type="password" id="password" name="password" class="form-input" required 
+                               placeholder="Nhập mật khẩu" autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember" value="1">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a href="/auth/forgot-password" class="forgot-password">Quên mật khẩu?</a>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <div class="loading-spinner"></div>
+                    <span>Đăng nhập</span>
+                </button>
+            </form>
+            
+            <!-- Social Login -->
+            <div class="divider">
+                <span>hoặc</span>
+            </div>
+            
+            <div class="social-login">
+                <button class="social-btn google-btn" onclick="socialLogin('google')">
+                    <span>🌐</span>
+                    <span>Google</span>
+                </button>
+                <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">
+                    <span>📘</span>
+                    <span>Facebook</span>
+                </button>
+            </div>
+            
+            <!-- Register Link -->
+            <div class="register-link">
+                Chưa có tài khoản? <a href="/auth/register">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Form handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const loginBtn = document.getElementById('loginBtn');
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Basic validation
+            if (!email || !password) {
+                e.preventDefault();
+                showAlert('Vui lòng nhập đầy đủ email và mật khẩu', 'error');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                e.preventDefault();
+                showAlert('Email không hợp lệ', 'error');
+                document.getElementById('email').classList.add('error');
+                return;
+            }
+            
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+        });
+        
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+        
+        // Social login
+        function socialLogin(provider) {
+            showAlert(`Đăng nhập ${provider} chưa được triển khai`, 'error');
+            // TODO: Implement social login
+            // window.location.href = `/auth/${provider}`;
+        }
+        
+        // Email validation
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Show alert message
+        function showAlert(message, type = 'error') {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Create new alert
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = type === 'error' ? `❌ ${message}` : `✅ ${message}`;
+            
+            // Insert after logo
+            const logo = document.querySelector('.logo');
+            logo.insertAdjacentElement('afterend', alert);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        // Remove error state on input
+        document.getElementById('email').addEventListener('input', function() {
+            this.classList.remove('error');
+        });
+        
+        document.getElementById('password').addEventListener('input', function() {
+            this.classList.remove('error');
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Enter to submit (if not already focused on submit button)
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                document.getElementById('loginForm').requestSubmit();
+            }
+            
+            // Escape to clear form
+            if (e.key === 'Escape') {
+                document.getElementById('loginForm').reset();
+            }
+        });
+        
+        // Auto-focus email input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').focus();
+        });
+        
+        // Handle form submission errors
+        window.addEventListener('load', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.classList.remove('loading');
+            loginBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
