@@ -534,11 +534,12 @@ class CartController {
     }
   }
 
-  /**
-   * Xử lý thanh toán - CHỈ GIAO HÀNG HÀ NỘI
-   * POST /cart/checkout
-   */
- // Thay thế method processCheckout trong CartController
+// controllers/cartController.js - Phần processCheckout được cải tiến
+
+/**
+ * Xử lý thanh toán - CẢI TIẾN VỚI REDIRECT ĐẾN TRANG SUCCESS
+ * POST /cart/checkout
+ */
 static async processCheckout(req, res) {
   try {
     const sessionId = req.sessionID || req.session.id;
@@ -549,7 +550,7 @@ static async processCheckout(req, res) {
       customerEmail,
       customerPhone,
       shippingAddress,
-      ward = '', // ← Mặc định là chuỗi rỗng nếu không có
+      ward = '',
       district,
       city,
       paymentMethod = 'cod',
@@ -573,7 +574,7 @@ static async processCheckout(req, res) {
       });
     }
     
-    // ✅ VALIDATE REQUIRED FIELDS - BỎ ward khỏi validation bắt buộc
+    // Validate required fields
     if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !district) {
       const missingFields = [];
       if (!customerName) missingFields.push('Họ tên');
@@ -593,35 +594,31 @@ static async processCheckout(req, res) {
     if (!emailRegex.test(customerEmail)) {
       return res.status(400).json({
         success: false,
-        message: 'Định dạng email không hợp lệ'
+        message: 'Email không hợp lệ'
       });
     }
     
-    // Validate phone format (10-11 digits)
-    const phoneRegex = /^[0-9]{10,11}$/;
-    const cleanPhone = customerPhone.replace(/[\s\-\(\)]/g, '');
-    if (!phoneRegex.test(cleanPhone)) {
+    // Validate phone number (Vietnam format)
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
       return res.status(400).json({
         success: false,
-        message: 'Số điện thoại phải có 10-11 chữ số'
+        message: 'Số điện thoại không hợp lệ'
       });
     }
     
-    // Generate order ID
-    const orderId = 'SP' + Date.now() + Math.floor(Math.random() * 1000);
-    
-    // Calculate delivery date (1-2 days for Hanoi)
-    const deliveryDate = new Date();
-    deliveryDate.setDate(deliveryDate.getDate() + 2);
+    // Generate order ID and delivery date
+    const orderId = `SP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-6)}`;
+    const deliveryDate = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
     
     // Create order data
     const orderData = {
       orderId: orderId,
       sessionId: sessionId,
       userId: userId,
-      status: 'confirmed',
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+      status: paymentMethod === 'cod' ? 'pending' : 'awaiting_payment',
       paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'unpaid',
       customer: {
         name: customerName.trim(),
         email: customerEmail.toLowerCase().trim(),
@@ -629,7 +626,7 @@ static async processCheckout(req, res) {
       },
       shipping: {
         address: shippingAddress.trim(),
-        ward: ward.trim(), // ← Ward có thể rỗng
+        ward: ward.trim(),
         district: district.trim(),
         city: city || 'Hà Nội'
       },
@@ -648,7 +645,14 @@ static async processCheckout(req, res) {
       shippingFee: cart.shippingFee,
       finalTotal: cart.finalTotal,
       notes: notes.trim(),
-      estimatedDelivery: deliveryDate
+      estimatedDelivery: deliveryDate,
+      orderHistory: [
+        {
+          status: 'pending',
+          timestamp: new Date(),
+          note: 'Đơn hàng đã được tạo'
+        }
+      ]
     };
     
     console.log('📋 Creating order:', {
@@ -658,7 +662,7 @@ static async processCheckout(req, res) {
       finalTotal: orderData.finalTotal
     });
     
-    // ✅ LUU ORDER VÀO DATABASE (nếu đã có Order model)
+    // Save order to database
     try {
       const Order = require('../models/Order');
       const savedOrder = await Order.createOrder(orderData);
@@ -683,12 +687,22 @@ static async processCheckout(req, res) {
         req.session.cartCount = 0;
       }
       
+      // Store order info in session for success page
+      req.session.lastOrder = {
+        orderId: savedOrder.orderId,
+        total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
+        paymentMethod: savedOrder.paymentMethod,
+        deliveryDate: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
+        customerName: savedOrder.customer.name,
+        status: savedOrder.status
+      };
+      
       console.log('✅ Checkout completed and saved to DB:', {
         orderId: savedOrder.orderId,
         total: savedOrder.finalTotal
       });
       
-      // Success response
+      // Success response with redirect URL
       res.json({
         success: true,
         message: 'Đặt hàng thành công!',
@@ -697,24 +711,39 @@ static async processCheckout(req, res) {
           estimatedDelivery: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
           total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
           paymentMethod: savedOrder.paymentMethod,
-          status: savedOrder.status
+          status: savedOrder.status,
+          redirectUrl: `/order-success?orderId=${savedOrder.orderId}&total=${encodeURIComponent(savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ')}&paymentMethod=${savedOrder.paymentMethod}&deliveryDate=${encodeURIComponent(savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'))}`
         }
       });
       
     } catch (orderError) {
-      console.log('⚠️ Order model not available, proceeding without DB save:', orderError.message);
+      console.log('⚠️ Order model error:', orderError.message);
       
-      // Clear cart anyway
+      // Fallback: Save to session if database save fails
+      if (!req.session.orders) {
+        req.session.orders = [];
+      }
+      
+      req.session.orders.push(orderData);
+      req.session.lastOrder = {
+        orderId: orderData.orderId,
+        total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
+        paymentMethod: orderData.paymentMethod,
+        deliveryDate: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
+        customerName: orderData.customer.name,
+        status: orderData.status
+      };
+      
+      // Clear cart
       cart.clear();
       await cart.save();
       
-      // Clear session cart
       if (req.session.cartItems) {
         req.session.cartItems = [];
         req.session.cartCount = 0;
       }
       
-      // Success response without DB save
+      // Success response with session fallback
       res.json({
         success: true,
         message: 'Đặt hàng thành công!',
@@ -722,17 +751,18 @@ static async processCheckout(req, res) {
           orderId: orderData.orderId,
           estimatedDelivery: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
           total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
-          paymentMethod: orderData.paymentMethod
+          paymentMethod: orderData.paymentMethod,
+          status: orderData.status,
+          redirectUrl: `/order-success?orderId=${orderData.orderId}&total=${encodeURIComponent(orderData.finalTotal.toLocaleString('vi-VN') + 'đ')}&paymentMethod=${orderData.paymentMethod}&deliveryDate=${encodeURIComponent(orderData.estimatedDelivery.toLocaleDateString('vi-VN'))}`
         }
       });
     }
     
   } catch (error) {
-    console.error('❌ Cart Controller ProcessCheckout Error:', error);
+    console.error('❌ Checkout error:', error);
     res.status(500).json({
       success: false,
-      message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.'
     });
   }
 }
