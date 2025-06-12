@@ -1,393 +1,378 @@
-// models/Cart.js - Updated để hỗ trợ User Authentication
-
+// models/Cart.js - Updated để hỗ trợ color và size
 const mongoose = require('mongoose');
 
-const cartSchema = new mongoose.Schema({
-  // User reference - NEW
-  userId: {
+const cartItemSchema = new mongoose.Schema({
+  product: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null  // null cho guest users
+    ref: 'Product',
+    required: true
   },
   
+  quantity: {
+    type: Number,
+    required: true,
+    min: [1, 'Số lượng phải ít nhất là 1'],
+    max: [10, 'Số lượng không được quá 10'],
+    default: 1
+  },
+  
+  color: {
+    type: String,
+    required: [true, 'Màu sắc là bắt buộc'],
+    trim: true
+  },
+  
+  size: {
+    type: String,
+    required: [true, 'Kích cỡ là bắt buộc'],
+    trim: true
+  },
+  
+  priceAtTime: {
+    type: Number,
+    required: true,
+    min: [0, 'Giá không được âm']
+  },
+  
+  subtotal: {
+    type: Number,
+    required: true,
+    min: [0, 'Subtotal không được âm']
+  },
+  
+  addedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: true });
+
+const cartSchema = new mongoose.Schema({
   sessionId: {
     type: String,
     required: true,
-    index: true
+    unique: true
   },
   
-  items: [{
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
-      required: true
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1,
-      default: 1
-    },
-    color: {
-      type: String,
-      default: 'default'
-    },
-    size: {
-      type: String,
-      default: 'M'
-    },
-    priceAtTime: {
-      type: Number,
-      required: true
-    },
-    subtotal: {
-      type: Number,
-      required: true
-    },
-    addedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   
-  // Pricing
+  items: [cartItemSchema],
+  
   totalItems: {
     type: Number,
-    default: 0
-  },
-  totalPrice: {
-    type: Number,
-    default: 0
-  },
-  discount: {
-    type: Number,
-    default: 0
-  },
-  finalTotal: {
-    type: Number,
-    default: 0
+    default: 0,
+    min: [0, 'Tổng số items không được âm']
   },
   
-  // Shipping
+  totalPrice: {
+    type: Number,
+    default: 0,
+    min: [0, 'Tổng giá không được âm']
+  },
+  
   shippingFee: {
     type: Number,
     default: 0
   },
   
-  // Timestamps
+  finalTotal: {
+    type: Number,
+    default: 0
+  },
+  
+  status: {
+    type: String,
+    enum: ['active', 'checked_out', 'abandoned'],
+    default: 'active'
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now
   },
+  
   updatedAt: {
     type: Date,
     default: Date.now
   },
   
-  // Cart expiry (for guest carts)
   expiresAt: {
     type: Date,
     default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
   }
 });
 
-// Indexes for performance
-cartSchema.index({ sessionId: 1 });
-cartSchema.index({ userId: 1 });
-cartSchema.index({ sessionId: 1, userId: 1 });
-cartSchema.index({ createdAt: -1 });
-cartSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for guest carts
-
-// Pre-save middleware
+// Middleware to update totals and timestamps
 cartSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
-  
-  // If cart has userId, remove expiry
-  if (this.userId) {
-    this.expiresAt = undefined;
-  }
-  
+  this.calculateTotals();
   next();
 });
 
-// Instance Methods
-cartSchema.methods.calculateTotals = function() {
-  this.totalItems = this.items.reduce((total, item) => total + item.quantity, 0);
-  this.totalPrice = this.items.reduce((total, item) => total + item.subtotal, 0);
-  
-  // Calculate shipping (free over 500k VND)
-  this.shippingFee = this.totalPrice >= 500000 ? 0 : 30000;
-  
-  // Apply discount if any
-  const discountAmount = (this.totalPrice * this.discount) / 100;
-  this.finalTotal = this.totalPrice + this.shippingFee - discountAmount;
-  
-  return this;
-};
+// =============================================
+// INSTANCE METHODS
+// =============================================
 
-cartSchema.methods.addItem = function(productData) {
-  const { productId, quantity = 1, color = 'default', size = 'M', price } = productData;
-  
-  // Find existing item with same product, color, size
-  const existingItemIndex = this.items.findIndex(item => 
-    item.product.toString() === productId.toString() &&
-    item.color === color &&
-    item.size === size
-  );
-  
-  if (existingItemIndex > -1) {
-    // Update existing item
-    this.items[existingItemIndex].quantity += quantity;
-    this.items[existingItemIndex].subtotal = this.items[existingItemIndex].quantity * this.items[existingItemIndex].priceAtTime;
-  } else {
-    // Add new item
-    this.items.push({
-      product: productId,
-      quantity: quantity,
-      color: color,
-      size: size,
-      priceAtTime: price,
-      subtotal: quantity * price,
-      addedAt: new Date()
-    });
-  }
-  
-  this.calculateTotals();
-  return this;
-};
-
-cartSchema.methods.removeItem = function(itemId) {
-  this.items = this.items.filter(item => item._id.toString() !== itemId.toString());
-  this.calculateTotals();
-  return this;
-};
-
-cartSchema.methods.updateItemQuantity = function(itemId, newQuantity) {
-  const item = this.items.find(item => item._id.toString() === itemId.toString());
-  
-  if (item) {
-    if (newQuantity <= 0) {
-      return this.removeItem(itemId);
+/**
+ * Thêm sản phẩm vào giỏ hàng với color và size
+ */
+cartSchema.methods.addItem = async function(productId, quantity, color, size) {
+  try {
+    const Product = mongoose.model('Product');
+    const product = await Product.findById(productId);
+    
+    if (!product) {
+      throw new Error('Sản phẩm không tồn tại');
     }
     
-    item.quantity = newQuantity;
-    item.subtotal = item.quantity * item.priceAtTime;
+    if (!product.inStock) {
+      throw new Error('Sản phẩm đã hết hàng');
+    }
+    
+    // Tìm item có cùng productId, color và size
+    const existingItemIndex = this.items.findIndex(item => 
+      item.product.toString() === productId.toString() &&
+      item.color === color &&
+      item.size === size
+    );
+    
+    if (existingItemIndex >= 0) {
+      // Nếu item đã tồn tại với cùng color/size, cập nhật quantity
+      const existingItem = this.items[existingItemIndex];
+      existingItem.quantity += quantity;
+      existingItem.subtotal = existingItem.quantity * existingItem.priceAtTime;
+      
+      console.log('📦 Updated existing cart item:', {
+        productId: productId,
+        color: color,
+        size: size,
+        oldQuantity: existingItem.quantity - quantity,
+        newQuantity: existingItem.quantity
+      });
+    } else {
+      // Nếu chưa có, tạo item mới
+      const newItem = {
+        product: productId,
+        quantity: quantity,
+        color: color,
+        size: size,
+        priceAtTime: product.price,
+        subtotal: product.price * quantity
+      };
+      
+      this.items.push(newItem);
+      
+      console.log('🆕 Added new cart item:', {
+        productId: productId,
+        color: color,
+        size: size,
+        quantity: quantity,
+        price: product.price
+      });
+    }
+    
+    // Cập nhật totals
+    this.calculateTotals();
+    
+    // Lưu vào database
+    await this.save();
+    
+    return this;
+  } catch (error) {
+    console.error('Cart addItem error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Xóa item khỏi giỏ hàng
+ */
+cartSchema.methods.removeItem = function(itemId) {
+  const initialLength = this.items.length;
+  this.items = this.items.filter(item => item._id.toString() !== itemId.toString());
+  
+  if (this.items.length < initialLength) {
+    console.log('🗑️ Removed cart item:', itemId);
     this.calculateTotals();
   }
   
   return this;
 };
 
-cartSchema.methods.clearCart = function() {
-  this.items = [];
-  this.calculateTotals();
+/**
+ * Cập nhật số lượng của item
+ */
+cartSchema.methods.updateItemQuantity = function(itemId, quantity) {
+  const item = this.items.find(item => item._id.toString() === itemId.toString());
+  
+  if (item) {
+    const oldQuantity = item.quantity;
+    item.quantity = quantity;
+    item.subtotal = item.priceAtTime * quantity;
+    
+    console.log('🔄 Updated item quantity:', {
+      itemId: itemId,
+      oldQuantity: oldQuantity,
+      newQuantity: quantity
+    });
+    
+    this.calculateTotals();
+  }
+  
   return this;
 };
 
-cartSchema.methods.isEmpty = function() {
-  return this.items.length === 0 || this.totalItems === 0;
+/**
+ * Tính toán tổng giá trị giỏ hàng
+ */
+cartSchema.methods.calculateTotals = function() {
+  this.totalItems = this.items.reduce((sum, item) => sum + item.quantity, 0);
+  this.totalPrice = this.items.reduce((sum, item) => sum + item.subtotal, 0);
+  
+  // Tính phí ship (miễn phí cho đơn từ 1M VND)
+  this.shippingFee = this.totalPrice >= 1000000 ? 0 : 50000;
+  this.finalTotal = this.totalPrice + this.shippingFee;
+  
+  return this;
 };
 
-cartSchema.methods.getFormattedTotalPrice = function() {
-  return this.totalPrice.toLocaleString('vi-VN') + '₫';
+/**
+ * Xóa tất cả items trong giỏ hàng
+ */
+cartSchema.methods.clear = function() {
+  this.items = [];
+  this.calculateTotals();
+  console.log('🧹 Cart cleared');
+  return this;
+};
+
+/**
+ * Kiểm tra giỏ hàng có trống không
+ */
+cartSchema.methods.isEmpty = function() {
+  return this.items.length === 0;
+};
+
+/**
+ * Format giá tiền
+ */
+cartSchema.methods.getFormattedTotal = function() {
+  return this.totalPrice.toLocaleString('vi-VN') + 'đ';
 };
 
 cartSchema.methods.getFormattedFinalTotal = function() {
-  return this.finalTotal.toLocaleString('vi-VN') + '₫';
+  return this.finalTotal.toLocaleString('vi-VN') + 'đ';
 };
 
 cartSchema.methods.getFormattedShippingFee = function() {
-  return this.shippingFee === 0 ? 'Miễn phí' : this.shippingFee.toLocaleString('vi-VN') + '₫';
+  return this.shippingFee.toLocaleString('vi-VN') + 'đ';
 };
 
-cartSchema.methods.hasProduct = function(productId) {
-  return this.items.some(item => item.product.toString() === productId.toString());
-};
+// =============================================
+// STATIC METHODS
+// =============================================
 
-cartSchema.methods.getItemCount = function(productId) {
-  return this.items
-    .filter(item => item.product.toString() === productId.toString())
-    .reduce((total, item) => total + item.quantity, 0);
-};
-
-// NEW: Convert guest cart to user cart
-cartSchema.methods.convertToUserCart = function(userId) {
-  this.userId = userId;
-  this.expiresAt = undefined; // Remove expiry for user carts
-  return this;
-};
-
-// NEW: Check if cart belongs to user
-cartSchema.methods.belongsToUser = function(userId) {
-  return this.userId && this.userId.toString() === userId.toString();
-};
-
-// Static Methods
+/**
+ * Tìm hoặc tạo cart theo sessionId và userId
+ */
 cartSchema.statics.findBySessionId = async function(sessionId, userId = null) {
   try {
-    let cart;
+    console.log(`🔍 Finding cart for session: ${sessionId}, user: ${userId}`);
     
-    // First, try to find by userId if provided
-    if (userId) {
-      cart = await this.findOne({ userId: userId }).populate('items.product');
-      if (cart) {
-        // Update sessionId to current session
-        cart.sessionId = sessionId;
-        await cart.save();
-        return cart;
-      }
-    }
-    
-    // Fallback to sessionId
-    cart = await this.findOne({ sessionId: sessionId }).populate('items.product');
+    let cart = await this.findOne({ sessionId: sessionId })
+                       .populate('items.product')
+                       .maxTimeMS(5000); // Giới hạn thời gian query 5s
     
     if (!cart) {
-      // Create new cart
+      console.log(`📦 Creating new cart for session: ${sessionId}`);
+      // Tạo cart mới
       cart = new this({ 
         sessionId: sessionId,
-        userId: userId || null
+        userId: userId
       });
       await cart.save();
+    } else if (userId && !cart.userId) {
+      // Cập nhật userId nếu user vừa đăng nhập
+      cart.userId = userId;
+      await cart.save();
+      console.log(`👤 Updated cart with userId: ${userId}`);
     }
     
+    console.log(`✅ Cart found/created: ${cart.items.length} items, ${cart.totalItems} total`);
     return cart;
   } catch (error) {
-    console.error('❌ Error finding cart:', error);
-    // Return empty cart as fallback
+    console.error('❌ Error finding cart by session:', error.message);
+    
+    // Fallback: trả về cart rỗng
+    console.log(`🔄 Creating fallback cart for session: ${sessionId}`);
     const fallbackCart = new this({ 
-      sessionId: sessionId, 
-      userId: userId || null 
+      sessionId: sessionId,
+      userId: userId
     });
     return fallbackCart;
   }
 };
 
-// NEW: Find user's cart across all sessions
-cartSchema.statics.findByUserId = async function(userId) {
-  try {
-    return await this.findOne({ userId: userId }).populate('items.product');
-  } catch (error) {
-    console.error('❌ Error finding user cart:', error);
-    return null;
-  }
-};
-
-// NEW: Merge two carts (for login scenarios)
-cartSchema.statics.mergeCarts = async function(guestCart, userCart) {
-  try {
-    if (!guestCart || guestCart.isEmpty()) {
-      return userCart;
-    }
-    
-    if (!userCart) {
-      // Convert guest cart to user cart
-      return guestCart;
-    }
-    
-    // Merge items from guest cart to user cart
-    for (const guestItem of guestCart.items) {
-      const existingItemIndex = userCart.items.findIndex(item => 
-        item.product.toString() === guestItem.product.toString() &&
-        item.color === guestItem.color &&
-        item.size === guestItem.size
-      );
-      
-      if (existingItemIndex > -1) {
-        // Update existing item quantity
-        userCart.items[existingItemIndex].quantity += guestItem.quantity;
-        userCart.items[existingItemIndex].subtotal = 
-          userCart.items[existingItemIndex].quantity * userCart.items[existingItemIndex].priceAtTime;
-      } else {
-        // Add new item
-        userCart.items.push({
-          product: guestItem.product,
-          quantity: guestItem.quantity,
-          color: guestItem.color,
-          size: guestItem.size,
-          priceAtTime: guestItem.priceAtTime,
-          subtotal: guestItem.subtotal,
-          addedAt: guestItem.addedAt
-        });
-      }
-    }
-    
-    userCart.calculateTotals();
-    await userCart.save();
-    
-    // Delete guest cart
-    await guestCart.deleteOne();
-    
-    return userCart;
-  } catch (error) {
-    console.error('❌ Error merging carts:', error);
-    return userCart || guestCart;
-  }
-};
-
-// NEW: Clean up expired guest carts
+/**
+ * Dọn dẹp cart cũ
+ */
 cartSchema.statics.cleanupExpiredCarts = async function() {
   try {
     const result = await this.deleteMany({
-      userId: null, // Only guest carts
-      expiresAt: { $lt: new Date() }
+      status: 'active',
+      updatedAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     });
     
     if (result.deletedCount > 0) {
-      console.log(`🧹 Cleaned up ${result.deletedCount} expired guest carts`);
+      console.log(`🧹 Cleaned up ${result.deletedCount} expired carts`);
     }
     
-    return result.deletedCount;
+    return result;
   } catch (error) {
-    console.error('❌ Error cleaning up expired carts:', error);
-    return 0;
+    console.error('Error cleaning up carts:', error);
   }
 };
 
-// NEW: Get cart statistics
-cartSchema.statics.getCartStats = async function() {
+/**
+ * Merge guest cart với user cart khi đăng nhập
+ */
+cartSchema.statics.mergeGuestCart = async function(guestSessionId, userSessionId, userId) {
   try {
-    const stats = await this.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalCarts: { $sum: 1 },
-          userCarts: { 
-            $sum: { $cond: [{ $ne: ['$userId', null] }, 1, 0] }
-          },
-          guestCarts: { 
-            $sum: { $cond: [{ $eq: ['$userId', null] }, 1, 0] }
-          },
-          totalItems: { $sum: '$totalItems' },
-          totalValue: { $sum: '$finalTotal' },
-          avgCartValue: { $avg: '$finalTotal' },
-          avgItemsPerCart: { $avg: '$totalItems' }
-        }
-      }
-    ]);
+    const guestCart = await this.findOne({ sessionId: guestSessionId });
+    const userCart = await this.findBySessionId(userSessionId, userId);
     
-    return stats[0] || {
-      totalCarts: 0,
-      userCarts: 0,
-      guestCarts: 0,
-      totalItems: 0,
-      totalValue: 0,
-      avgCartValue: 0,
-      avgItemsPerCart: 0
-    };
+    if (guestCart && !guestCart.isEmpty()) {
+      // Merge items from guest cart to user cart
+      for (const guestItem of guestCart.items) {
+        await userCart.addItem(
+          guestItem.product,
+          guestItem.quantity,
+          guestItem.color,
+          guestItem.size
+        );
+      }
+      
+      // Delete guest cart
+      await guestCart.deleteOne();
+      console.log(`🔄 Merged guest cart ${guestSessionId} into user cart ${userSessionId}`);
+    }
+    
+    return userCart;
   } catch (error) {
-    console.error('❌ Error getting cart stats:', error);
-    return null;
+    console.error('Error merging guest cart:', error);
+    throw error;
   }
 };
 
-// Virtual for checking if cart is from guest
-cartSchema.virtual('isGuestCart').get(function() {
-  return !this.userId;
-});
-
-// Virtual for checking if cart is from user
-cartSchema.virtual('isUserCart').get(function() {
-  return !!this.userId;
-});
+// =============================================
+// INDEXES
+// =============================================
+cartSchema.index({ sessionId: 1 }, { unique: true });
+cartSchema.index({ userId: 1 });
+cartSchema.index({ status: 1, updatedAt: 1 });
+cartSchema.index({ expiresAt: 1 });
 
 module.exports = mongoose.model('Cart', cartSchema);
