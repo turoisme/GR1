@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title || 'Giới thiệu - SportShop' %></title>
+    <title><%= title %></title>
     <style>
         * {
             margin: 0;
@@ -20,19 +20,19 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }
         
-        /* Header */
+        /* Header Styles */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 1rem 0;
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 100;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         
@@ -43,45 +43,57 @@
         }
         
         .logo {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-decoration: none;
         }
         
         .nav-links {
             display: flex;
             list-style: none;
             gap: 30px;
-            align-items: center;
         }
         
         .nav-links a {
             text-decoration: none;
             color: #333;
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 500;
             transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 25px;
+            position: relative;
         }
         
         .nav-links a:hover,
         .nav-links a.active {
             color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
             transform: translateY(-2px);
+        }
+        
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+            border-radius: 1px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .cart-btn {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 30px;
+            border-radius: 25px;
             text-decoration: none;
             font-weight: bold;
             transition: all 0.3s ease;
@@ -89,199 +101,436 @@
         }
         
         .cart-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
-        /* Main Content */
-        main {
-            padding: 40px 0;
+        /* User Dropdown Styles - Same as products page */
+        .user-dropdown {
+            position: relative;
         }
         
-        /* About Section */
-        .about-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 80px 60px;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-top: 10px;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .avatar-small {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .user-email {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .dropdown-item.logout {
+            color: #dc3545;
+        }
+        
+        .dropdown-item.logout:hover {
+            background-color: #fff5f5;
+        }
+        
+        .dropdown-menu hr {
+            margin: 8px 0;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        /* Auth buttons cho user chưa đăng nhập */
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #667eea;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .register-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            font-size: 14px;
+        }
+        
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Page Content */
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 80px 0;
             text-align: center;
-            border-radius: 25px;
-            margin-bottom: 40px;
+            margin: 40px 0;
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .page-header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 60px;
+            border-radius: 20px;
+            margin: 40px 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin: 40px 0;
+        }
+        
+        .about-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        .about-text h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .about-text p {
+            margin-bottom: 20px;
+        }
+        
+        .about-image {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 15px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8rem;
+            color: white;
             position: relative;
             overflow: hidden;
         }
         
-        .about-section::before {
+        .about-image::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
-            animation: float 10s ease-in-out infinite;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-30px) rotate(180deg); }
+        .about-image:hover::before {
+            opacity: 1;
         }
         
-        .about-content {
-            position: relative;
-            z-index: 2;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .about-icon {
-            font-size: 5rem;
-            margin-bottom: 30px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .about-title {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 30px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .about-description {
-            font-size: 1.3rem;
-            line-height: 1.8;
-            color: #555;
-            margin-bottom: 40px;
-        }
-        
-        .about-description p {
-            margin-bottom: 20px;
-        }
-        
-        /* Tech Stack */
-        .tech-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            padding: 60px 40px;
-            border-radius: 25px;
-            color: white;
-            margin-bottom: 40px;
-        }
-        
-        .tech-title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 40px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .tech-grid {
+        .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
+            margin: 60px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 15px;
             text-align: center;
-        }
-        
-        .tech-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px 20px;
-            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
         }
         
-        .tech-item:hover {
+        .feature-card:hover {
             transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
         
-        .tech-icon {
+        .feature-icon {
             font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            color: #333;
             margin-bottom: 15px;
         }
         
-        .tech-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
         }
         
-        .tech-description {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            line-height: 1.5;
-        }
-        
-        /* Contact Section */
-        .contact-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 60px 40px;
-            border-radius: 25px;
+        .stats-section {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 60px;
+            border-radius: 20px;
+            margin: 60px 0;
             text-align: center;
         }
         
-        .contact-title {
-            font-size: 2.5rem;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
             font-weight: bold;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .team-section {
+            text-align: center;
+            margin: 60px 0;
+        }
+        
+        .team-section h2 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 40px;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
-        .contact-description {
-            font-size: 1.2rem;
+        .team-member {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .member-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin: 0 auto 20px;
+        }
+        
+        .member-name {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .member-role {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .member-contact {
             color: #666;
-            margin-bottom: 40px;
             line-height: 1.6;
         }
         
-        .contact-buttons {
+        /* Call to Action */
+        .cta-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            margin: 60px 0;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .cta-buttons {
             display: flex;
             gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
         }
         
-        .contact-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .cta-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
             color: white;
             padding: 15px 30px;
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
             text-decoration: none;
-            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
-        .contact-btn:hover {
+        .cta-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
         
-        .contact-btn.secondary {
-            background: transparent;
-            border: 2px solid #667eea;
+        .cta-btn.primary {
+            background: white;
             color: #667eea;
-            box-shadow: none;
+            border-color: white;
         }
         
-        .contact-btn.secondary:hover {
-            background: #667eea;
-            color: white;
+        .cta-btn.primary:hover {
+            background: #f8f9ff;
         }
         
         /* Footer */
@@ -294,113 +543,152 @@
             backdrop-filter: blur(10px);
         }
         
-        /* Responsive */
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .flash-message.error {
+            background: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
             
-            .about-section {
-                padding: 60px 40px;
+            .auth-buttons {
+                flex-direction: column;
+                gap: 8px;
             }
             
-            .about-title {
+            .page-header h1 {
                 font-size: 2.5rem;
             }
             
-            .tech-grid {
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .content-section {
+                padding: 40px 30px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
             
-            .contact-buttons {
+            .cta-buttons {
                 flex-direction: column;
                 align-items: center;
+            }
+            
+            .dropdown-menu {
+                right: -50px;
+                min-width: 250px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .page-header {
+                padding: 60px 0;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <a href="/" class="logo">SportShop</a>
-            <ul class="nav-links">
-                <li><a href="/">Trang chủ</a></li>
-                <li><a href="/products">Sản phẩm</a></li>
-                <li><a href="/about" class="active">Giới thiệu</a></li>
-                <li><a href="/contact">Liên hệ</a></li>
-            </ul>
-            <a href="/cart" class="cart-btn">
-                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
-            </a>
-        </nav>
-    </header>
-
-    <main class="container">
-        <!-- About Section -->
-        <section class="about-section">
-            <div class="about-content">
-                <div class="about-icon">🏃‍♂️</div>
-                <h1 class="about-title">Về Dự Án SportShop</h1>
-                <div class="about-description">
-                    <p>
-                        <strong>SportShop</strong> là một dự án cá nhân được phát triển nhằm tạo ra một trang web 
-                        bán hàng thể thao hiện đại và thân thiện với người dùng.
-                    </p>
-                    <p>
-                        Dự án này được xây dựng với mục đích học tập và thực hành các công nghệ web hiện đại, 
-                        đồng thời tạo ra một trải nghiệm mua sắm trực tuyến mượt mà và chuyên nghiệp.
-                    </p>
+    <!-- Flash Messages -->
+    <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="flash-messages">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">50,000+</div>
+                    <div class="stat-label">Khách hàng hài lòng</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1,000+</div>
+                    <div class="stat-label">Sản phẩm chất lượng</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">5+</div>
+                    <div class="stat-label">Năm kinh nghiệm</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">63</div>
+                    <div class="stat-label">Tỉnh thành phục vụ</div>
                 </div>
             </div>
         </section>
 
-        <!-- Tech Stack Section -->
-        <section class="tech-section">
-            <h2 class="tech-title">🛠️ Công Nghệ Sử Dụng</h2>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <div class="tech-icon">🟢</div>
-                    <h3 class="tech-name">Node.js</h3>
-                    <p class="tech-description">Backend JavaScript runtime environment</p>
-                </div>
-                <div class="tech-item">
-                    <div class="tech-icon">🚀</div>
-                    <h3 class="tech-name">Express.js</h3>
-                    <p class="tech-description">Web framework cho Node.js</p>
-                </div>
-                <div class="tech-item">
-                    <div class="tech-icon">📄</div>
-                    <h3 class="tech-name">EJS</h3>
-                    <p class="tech-description">Template engine để render HTML</p>
-                </div>
-                <div class="tech-item">
-                    <div class="tech-icon">🎨</div>
-                    <h3 class="tech-name">CSS3</h3>
-                    <p class="tech-description">Styling với gradient và animations</p>
-                </div>
-                <div class="tech-item">
-                    <div class="tech-icon">⚡</div>
-                    <h3 class="tech-name">JavaScript</h3>
-                    <p class="tech-description">Frontend interactivity</p>
-                </div>
-                <div class="tech-item">
-                    <div class="tech-icon">🏗️</div>
-                    <h3 class="tech-name">MVC Pattern</h3>
-                    <p class="tech-description">Kiến trúc Model-View-Controller</p>
+        <section class="content-section">
+            <div class="team-section">
+                <h2>Đội Ngũ Phát Triển</h2>
+                <div class="team-member">
+                    <div class="member-avatar">NT</div>
+                    <div class="member-name">Nguyễn Thanh Tân</div>
+                    <div class="member-role">Founder & Developer</div>
+                    <div class="member-contact">
+                        📧 Tan.NT225923@sis.hust.edu.vn<br>
+                        📱 0866 387 718<br>
+                        🎓 Đại học Bách Khoa Hà Nội
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Contact Section -->
-        <section class="contact-section">
-            <h2 class="contact-title">💬 Liên Hệ & Phản Hồi</h2>
-            <p class="contact-description">
-                Đây là dự án học tập và thực hành. Nếu bạn có góp ý hoặc muốn trao đổi về code, 
-                đừng ngần ngại liên hệ với tôi!
-            </p>
-            <div class="contact-buttons">
-                <a href="/products" class="contact-btn">🛍️ Xem sản phẩm</a>
-                <a href="/contact" class="contact-btn secondary">📧 Gửi phản hồi</a>
+        <section class="cta-section">
+            <h2>Bắt Đầu Hành Trình Thể Thao Của Bạn</h2>
+            <p>Khám phá bộ sưu tập đa dạng và tìm kiếm những sản phẩm hoàn hảo cho bạn</p>
+            <div class="cta-buttons">
+                <a href="/products" class="cta-btn primary">🛍️ Mua Sắm Ngay</a>
+                <a href="/contact" class="cta-btn">💬 Liên Hệ Tư Vấn</a>
             </div>
         </section>
     </main>
@@ -411,5 +699,242 @@
             <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
         </div>
     </footer>
+
+    <script>
+        // Toggle user dropdown menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.user-dropdown');
+            const menu = document.getElementById('userDropdownMenu');
+            
+            if (dropdown && !dropdown.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Auto-hide flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+            
+            // Animate numbers on scroll
+            const animateNumbers = () => {
+                const statNumbers = document.querySelectorAll('.stat-number');
+                statNumbers.forEach(stat => {
+                    const target = parseInt(stat.textContent.replace(/[^0-9]/g, ''));
+                    const suffix = stat.textContent.replace(/[0-9]/g, '');
+                    let current = 0;
+                    const increment = target / 50;
+                    
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            current = target;
+                            clearInterval(timer);
+                        }
+                        stat.textContent = Math.floor(current).toLocaleString() + suffix;
+                    }, 30);
+                });
+            };
+            
+            // Trigger animation when stats section comes into view
+            const statsSection = document.querySelector('.stats-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateNumbers();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+            
+            if (statsSection) {
+                observer.observe(statsSection);
+            }
+        });
+    </script>
 </body>
-</html>
+</html>="flash-message">
+                ✅ <%= success %>
+            </div>
+        </div>
+    <% } %>
+    
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message error">
+                ❌ <%= error %>
+            </div>
+        </div>
+    <% } %>
+
+    <header>
+        <nav class="container">
+            <div class="logo">SportShop</div>
+            <ul class="nav-links">
+                <li><a href="/">Trang chủ</a></li>
+                <li><a href="/products">Sản phẩm</a></li>
+                <li><a href="/about" class="active">Giới thiệu</a></li>
+                <li><a href="/contact">Liên hệ</a></li>
+            </ul>
+            <div class="user-menu">
+                <a href="/cart" class="cart-btn">
+                    🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+                </a>
+                
+                <!-- Hiển thị menu khác nhau dựa trên trạng thái đăng nhập -->
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- User đã đăng nhập -->
+                    <div class="user-dropdown">
+                        <div class="user-avatar" onclick="toggleUserMenu()" title="<%= user.fullName %>">
+                            <%= user.initials || user.fullName.charAt(0) %>
+                        </div>
+                        <div class="dropdown-menu" id="userDropdownMenu">
+                            <div class="dropdown-header">
+                                <div class="avatar-small">
+                                    <%= user.initials || user.fullName.charAt(0) %>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name"><%= user.fullName %></div>
+                                    <div class="user-email"><%= user.email %></div>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="/user/account" class="dropdown-item">
+                                <span>🏠</span> Tài khoản của tôi
+                            </a>
+                            <a href="/user/profile" class="dropdown-item">
+                                <span>👤</span> Thông tin cá nhân
+                            </a>
+                            <a href="/user/orders" class="dropdown-item">
+                                <span>📦</span> Đơn hàng
+                            </a>
+                            <a href="/user/favorites" class="dropdown-item">
+                                <span>❤️</span> Yêu thích
+                            </a>
+                            <hr>
+                            <a href="/auth/logout" class="dropdown-item logout" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                                <span>🚪</span> Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- User chưa đăng nhập -->
+                    <div class="auth-buttons">
+                        <a href="/auth/login" class="login-btn">🔐 Đăng nhập</a>
+                        <a href="/auth/register" class="register-btn">📝 Đăng ký</a>
+                    </div>
+                <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h1>📖 Về Chúng Tôi</h1>
+            <p>Khám phá câu chuyện đằng sau SportShop và sứ mệnh của chúng tôi</p>
+        </section>
+
+        <section class="content-section">
+            <div class="about-grid">
+                <div class="about-text">
+                    <h2>Câu Chuyện SportShop</h2>
+                    <p>
+                        SportShop được thành lập với niềm đam mê dành cho thể thao và mong muốn 
+                        mang đến những sản phẩm chất lượng cao nhất cho cộng đồng yêu thể thao Việt Nam.
+                    </p>
+                    <p>
+                        Chúng tôi hiểu rằng để đạt được thành công trong thể thao, bạn cần những 
+                        trang thiết bị tốt nhất. Vì vậy, chúng tôi chỉ hợp tác với những thương hiệu 
+                        uy tín nhất thế giới như Nike, Adidas, Under Armour và Puma.
+                    </p>
+                    <p>
+                        Với hơn 5 năm kinh nghiệm trong ngành, SportShop đã trở thành điểm đến 
+                        tin cậy của hàng nghìn khách hàng trên toàn quốc.
+                    </p>
+                </div>
+                <div class="about-image">
+                    🏃‍♂️
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 40px; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Tại Sao Chọn SportShop?
+            </h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌟</div>
+                    <h3>Chất Lượng Đảm Bảo</h3>
+                    <p>
+                        Tất cả sản phẩm của chúng tôi đều là hàng chính hãng, 
+                        được nhập khẩu trực tiếp từ các nhà sản xuất uy tín.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🚚</div>
+                    <h3>Giao Hàng Nhanh</h3>
+                    <p>
+                        Giao hàng trong 24h tại Hà Nội và 2-3 ngày cho các tỉnh thành khác. 
+                        Miễn phí giao hàng cho đơn từ 500.000đ.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>Giá Cả Hợp Lý</h3>
+                    <p>
+                        Chúng tôi cam kết mang đến giá tốt nhất thị trường với 
+                        nhiều chương trình khuyến mãi hấp dẫn.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Bảo Hành Tận Tâm</h3>
+                    <p>
+                        Chế độ bảo hành 12 tháng cho tất cả sản phẩm. 
+                        Đổi trả miễn phí trong 30 ngày nếu không hài lòng.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Tư Vấn Chuyên Nghiệp</h3>
+                    <p>
+                        Đội ngũ tư vấn viên am hiểu sâu về thể thao, sẵn sàng 
+                        hỗ trợ bạn chọn sản phẩm phù hợp nhất.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Trách Nhiệm Xã Hội</h3>
+                    <p>
+                        Chúng tôi cam kết bảo vệ môi trường và đóng góp 
+                        cho cộng đồng thông qua các hoạt động từ thiện.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-section">
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px;">SportShop Trong Số Liệu</h2>
+            <p style="font-size: 1.2rem; opacity: 0.9;">Những con số ấn tượng trong hành trình phát triển</p>
+            
+            <div class

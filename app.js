@@ -126,7 +126,12 @@ const sessionConfig = {
 
 // Apply session middleware
 app.use(session(sessionConfig));
-
+app.use((req, res, next) => {
+  // Make user available in all views
+  res.locals.user = req.session?.user || null;
+  res.locals.isAuthenticated = !!req.session?.user;
+  next();
+});
 // 📨 FLASH MESSAGES MIDDLEWARE
 app.use(flash());
 

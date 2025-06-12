@@ -25,6 +25,7 @@
             padding: 0 20px;
         }
         
+        /* Header Styles */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -69,6 +70,23 @@
             transform: translateY(-2px);
         }
         
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+            border-radius: 1px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
         .cart-btn {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
@@ -86,6 +104,160 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
+        /* User Dropdown Styles */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-top: 10px;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .avatar-small {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .user-email {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .dropdown-item.logout {
+            color: #dc3545;
+        }
+        
+        .dropdown-item.logout:hover {
+            background-color: #fff5f5;
+        }
+        
+        .dropdown-menu hr {
+            margin: 8px 0;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        /* Auth buttons cho user chưa đăng nhập */
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #667eea;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .register-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            font-size: 14px;
+        }
+        
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Page Content */
         .page-header {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -170,79 +342,39 @@
         .product-card {
             background: white;
             border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
             overflow: hidden;
-        }
-        
-        .product-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .product-card:hover::before {
-            left: 100%;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
         
         .product-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
         }
         
         .product-image {
-            width: 100%;
             height: 200px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 10px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3rem;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .product-image::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-            transform: translate(-50%, -50%);
-        }
-        
-        .product-card:hover .product-image::after {
-            width: 200px;
-            height: 200px;
+            color: white;
         }
         
         .product-info {
-            text-align: center;
+            padding: 20px;
         }
         
         .product-brand {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #888;
-            margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
         
         .product-name {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: bold;
             margin-bottom: 10px;
             color: #333;
@@ -307,6 +439,17 @@
             transform: translateY(-2px);
         }
         
+        .no-products {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .no-products p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
         .pagination {
             display: flex;
             justify-content: center;
@@ -335,31 +478,7 @@
             color: white;
         }
         
-        .no-products {
-            text-align: center;
-            color: #666;
-            font-size: 1.2rem;
-            padding: 60px 0;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
+        /* Footer */
         footer {
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -369,13 +488,53 @@
             backdrop-filter: blur(10px);
         }
         
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .flash-message.error {
+            background: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
             
+            .auth-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
             .page-header h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             
             .filters {
@@ -387,15 +546,31 @@
                 grid-template-columns: 1fr;
             }
             
-            .products-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: stretch;
+            .dropdown-menu {
+                right: -50px;
+                min-width: 250px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Flash Messages -->
+    <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message">
+                ✅ <%= success %>
+            </div>
+        </div>
+    <% } %>
+    
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message error">
+                ❌ <%= error %>
+            </div>
+        </div>
+    <% } %>
+
     <header>
         <nav class="container">
             <div class="logo">SportShop</div>
@@ -405,16 +580,62 @@
                 <li><a href="/about">Giới thiệu</a></li>
                 <li><a href="/contact">Liên hệ</a></li>
             </ul>
-            <a href="/cart" class="cart-btn">
-                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
-            </a>
+            <div class="user-menu">
+                <a href="/cart" class="cart-btn">
+                    🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+                </a>
+                
+                <!-- Hiển thị menu khác nhau dựa trên trạng thái đăng nhập -->
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- User đã đăng nhập -->
+                    <div class="user-dropdown">
+                        <div class="user-avatar" onclick="toggleUserMenu()" title="<%= user.fullName %>">
+                            <%= user.initials || user.fullName.charAt(0) %>
+                        </div>
+                        <div class="dropdown-menu" id="userDropdownMenu">
+                            <div class="dropdown-header">
+                                <div class="avatar-small">
+                                    <%= user.initials || user.fullName.charAt(0) %>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name"><%= user.fullName %></div>
+                                    <div class="user-email"><%= user.email %></div>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="/user/account" class="dropdown-item">
+                                <span>🏠</span> Tài khoản của tôi
+                            </a>
+                            <a href="/user/profile" class="dropdown-item">
+                                <span>👤</span> Thông tin cá nhân
+                            </a>
+                            <a href="/user/orders" class="dropdown-item">
+                                <span>📦</span> Đơn hàng
+                            </a>
+                            <a href="/user/favorites" class="dropdown-item">
+                                <span>❤️</span> Yêu thích
+                            </a>
+                            <hr>
+                            <a href="/auth/logout" class="dropdown-item logout" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                                <span>🚪</span> Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- User chưa đăng nhập -->
+                    <div class="auth-buttons">
+                        <a href="/auth/login" class="login-btn">🔐 Đăng nhập</a>
+                        <a href="/auth/register" class="register-btn">📝 Đăng ký</a>
+                    </div>
+                <% } %>
+            </div>
         </nav>
     </header>
 
     <main class="container">
         <section class="page-header">
-            <h1>Sản Phẩm Thể Thao</h1>
-            <p>Khám phá bộ sưu tập đa dạng với chất lượng cao</p>
+            <h1>🛍️ Sản Phẩm Thể Thao</h1>
+            <p>Khám phá bộ sưu tập đa dạng các sản phẩm thể thao chất lượng cao</p>
         </section>
 
         <section class="filters-section">
@@ -423,13 +644,10 @@
                     <label for="category">Danh mục:</label>
                     <select id="category" onchange="filterProducts()">
                         <option value="">Tất cả danh mục</option>
-                        <% if (typeof categories !== 'undefined') { %>
-                            <% categories.forEach(category => { %>
-                                <option value="<%= category.id %>" <%= (typeof filters !== 'undefined' && filters.category === category.id) ? 'selected' : '' %>>
-                                    <%= category.name %>
-                                </option>
-                            <% }) %>
-                        <% } %>
+                        <option value="shoes" <%= (typeof filters !== 'undefined' && filters.category === 'shoes') ? 'selected' : '' %>>Giày</option>
+                        <option value="tops" <%= (typeof filters !== 'undefined' && filters.category === 'tops') ? 'selected' : '' %>>Áo</option>
+                        <option value="bottoms" <%= (typeof filters !== 'undefined' && filters.category === 'bottoms') ? 'selected' : '' %>>Quần</option>
+                        <option value="accessories" <%= (typeof filters !== 'undefined' && filters.category === 'accessories') ? 'selected' : '' %>>Phụ kiện</option>
                     </select>
                 </div>
                 
@@ -437,23 +655,21 @@
                     <label for="brand">Thương hiệu:</label>
                     <select id="brand" onchange="filterProducts()">
                         <option value="">Tất cả thương hiệu</option>
-                        <% if (typeof brands !== 'undefined') { %>
-                            <% brands.forEach(brand => { %>
-                                <option value="<%= brand %>" <%= (typeof filters !== 'undefined' && filters.brand === brand) ? 'selected' : '' %>>
-                                    <%= brand %>
-                                </option>
-                            <% }) %>
-                        <% } %>
+                        <option value="Nike" <%= (typeof filters !== 'undefined' && filters.brand === 'Nike') ? 'selected' : '' %>>Nike</option>
+                        <option value="Adidas" <%= (typeof filters !== 'undefined' && filters.brand === 'Adidas') ? 'selected' : '' %>>Adidas</option>
+                        <option value="Under Armour" <%= (typeof filters !== 'undefined' && filters.brand === 'Under Armour') ? 'selected' : '' %>>Under Armour</option>
+                        <option value="Puma" <%= (typeof filters !== 'undefined' && filters.brand === 'Puma') ? 'selected' : '' %>>Puma</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
                     <label for="sort">Sắp xếp:</label>
                     <select id="sort" onchange="filterProducts()">
-                        <option value="name-asc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'name-asc') ? 'selected' : '' %>>Tên A-Z</option>
-                        <option value="name-desc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'name-desc') ? 'selected' : '' %>>Tên Z-A</option>
-                        <option value="price-asc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'price-asc') ? 'selected' : '' %>>Giá thấp đến cao</option>
-                        <option value="price-desc" <%= (typeof filters !== 'undefined' && filters.sortBy === 'price-desc') ? 'selected' : '' %>>Giá cao đến thấp</option>
+                        <option value="newest" <%= (typeof filters !== 'undefined' && filters.sort === 'newest') ? 'selected' : '' %>>Mới nhất</option>
+                        <option value="price_asc" <%= (typeof filters !== 'undefined' && filters.sort === 'price_asc') ? 'selected' : '' %>>Giá thấp đến cao</option>
+                        <option value="price_desc" <%= (typeof filters !== 'undefined' && filters.sort === 'price_desc') ? 'selected' : '' %>>Giá cao đến thấp</option>
+                        <option value="name_asc" <%= (typeof filters !== 'undefined' && filters.sort === 'name_asc') ? 'selected' : '' %>>Tên A-Z</option>
+                        <option value="name_desc" <%= (typeof filters !== 'undefined' && filters.sort === 'name_desc') ? 'selected' : '' %>>Tên Z-A</option>
                     </select>
                 </div>
             </div>
@@ -479,13 +695,13 @@
                             <div class="product-info">
                                 <div class="product-brand"><%= product.brand %></div>
                                 <h3 class="product-name"><%= product.name %></h3>
-                                <p class="product-description"><%= product.description.substring(0, 80) %>...</p>
-                                <p class="product-price"><%= product.getFormattedPrice() %></p>
+                                <p class="product-description"><%= product.description && product.description.substring ? product.description.substring(0, 80) + '...' : 'Sản phẩm chất lượng cao' %></p>
+                                <p class="product-price"><%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %></p>
                                 <div class="product-actions">
-                                    <button class="add-to-cart" onclick="addToCart(<%= product.id %>)">
+                                    <button class="add-to-cart" onclick="addToCart('<%= product._id || product.id %>')">
                                         Thêm vào giỏ
                                     </button>
-                                    <a href="/products/<%= product.id %>" class="view-detail">
+                                    <a href="/products/<%= product._id || product.id %>" class="view-detail">
                                         Chi tiết
                                     </a>
                                 </div>
@@ -494,7 +710,8 @@
                     <% }) %>
                 <% } else { %>
                     <div class="no-products">
-                        <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc của bạn.</p>
+                        <p>🔍 Không tìm thấy sản phẩm nào phù hợp với bộ lọc của bạn.</p>
+                        <a href="/products" style="color: #667eea; text-decoration: none; font-weight: bold;">← Xem tất cả sản phẩm</a>
                     </div>
                 <% } %>
             </div>
@@ -502,35 +719,26 @@
             <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
                 <div class="pagination">
                     <% if (pagination.hasPrev) { %>
-                        <a href="?page=<%= pagination.prevPage %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
-                            ← Trước
-                        </a>
+                        <a href="?page=<%= pagination.prevPage %>">« Trước</a>
                     <% } %>
                     
                     <% for (let i = 1; i <= pagination.totalPages; i++) { %>
                         <% if (i === pagination.currentPage) { %>
                             <span class="current"><%= i %></span>
                         <% } else { %>
-                            <a href="?page=<%= i %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
-                                <%= i %>
-                            </a>
+                            <a href="?page=<%= i %>"><%= i %></a>
                         <% } %>
                     <% } %>
                     
                     <% if (pagination.hasNext) { %>
-                        <a href="?page=<%= pagination.nextPage %><%= typeof filters !== 'undefined' ? '&category=' + (filters.category || '') + '&brand=' + (filters.brand || '') + '&sort=' + (filters.sortBy || '') : '' %>">
-                            Sau →
-                        </a>
+                        <a href="?page=<%= pagination.nextPage %>">Sau »</a>
                     <% } %>
                 </div>
             <% } %>
         </section>
     </main>
 
-    <!-- Notification -->
-    <div class="notification" id="notification"></div>
-
-      <footer>
+    <footer>
         <div class="container">
             <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
             <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
@@ -538,46 +746,80 @@
     </footer>
 
     <script>
-        function addToCart(productId) {
-            fetch('/cart/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    quantity: 1
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification(data.message);
-                    // Update cart count
-                    updateCartCount(data.data.cartItemCount);
-                } else {
-                    showNotification('Lỗi: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Có lỗi xảy ra', 'error');
-            });
+        // Toggle user dropdown menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
         }
 
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.background = type === 'error' ? 
-                'linear-gradient(45deg, #dc3545, #c82333)' : 
-                'linear-gradient(45deg, #28a745, #20c997)';
-            notification.classList.add('show');
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.user-dropdown');
+            const menu = document.getElementById('userDropdownMenu');
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            if (dropdown && !dropdown.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Add to cart function
+        function addToCart(productId) {
+            <% if (typeof user !== 'undefined' && user) { %>
+                // User đã đăng nhập - có thể thêm vào giỏ hàng
+                fetch('/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId: productId,
+                        quantity: 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Đã thêm sản phẩm vào giỏ hàng!', 'success');
+                        updateCartCount(data.cartItemCount || 0);
+                    } else {
+                        showNotification(data.message || 'Có lỗi xảy ra', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Có lỗi xảy ra khi thêm sản phẩm', 'error');
+                });
+            <% } else { %>
+                // User chưa đăng nhập - hiển thị modal đăng nhập
+                if (confirm('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Chuyển đến trang đăng nhập?')) {
+                    window.location.href = '/auth/login';
+                }
+            <% } %>
         }
 
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `flash-message ${type}`;
+            notification.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+            
+            const container = document.querySelector('.flash-messages');
+            if (container) {
+                container.appendChild(notification);
+            } else {
+                const newContainer = document.createElement('div');
+                newContainer.className = 'flash-messages';
+                newContainer.appendChild(notification);
+                document.body.appendChild(newContainer);
+            }
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Update cart count
         function updateCartCount(count) {
             const cartBtn = document.querySelector('.cart-btn');
             if (cartBtn) {
@@ -585,6 +827,7 @@
             }
         }
 
+        // Filter products
         function filterProducts() {
             const category = document.getElementById('category').value;
             const brand = document.getElementById('brand').value;
@@ -597,6 +840,19 @@
             
             window.location.href = '/products?' + params.toString();
         }
+
+        // Auto-hide flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
     </script>
 </body>
 </html>

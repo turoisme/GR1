@@ -25,6 +25,7 @@
             padding: 0 20px;
         }
         
+        /* Header Styles */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -64,9 +65,27 @@
             position: relative;
         }
         
-        .nav-links a:hover {
+        .nav-links a:hover,
+        .nav-links a.active {
             color: #667eea;
             transform: translateY(-2px);
+        }
+        
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+            border-radius: 1px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .cart-btn {
@@ -86,13 +105,163 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
-        .hero {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 80px 0;
-            text-align: center;
-            margin: 40px 0;
+        /* User Dropdown Styles */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-top: 10px;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .avatar-small {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .user-email {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .dropdown-item.logout {
+            color: #dc3545;
+        }
+        
+        .dropdown-item.logout:hover {
+            background-color: #fff5f5;
+        }
+        
+        .dropdown-menu hr {
+            margin: 8px 0;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        /* Auth buttons cho user chưa đăng nhập */
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #667eea;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
             border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .register-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            font-size: 14px;
+        }
+        
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 100px 0;
             color: white;
         }
         
@@ -100,111 +269,98 @@
             font-size: 3.5rem;
             margin-bottom: 20px;
             text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
         }
         
         .hero p {
             font-size: 1.3rem;
-            margin-bottom: 30px;
             opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Products Section */
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 60px 0;
+            margin: 60px 0;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
         .section-title {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 50px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .products-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 60px 0;
-            border-radius: 20px;
-            margin: 40px 0;
+            color: #333;
+            font-weight: 700;
         }
         
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-            margin-top: 40px;
+            padding: 0 30px;
         }
         
         .product-card {
             background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
-        }
-        
-        .product-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .product-card:hover::before {
-            left: 100%;
         }
         
         .product-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
         
         .product-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 10px;
+            height: 250px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
-            margin-bottom: 20px;
+            font-size: 4rem;
+            color: white;
             position: relative;
             overflow: hidden;
         }
         
-        .product-image::after {
+        .product-image::before {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
-        .product-card:hover .product-image::after {
-            width: 200px;
-            height: 200px;
+        .product-card:hover .product-image::before {
+            opacity: 1;
+        }
+        
+        .product-info {
+            padding: 25px;
         }
         
         .product-name {
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 600;
             margin-bottom: 10px;
             color: #333;
         }
         
         .product-price {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.4rem;
+            font-weight: 700;
             color: #667eea;
             margin-bottom: 15px;
         }
@@ -216,21 +372,72 @@
             border: none;
             padding: 12px;
             border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .add-to-cart:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .add-to-cart:active {
-            transform: scale(0.98);
+        /* Call to Action Section */
+        .cta-section {
+            text-align: center;
+            padding: 80px 0;
+            color: white;
         }
         
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .cta-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 30px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cta-btn.primary {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        
+        .cta-btn.primary:hover {
+            background: #f8f9ff;
+        }
+        
+        /* Footer */
         footer {
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -240,75 +447,108 @@
             backdrop-filter: blur(10px);
         }
         
-        .notification {
+        footer p {
+            margin-bottom: 10px;
+        }
+        
+        /* Flash Messages */
+        .flash-messages {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(45deg, #28a745, #20c997);
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            background: #28a745;
             color: white;
-            padding: 15px 25px;
+            padding: 15px 20px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1001;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
         }
         
-        .notification.show {
-            transform: translateX(0);
+        .flash-message.error {
+            background: #dc3545;
         }
         
-        /* Product Modal Styles */
+        .flash-message.warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Product Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
         
         .modal-overlay.show {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
         }
         
         .product-modal {
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 40px;
             max-width: 500px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
-            position: relative;
-            animation: slideUp 0.3s ease;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .modal-overlay.show .product-modal {
+            transform: scale(1);
         }
         
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
         }
         
         .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
             background: none;
             border: none;
-            font-size: 2rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            color: #999;
+            color: #666;
             transition: color 0.3s ease;
         }
         
@@ -316,184 +556,188 @@
             color: #333;
         }
         
-        .modal-product-image {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 15px;
+        .product-preview {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .product-preview-image {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
-            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: white;
+            flex-shrink: 0;
         }
         
-        .modal-product-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
+        .product-preview-info {
+            flex: 1;
+        }
+        
+        .product-preview-name {
+            font-size: 1.1rem;
+            font-weight: 600;
             color: #333;
+            margin-bottom: 5px;
         }
         
-        .modal-product-price {
+        .product-preview-price {
             font-size: 1.3rem;
             font-weight: bold;
             color: #667eea;
-            text-align: center;
+        }
+        
+        .modal-option {
             margin-bottom: 25px;
         }
         
-        .option-group {
-            margin-bottom: 25px;
-        }
-        
-        .option-label {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #333;
+        .modal-option label {
             display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
         }
         
-        .color-options {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
+        .required-star {
+            color: #e74c3c;
+        }
+        
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 10px;
+        }
+        
+        .option-btn {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .option-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .option-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
         }
         
         .color-option {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 3px solid transparent;
+            margin: 5px;
+            border: 3px solid #e0e0e0;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .color-option:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         
         .color-option.selected {
             border-color: #667eea;
             transform: scale(1.1);
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
         }
         
-        .color-option::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-            font-size: 1rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        }
+        .color-red { background: #dc3545; }
+        .color-blue { background: #007bff; }
+        .color-black { background: #333; }
+        .color-white { background: #fff; border-color: #ccc; }
+        .color-green { background: #28a745; }
+        .color-yellow { background: #ffc107; }
         
-        .color-option.selected::after {
-            opacity: 1;
-        }
-        
-        .size-options {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .size-option {
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            color: #333;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 45px;
-            text-align: center;
-        }
-        
-        .size-option:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-        
-        .size-option.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-        
-        .quantity-group {
+        .quantity-selector {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 15px;
-            margin-bottom: 25px;
         }
         
         .quantity-btn {
             width: 40px;
             height: 40px;
-            border: 2px solid #667eea;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             background: white;
-            color: #667eea;
-            border-radius: 50%;
+            cursor: pointer;
             font-size: 1.2rem;
             font-weight: bold;
-            cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .quantity-btn:hover {
-            background: #667eea;
-            color: white;
+            border-color: #667eea;
+            background: #f8f9ff;
         }
         
-        .quantity-display {
-            font-size: 1.2rem;
-            font-weight: bold;
-            min-width: 40px;
+        .quantity-input {
+            width: 60px;
             text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 1rem;
+            font-weight: bold;
         }
         
-        .modal-add-btn {
-            width: 100%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .modal-btn {
+            flex: 1;
             padding: 15px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
-        .modal-add-btn:hover:not(:disabled) {
+        .modal-btn.primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .modal-btn.primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .modal-add-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .modal-btn.secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e0e0e0;
         }
         
+        .modal-btn.secondary:hover {
+            background: #e9ecef;
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
+            }
+            
+            .auth-buttons {
+                flex-direction: column;
+                gap: 8px;
             }
             
             .hero h1 {
@@ -502,28 +746,124 @@
             
             .products-grid {
                 grid-template-columns: 1fr;
+                padding: 0 15px;
             }
             
-            .product-modal {
-                width: 95%;
-                padding: 20px;
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .dropdown-menu {
+                right: -50px;
+                min-width: 250px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .hero {
+                padding: 60px 0;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .products-section {
+                margin: 30px 0;
+                padding: 40px 0;
+            }
+            
+            .section-title {
+                font-size: 2rem;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Flash Messages -->
+    <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message">
+                ✅ <%= success %>
+            </div>
+        </div>
+    <% } %>
+    
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message error">
+                ❌ <%= error %>
+            </div>
+        </div>
+    <% } %>
+
     <header>
         <nav class="container">
             <div class="logo">SportShop</div>
             <ul class="nav-links">
-                <li><a href="/">Trang chủ</a></li>
-                <li><a href="/products">Sản phẩm</a></li>
-                <li><a href="/about">Giới thiệu</a></li>
-                <li><a href="/contact">Liên hệ</a></li>
+                <li><a href="/" class="<%= currentPage === 'home' ? 'active' : '' %>">Trang chủ</a></li>
+                <li><a href="/products" class="<%= currentPage === 'products' ? 'active' : '' %>">Sản phẩm</a></li>
+                <li><a href="/about" class="<%= currentPage === 'about' ? 'active' : '' %>">Giới thiệu</a></li>
+                <li><a href="/contact" class="<%= currentPage === 'contact' ? 'active' : '' %>">Liên hệ</a></li>
             </ul>
-            <a href="/cart" class="cart-btn">
-                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
-            </a>
+            <div class="user-menu">
+                <a href="/cart" class="cart-btn">
+                    🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+                </a>
+                
+                <!-- Hiển thị menu khác nhau dựa trên trạng thái đăng nhập -->
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- User đã đăng nhập -->
+                    <div class="user-dropdown">
+                        <div class="user-avatar" onclick="toggleUserMenu()" title="<%= user.fullName %>">
+                            <%= user.initials || user.fullName.charAt(0) %>
+                        </div>
+                        <div class="dropdown-menu" id="userDropdownMenu">
+                            <div class="dropdown-header">
+                                <div class="avatar-small">
+                                    <%= user.initials || user.fullName.charAt(0) %>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name"><%= user.fullName %></div>
+                                    <div class="user-email"><%= user.email %></div>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="/user/account" class="dropdown-item">
+                                <span>🏠</span> Tài khoản của tôi
+                            </a>
+                            <a href="/user/profile" class="dropdown-item">
+                                <span>👤</span> Thông tin cá nhân
+                            </a>
+                            <a href="/user/orders" class="dropdown-item">
+                                <span>📦</span> Đơn hàng
+                            </a>
+                            <a href="/user/favorites" class="dropdown-item">
+                                <span>❤️</span> Yêu thích
+                            </a>
+                            <hr>
+                            <a href="/auth/logout" class="dropdown-item logout" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                                <span>🚪</span> Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- User chưa đăng nhập -->
+                    <div class="auth-buttons">
+                        <a href="/auth/login" class="login-btn">🔐 Đăng nhập</a>
+                        <a href="/auth/register" class="register-btn">📝 Đăng ký</a>
+                    </div>
+                <% } %>
+            </div>
         </nav>
     </header>
 
@@ -541,71 +881,117 @@
                     <% featuredProducts.forEach(product => { %>
                         <div class="product-card">
                             <div class="product-image"><%= product.image %></div>
-                            <h3 class="product-name"><%= product.name %></h3>
-                            <p class="product-price"><%= product.getFormattedPrice() %></p>
-                            <button class="add-to-cart" onclick="openProductModal('<%= product._id || product.id %>', '<%= product.name.replace(/'/g, '&quot;') %>', '<%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>', '<%= product.image %>')">Chọn mua</button>
+                            <div class="product-info">
+                                <h3 class="product-name"><%= product.name %></h3>
+                                <p class="product-price"><%= product.getFormattedPrice() %></p>
+                                <button class="add-to-cart" onclick="openProductModal('<%= product._id || product.id %>', '<%= product.name.replace(/'/g, '&quot;') %>', '<%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>', '<%= product.image %>')">
+                                    Thêm vào giỏ
+                                </button>
+                            </div>
                         </div>
                     <% }) %>
                 <% } else { %>
-                    <p style="color: #666; text-align: center; grid-column: 1/-1;">Không có sản phẩm nào.</p>
+                    <!-- Sản phẩm mẫu khi chưa có dữ liệu -->
+                    <div class="product-card">
+                        <div class="product-image">👟</div>
+                        <div class="product-info">
+                            <h3 class="product-name">Giày chạy bộ Nike Air Max</h3>
+                            <p class="product-price">2.500.000đ</p>
+                            <button class="add-to-cart" onclick="openProductModal('sample1', 'Giày chạy bộ Nike Air Max', '2.500.000đ', '👟')">
+                                Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">👕</div>
+                        <div class="product-info">
+                            <h3 class="product-name">Áo thể thao Adidas</h3>
+                            <p class="product-price">850.000đ</p>
+                            <button class="add-to-cart" onclick="openProductModal('sample2', 'Áo thể thao Adidas', '850.000đ', '👕')">
+                                Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🩳</div>
+                        <div class="product-info">
+                            <h3 class="product-name">Quần short Nike</h3>
+                            <p class="product-price">650.000đ</p>
+                            <button class="add-to-cart" onclick="openProductModal('sample3', 'Quần short Nike', '650.000đ', '🩳')">
+                                Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
                 <% } %>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2>Bắt Đầu Mua Sắm Ngay Hôm Nay</h2>
+            <p>Tìm kiếm những sản phẩm thể thao chất lượng cao với giá cả hợp lý</p>
+            <div class="cta-buttons">
+                <a href="/products" class="cta-btn primary">🛍️ Xem Tất Cả Sản Phẩm</a>
+                <a href="/about" class="cta-btn">ℹ️ Tìm Hiểu Thêm</a>
             </div>
         </section>
     </main>
 
-    <!-- Notification -->
-    <div class="notification" id="notification"></div>
-
-    <!-- Product Selection Modal -->
+    <!-- Product Modal -->
     <div class="modal-overlay" id="productModal">
         <div class="product-modal">
-            <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            <div class="modal-header">
+                <h3 class="modal-title">Thêm vào giỏ hàng</h3>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
             
-            <div class="modal-product-image" id="modalProductImage">👕</div>
-            <h3 class="modal-product-title" id="modalProductTitle">Tên sản phẩm</h3>
-            <p class="modal-product-price" id="modalProductPrice">0đ</p>
-            
-            <div class="option-group">
-                <label class="option-label">Chọn màu sắc:</label>
-                <div class="color-options" id="colorOptions">
-                    <div class="color-option" style="background: #ff6b6b;" data-color="Đỏ" onclick="selectColor('Đỏ')"></div>
-                    <div class="color-option" style="background: #4ecdc4;" data-color="Xanh dương" onclick="selectColor('Xanh dương')"></div>
-                    <div class="color-option" style="background: #45b7d1;" data-color="Xanh nhạt" onclick="selectColor('Xanh nhạt')"></div>
-                    <div class="color-option" style="background: #96ceb4;" data-color="Xanh lá" onclick="selectColor('Xanh lá')"></div>
-                    <div class="color-option" style="background: #feca57;" data-color="Vàng" onclick="selectColor('Vàng')"></div>
-                    <div class="color-option" style="background: #ff9ff3;" data-color="Hồng" onclick="selectColor('Hồng')"></div>
-                    <div class="color-option" style="background: #333;" data-color="Đen" onclick="selectColor('Đen')"></div>
-                    <div class="color-option" style="background: #fff; border: 2px solid #ddd;" data-color="Trắng" onclick="selectColor('Trắng')"></div>
+            <div class="product-preview">
+                <div class="product-preview-image" id="modalProductImage">👟</div>
+                <div class="product-preview-info">
+                    <div class="product-preview-name" id="modalProductName">Tên sản phẩm</div>
+                    <div class="product-preview-price" id="modalProductPrice">0đ</div>
                 </div>
             </div>
             
-            <div class="option-group">
-                <label class="option-label">Chọn kích cỡ:</label>
-                <div class="size-options" id="sizeOptions">
-                    <div class="size-option" data-size="S" onclick="selectSize('S')">S</div>
-                    <div class="size-option" data-size="M" onclick="selectSize('M')">M</div>
-                    <div class="size-option" data-size="L" onclick="selectSize('L')">L</div>
-                    <div class="size-option" data-size="XL" onclick="selectSize('XL')">XL</div>
-                    <div class="size-option" data-size="XXL" onclick="selectSize('XXL')">XXL</div>
+            <div class="modal-option">
+                <label>Màu sắc <span class="required-star">*</span></label>
+                <div class="option-grid" style="grid-template-columns: repeat(6, 1fr); justify-items: center;">
+                    <div class="color-option color-black" data-color="Đen" onclick="selectColor(this)"></div>
+                    <div class="color-option color-white" data-color="Trắng" onclick="selectColor(this)"></div>
+                    <div class="color-option color-red" data-color="Đỏ" onclick="selectColor(this)"></div>
+                    <div class="color-option color-blue" data-color="Xanh dương" onclick="selectColor(this)"></div>
+                    <div class="color-option color-green" data-color="Xanh lá" onclick="selectColor(this)"></div>
+                    <div class="color-option color-yellow" data-color="Vàng" onclick="selectColor(this)"></div>
                 </div>
             </div>
             
-            <div class="option-group">
-                <label class="option-label">Số lượng:</label>
-                <div class="quantity-group">
-                    <button class="quantity-btn" onclick="changeQuantity(-1)">−</button>
-                    <span class="quantity-display" id="quantityDisplay">1</span>
+            <div class="modal-option">
+                <label>Kích thước <span class="required-star">*</span></label>
+                <div class="option-grid">
+                    <button class="option-btn" data-size="S" onclick="selectSize(this)">S</button>
+                    <button class="option-btn" data-size="M" onclick="selectSize(this)">M</button>
+                    <button class="option-btn" data-size="L" onclick="selectSize(this)">L</button>
+                    <button class="option-btn" data-size="XL" onclick="selectSize(this)">XL</button>
+                    <button class="option-btn" data-size="XXL" onclick="selectSize(this)">XXL</button>
+                </div>
+            </div>
+            
+            <div class="modal-option">
+                <label>Số lượng</label>
+                <div class="quantity-selector">
+                    <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                    <input type="number" class="quantity-input" id="modalQuantity" value="1" min="1" max="10">
                     <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
                 </div>
             </div>
             
-            <button class="modal-add-btn" id="modalAddBtn" onclick="addToCartFromModal()">
-                Vui lòng chọn màu và size
-            </button>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeProductModal()">Hủy</button>
+                <button class="modal-btn primary" onclick="addToCartWithOptions()" id="addToCartBtn">Thêm vào giỏ</button>
+            </div>
         </div>
     </div>
 
-     <footer>
+    <footer>
         <div class="container">
             <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
             <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
@@ -613,147 +999,193 @@
     </footer>
 
     <script>
-        // Modal state
-        let currentProduct = {
-            id: null,
-            name: '',
-            price: '',
-            image: '',
-            selectedColor: null,
-            selectedSize: null,
-            quantity: 1
-        };
+        // Global variables for modal
+        let currentProductId = '';
+        let selectedColor = '';
+        let selectedSize = '';
 
-        function openProductModal(productId, name, price, image) {
-            console.log('Opening modal for:', { productId, name, price, image }); // Debug log
-            
-            currentProduct.id = productId;
-            currentProduct.name = name;
-            currentProduct.price = price;
-            currentProduct.image = image;
-            currentProduct.selectedColor = null;
-            currentProduct.selectedSize = null;
-            currentProduct.quantity = 1;
-            
-            // Update modal content
-            document.getElementById('modalProductImage').textContent = image;
-            document.getElementById('modalProductTitle').textContent = name;
-            document.getElementById('modalProductPrice').textContent = price;
-            document.getElementById('quantityDisplay').textContent = '1';
-            
-            // Reset selections
-            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
-            document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
-            
-            // Show modal
-            const modal = document.getElementById('productModal');
-            console.log('Modal element:', modal); // Debug log
-            if (modal) {
-                modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
-                console.log('Modal should be visible now'); // Debug log
-            } else {
-                console.error('Modal element not found!');
-            }
-            
-            updateAddButton();
+        // Toggle user dropdown menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
         }
 
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.user-dropdown');
+            const menu = document.getElementById('userDropdownMenu');
+            
+            if (dropdown && !dropdown.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Open product modal
+        function openProductModal(productId, productName, productPrice, productImage) {
+            <% if (typeof user !== 'undefined' && user) { %>
+                // User đã đăng nhập - hiển thị modal chọn options
+                currentProductId = productId;
+                
+                // Update modal content
+                document.getElementById('modalProductImage').textContent = productImage;
+                document.getElementById('modalProductName').textContent = productName;
+                document.getElementById('modalProductPrice').textContent = productPrice;
+                
+                // Reset selections
+                selectedColor = '';
+                selectedSize = '';
+                document.getElementById('modalQuantity').value = 1;
+                
+                // Clear previous selections
+                document.querySelectorAll('.color-option.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                document.querySelectorAll('.option-btn.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Show modal
+                document.getElementById('productModal').classList.add('show');
+                document.body.style.overflow = 'hidden';
+            <% } else { %>
+                // User chưa đăng nhập - hiển thị modal đăng nhập
+                showLoginModal();
+            <% } %>
+        }
+
+        // Close product modal
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('show');
             document.body.style.overflow = 'auto';
         }
 
-        function selectColor(color) {
+        // Select color
+        function selectColor(element) {
             // Remove previous selection
-            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
-            // Add selection to clicked color
-            document.querySelector(`[data-color="${color}"]`).classList.add('selected');
-            currentProduct.selectedColor = color;
-            updateAddButton();
+            document.querySelectorAll('.color-option.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Select current color
+            element.classList.add('selected');
+            selectedColor = element.getAttribute('data-color');
         }
 
-        function selectSize(size) {
+        // Select size
+        function selectSize(element) {
             // Remove previous selection
-            document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
-            // Add selection to clicked size
-            document.querySelector(`[data-size="${size}"]`).classList.add('selected');
-            currentProduct.selectedSize = size;
-            updateAddButton();
+            document.querySelectorAll('.option-btn.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Select current size
+            element.classList.add('selected');
+            selectedSize = element.getAttribute('data-size');
         }
 
-        function changeQuantity(change) {
-            const newQuantity = currentProduct.quantity + change;
-            if (newQuantity >= 1 && newQuantity <= 10) {
-                currentProduct.quantity = newQuantity;
-                document.getElementById('quantityDisplay').textContent = newQuantity;
-            }
+        // Change quantity
+        function changeQuantity(delta) {
+            const quantityInput = document.getElementById('modalQuantity');
+            let quantity = parseInt(quantityInput.value) + delta;
+            
+            if (quantity < 1) quantity = 1;
+            if (quantity > 10) quantity = 10;
+            
+            quantityInput.value = quantity;
         }
 
-        function updateAddButton() {
-            const addBtn = document.getElementById('modalAddBtn');
-            if (currentProduct.selectedColor && currentProduct.selectedSize) {
-                addBtn.disabled = false;
-                addBtn.textContent = 'Thêm vào giỏ hàng';
-                addBtn.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
-            } else {
-                addBtn.disabled = true;
-                addBtn.textContent = 'Vui lòng chọn màu và size';
-                addBtn.style.background = '#ccc';
-            }
-        }
-
-        function addToCartFromModal() {
-            if (!currentProduct.selectedColor || !currentProduct.selectedSize) {
-                showNotification('Vui lòng chọn màu sắc và kích cỡ!', 'error');
+        // Add to cart with options
+        function addToCartWithOptions() {
+            // Validate selections
+            if (!selectedColor) {
+                showNotification('Vui lòng chọn màu sắc', 'error');
                 return;
             }
-
+            
+            if (!selectedSize) {
+                showNotification('Vui lòng chọn kích thước', 'error');
+                return;
+            }
+            
+            const quantity = parseInt(document.getElementById('modalQuantity').value);
+            
+            // Disable button
+            const addBtn = document.getElementById('addToCartBtn');
+            addBtn.disabled = true;
+            addBtn.textContent = 'Đang thêm...';
+            
+            // Send request
             fetch('/cart/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    productId: currentProduct.id,
-                    quantity: currentProduct.quantity,
-                    color: currentProduct.selectedColor,
-                    size: currentProduct.selectedSize
+                    productId: currentProductId,
+                    quantity: quantity,
+                    color: selectedColor,
+                    size: selectedSize
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showNotification(`Đã thêm ${currentProduct.name} (${currentProduct.selectedColor}, ${currentProduct.selectedSize}) vào giỏ hàng!`);
+                    showNotification('Đã thêm sản phẩm vào giỏ hàng!', 'success');
+                    updateCartCount(data.cartItemCount || 0);
                     closeProductModal();
-                    // Update cart count if needed
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
                 } else {
-                    showNotification('Lỗi: ' + data.message, 'error');
+                    showNotification(data.message || 'Có lỗi xảy ra', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra', 'error');
+                showNotification('Có lỗi xảy ra khi thêm sản phẩm', 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                addBtn.disabled = false;
+                addBtn.textContent = 'Thêm vào giỏ';
             });
         }
 
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.background = type === 'error' ? 
-                'linear-gradient(45deg, #dc3545, #c82333)' : 
-                'linear-gradient(45deg, #28a745, #20c997)';
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+        // Show login modal for guest users
+        function showLoginModal() {
+            if (confirm('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Chuyển đến trang đăng nhập?')) {
+                window.location.href = '/auth/login';
+            }
         }
 
-        // Close modal when clicking outside
+        // Update cart count
+        function updateCartCount(count) {
+            const cartBtn = document.querySelector('.cart-btn');
+            if (cartBtn) {
+                cartBtn.innerHTML = `🛒 Giỏ hàng (${count})`;
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `flash-message ${type}`;
+            notification.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+            
+            const container = document.querySelector('.flash-messages');
+            if (container) {
+                container.appendChild(notification);
+            } else {
+                const newContainer = document.createElement('div');
+                newContainer.className = 'flash-messages';
+                newContainer.appendChild(notification);
+                document.body.appendChild(newContainer);
+            }
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Close modal when clicking overlay
         document.getElementById('productModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeProductModal();
@@ -765,6 +1197,19 @@
             if (e.key === 'Escape') {
                 closeProductModal();
             }
+        });
+
+        // Auto-hide flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
         });
     </script>
 </body>

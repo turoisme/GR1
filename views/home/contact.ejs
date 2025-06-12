@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title || 'Liên hệ - SportShop' %></title>
+    <title><%= title %></title>
     <style>
         * {
             margin: 0;
@@ -20,19 +20,19 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }
         
-        /* Header */
+        /* Header Styles - Same as other pages */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 1rem 0;
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 100;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
         
@@ -43,45 +43,57 @@
         }
         
         .logo {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-decoration: none;
         }
         
         .nav-links {
             display: flex;
             list-style: none;
             gap: 30px;
-            align-items: center;
         }
         
         .nav-links a {
             text-decoration: none;
             color: #333;
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 500;
             transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 25px;
+            position: relative;
         }
         
         .nav-links a:hover,
         .nav-links a.active {
             color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
             transform: translateY(-2px);
+        }
+        
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+            border-radius: 1px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .cart-btn {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 30px;
+            border-radius: 25px;
             text-decoration: none;
             font-weight: bold;
             transition: all 0.3s ease;
@@ -89,157 +101,214 @@
         }
         
         .cart-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
-        /* Main Content */
-        main {
-            padding: 40px 0;
-        }
-        
-        /* Page Header */
-        .page-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 80px 60px;
-            text-align: center;
-            border-radius: 25px;
-            margin-bottom: 40px;
+        /* User Dropdown Styles */
+        .user-dropdown {
             position: relative;
-            overflow: hidden;
         }
         
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
-            animation: float 10s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-30px) rotate(180deg); }
-        }
-        
-        .page-content {
-            position: relative;
-            z-index: 2;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .page-icon {
-            font-size: 4rem;
-            margin-bottom: 30px;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .page-title {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .page-description {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            color: #555;
-        }
-        
-        /* Contact Section */
-        .contact-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            padding: 60px 40px;
-            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            margin-bottom: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .section-title {
-            font-size: 2.5rem;
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-top: 10px;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .avatar-small {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .user-email {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .dropdown-item.logout {
+            color: #dc3545;
+        }
+        
+        .dropdown-item.logout:hover {
+            background-color: #fff5f5;
+        }
+        
+        .dropdown-menu hr {
+            margin: 8px 0;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        /* Auth buttons */
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #667eea;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .register-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            font-size: 14px;
+        }
+        
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Page Content */
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 80px 0;
             text-align: center;
-            margin-bottom: 40px;
+            margin: 40px 0;
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .page-header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            text-align: center;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
         }
         
-        .contact-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 40px 30px;
-            border-radius: 20px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .contact-item:hover {
-            transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .contact-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-        
-        .contact-label {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
-        
-        .contact-value {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            line-height: 1.5;
-        }
-        
-        .contact-value a {
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .contact-value a:hover {
-            opacity: 1;
-            text-decoration: underline;
-        }
-        
-        /* Social Section - same as About page */
-        .social-section {
+        .contact-form {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 60px 40px;
-            border-radius: 25px;
-            text-align: center;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
-        .social-title {
-            font-size: 2.5rem;
-            font-weight: bold;
+        .contact-info {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-title {
+            font-size: 2rem;
+            color: #333;
             margin-bottom: 30px;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
@@ -247,52 +316,162 @@
             background-clip: text;
         }
         
-        .social-description {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 40px;
-            line-height: 1.6;
+        .form-group {
+            margin-bottom: 25px;
         }
         
-        .social-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
         }
         
-        .social-btn {
+        .required {
+            color: #e74c3c;
+        }
+        
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .submit-btn {
+            width: 100%;
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
-            padding: 15px 30px;
             border: none;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
         }
         
-        .social-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
         
-        .social-btn.secondary {
-            background: transparent;
-            border: 2px solid #667eea;
-            color: #667eea;
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
             box-shadow: none;
         }
         
-        .social-btn.secondary:hover {
-            background: #667eea;
-            color: white;
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .info-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .info-icon {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            flex-shrink: 0;
+        }
+        
+        .info-content h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .info-content p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .faq-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin: 40px 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            background: #f8f9ff;
+            padding: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+        
+        .faq-question:hover {
+            background: #eef1ff;
+        }
+        
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .faq-answer.active {
+            padding: 20px;
+            max-height: 500px;
+        }
+        
+        .faq-answer p {
+            color: #666;
+            line-height: 1.6;
         }
         
         /* Footer */
@@ -305,118 +484,341 @@
             backdrop-filter: blur(10px);
         }
         
-        /* Responsive */
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .flash-message.error {
+            background: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
             
-            .page-header {
-                padding: 60px 40px;
+            .auth-buttons {
+                flex-direction: column;
+                gap: 8px;
             }
             
-            .page-title {
+            .page-header h1 {
                 font-size: 2.5rem;
             }
             
             .contact-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
+                gap: 30px;
             }
             
-            .social-buttons {
-                flex-direction: column;
-                align-items: center;
+            .contact-form,
+            .contact-info {
+                padding: 30px 25px;
+            }
+            
+            .dropdown-menu {
+                right: -50px;
+                min-width: 250px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .page-header {
+                padding: 60px 0;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .contact-form,
+            .contact-info {
+                padding: 25px 20px;
+            }
+            
+            .faq-section {
+                padding: 30px 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Flash Messages -->
+    <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message">
+                ✅ <%= success %>
+            </div>
+        </div>
+    <% } %>
+    
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="flash-messages">
+            <div class="flash-message error">
+                ❌ <%= error %>
+            </div>
+        </div>
+    <% } %>
+
     <header>
         <nav class="container">
-            <a href="/" class="logo">SportShop</a>
+            <div class="logo">SportShop</div>
             <ul class="nav-links">
                 <li><a href="/">Trang chủ</a></li>
                 <li><a href="/products">Sản phẩm</a></li>
                 <li><a href="/about">Giới thiệu</a></li>
                 <li><a href="/contact" class="active">Liên hệ</a></li>
             </ul>
-            <a href="/cart" class="cart-btn">
-                🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
-            </a>
+            <div class="user-menu">
+                <a href="/cart" class="cart-btn">
+                    🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+                </a>
+                
+                <!-- Hiển thị menu khác nhau dựa trên trạng thái đăng nhập -->
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- User đã đăng nhập -->
+                    <div class="user-dropdown">
+                        <div class="user-avatar" onclick="toggleUserMenu()" title="<%= user.fullName %>">
+                            <%= user.initials || user.fullName.charAt(0) %>
+                        </div>
+                        <div class="dropdown-menu" id="userDropdownMenu">
+                            <div class="dropdown-header">
+                                <div class="avatar-small">
+                                    <%= user.initials || user.fullName.charAt(0) %>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name"><%= user.fullName %></div>
+                                    <div class="user-email"><%= user.email %></div>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="/user/account" class="dropdown-item">
+                                <span>🏠</span> Tài khoản của tôi
+                            </a>
+                            <a href="/user/profile" class="dropdown-item">
+                                <span>👤</span> Thông tin cá nhân
+                            </a>
+                            <a href="/user/orders" class="dropdown-item">
+                                <span>📦</span> Đơn hàng
+                            </a>
+                            <a href="/user/favorites" class="dropdown-item">
+                                <span>❤️</span> Yêu thích
+                            </a>
+                            <hr>
+                            <a href="/auth/logout" class="dropdown-item logout" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                                <span>🚪</span> Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- User chưa đăng nhập -->
+                    <div class="auth-buttons">
+                        <a href="/auth/login" class="login-btn">🔐 Đăng nhập</a>
+                        <a href="/auth/register" class="register-btn">📝 Đăng ký</a>
+                    </div>
+                <% } %>
+            </div>
         </nav>
     </header>
 
     <main class="container">
-        <!-- Page Header -->
         <section class="page-header">
-            <div class="page-content">
-                <div class="page-icon">📞</div>
-                <h1 class="page-title">Liên Hệ</h1>
-                <p class="page-description">
-                    Hãy kết nối với tôi để trao đổi, góp ý hoặc thảo luận về dự án. 
-                    Tôi luôn sẵn sàng lắng nghe và phản hồi.
-                </p>
-            </div>
+            <h1>💬 Liên Hệ Với Chúng Tôi</h1>
+            <p>Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
         </section>
 
-        <!-- Contact Section -->
-        <section class="contact-section">
-            <h2 class="section-title">📋 Thông Tin Liên Hệ</h2>
-            <div class="contact-grid">
-                <div class="contact-item">
-                    <div class="contact-icon">📱</div>
-                    <h3 class="contact-label">Số điện thoại</h3>
-                    <p class="contact-value">
-                        <a href="tel:0866387718">0866 387 718</a>
-                    </p>
+        <div class="contact-grid">
+            <!-- Contact Form -->
+            <div class="contact-form">
+                <h2 class="form-title">Gửi Tin Nhắn</h2>
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Họ và tên <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" class="form-input" required 
+                               placeholder="Nhập họ và tên của bạn"
+                               value="<%= typeof user !== 'undefined' && user ? user.fullName : '' %>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" class="form-input" required 
+                               placeholder="example@email.com"
+                               value="<%= typeof user !== 'undefined' && user ? user.email : '' %>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại</label>
+                        <input type="tel" id="phone" name="phone" class="form-input" 
+                               placeholder="0123 456 789">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Chủ đề <span class="required">*</span></label>
+                        <input type="text" id="subject" name="subject" class="form-input" required 
+                               placeholder="Tiêu đề tin nhắn">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Nội dung <span class="required">*</span></label>
+                        <textarea id="message" name="message" class="form-textarea" required 
+                                  placeholder="Nhập nội dung tin nhắn của bạn..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        📤 Gửi Tin Nhắn
+                    </button>
+                </form>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="contact-info">
+                <h2 class="form-title">Thông Tin Liên Hệ</h2>
+                
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <h3>Địa chỉ</h3>
+                        <p>
+                            Đại học Bách Khoa Hà Nội<br>
+                            Số 1, Đại Cồ Việt, Hai Bà Trưng, Hà Nội
+                        </p>
+                    </div>
                 </div>
                 
-                <div class="contact-item">
-                    <div class="contact-icon">✉️</div>
-                    <h3 class="contact-label">Email</h3>
-                    <p class="contact-value">
-                        <a href="mailto:Tan.NT225923@sis.hust.edu.vn">Tan.NT225923@sis.hust.edu.vn</a>
-                    </p>
+                <div class="info-item">
+                    <div class="info-icon">📞</div>
+                    <div class="info-content">
+                        <h3>Số điện thoại</h3>
+                        <p>
+                            Hotline: 0866 387 718<br>
+                            (8:00 - 22:00, tất cả các ngày)
+                        </p>
+                    </div>
                 </div>
                 
-                <div class="contact-item">
-                    <div class="contact-icon">📘</div>
-                    <h3 class="contact-label">Facebook</h3>
-                    <p class="contact-value">
-                        <a href="https://facebook.com/tangaaz" target="_blank">Nguyễn Thanh Tân</a>
-                    </p>
+                <div class="info-item">
+                    <div class="info-icon">⏰</div>
+                    <div class="info-content">
+                        <h3>Giờ làm việc</h3>
+                        <p>
+                            Thứ 2 - Thứ 6: 8:00 - 22:00<br>
+                            Thứ 7 - Chủ nhật: 9:00 - 21:00
+                        </p>
+                    </div>
                 </div>
                 
-                <div class="contact-item">
-                    <div class="contact-icon">🐙</div>
-                    <h3 class="contact-label">GitHub</h3>
-                    <p class="contact-value">
-                        <a href="https://github.com/Turoisme" target="_blank">Turoisme</a>
+                <div class="info-item">
+                    <div class="info-icon">💬</div>
+                    <div class="info-content">
+                        <h3>Mạng xã hội</h3>
+                        <p>
+                            Facebook: SportShop Vietnam<br>
+                            Instagram: @sportshop_vn
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <h2 class="faq-title">❓ Câu Hỏi Thường Gặp</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Làm thế nào để tôi biết size giày phù hợp?
+                </div>
+                <div class="faq-answer">
+                    <p>
+                        Chúng tôi có bảng size chi tiết cho từng thương hiệu. Bạn có thể đo chân theo hướng dẫn 
+                        hoặc liên hệ tư vấn viên để được hỗ trợ chọn size chính xác nhất.
                     </p>
                 </div>
             </div>
-        </section>
-
-        <!-- Social Section -->
-        <section class="social-section">
-            <h2 class="social-title">💬 Kết Nối & Phản Hồi</h2>
-            <p class="social-description">
-                Đây là dự án học tập và thực hành. Nếu bạn có góp ý hoặc muốn trao đổi về code, 
-                đừng ngần ngại liên hệ với tôi qua các kênh dưới đây!
-            </p>
-            <div class="social-buttons">
-                <a href="tel:0866387718" class="social-btn">
-                    📱 Gọi điện
-                </a>
-                <a href="mailto:Tan.NT225923@sis.hust.edu.vn" class="social-btn secondary">
-                    ✉️ Gửi Email
-                </a>
-                <a href="https://facebook.com/tangaaz" target="_blank" class="social-btn">
-                    📘 Facebook
-                </a>
-                <a href="https://github.com/Turoisme" target="_blank" class="social-btn secondary">
-                    🐙 GitHub
-                </a>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Chính sách đổi trả như thế nào?
+                </div>
+                <div class="faq-answer">
+                    <p>
+                        Bạn có thể đổi trả trong vòng 30 ngày kể từ ngày nhận hàng. Sản phẩm cần còn nguyên 
+                        tem mác, chưa qua sử dụng và có hóa đơn mua hàng.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Thời gian giao hàng là bao lâu?
+                </div>
+                <div class="faq-answer">
+                    <p>
+                        Nội thành Hà Nội: 2-4 giờ (giao hàng nhanh)<br>
+                        Các tỉnh thành khác: 1-3 ngày làm việc<br>
+                        Miễn phí giao hàng cho đơn hàng từ 500.000đ
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Tôi có thể thanh toán bằng cách nào?
+                </div>
+                <div class="faq-answer">
+                    <p>
+                        Chúng tôi hỗ trợ nhiều hình thức thanh toán:<br>
+                        - Tiền mặt khi nhận hàng (COD)<br>
+                        - Chuyển khoản ngân hàng<br>
+                        - Ví điện tử (MoMo, ZaloPay)<br>
+                        - Thẻ tín dụng/ghi nợ
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Làm sao để kiểm tra tình trạng đơn hàng?
+                </div>
+                <div class="faq-answer">
+                    <p>
+                        Bạn có thể kiểm tra tình trạng đơn hàng bằng cách:<br>
+                        - Đăng nhập vào tài khoản và xem mục "Đơn hàng"<br>
+                        - Gọi hotline với mã đơn hàng<br>
+                        - Nhận thông báo qua SMS/Email tự động
+                    </p>
+                </div>
             </div>
         </section>
     </main>
@@ -427,5 +829,126 @@
             <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
         </div>
     </footer>
+
+    <script>
+        // Toggle user dropdown menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.user-dropdown');
+            const menu = document.getElementById('userDropdownMenu');
+            
+            if (dropdown && !dropdown.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Toggle FAQ items
+        function toggleFAQ(question) {
+            const answer = question.nextElementSibling;
+            const allAnswers = document.querySelectorAll('.faq-answer');
+            const allQuestions = document.querySelectorAll('.faq-question');
+            
+            // Close all other FAQ items
+            allAnswers.forEach((item, index) => {
+                if (item !== answer) {
+                    item.classList.remove('active');
+                    allQuestions[index].style.background = '#f8f9ff';
+                }
+            });
+            
+            // Toggle current FAQ item
+            answer.classList.toggle('active');
+            if (answer.classList.contains('active')) {
+                question.style.background = '#eef1ff';
+            } else {
+                question.style.background = '#f8f9ff';
+            }
+        }
+
+        // Handle contact form submission
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const formData = new FormData(this);
+            
+            // Convert FormData to JSON
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Đang gửi...';
+            
+            // Send form data
+            fetch('/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showNotification('Tin nhắn đã được gửi thành công! Chúng tôi sẽ phản hồi sớm nhất có thể.', 'success');
+                    this.reset(); // Clear form
+                } else {
+                    showNotification(result.message || 'Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.', 'error');
+            })
+            .finally(() => {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Gửi Tin Nhắn';
+            });
+        });
+
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `flash-message ${type}`;
+            notification.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+            
+            const container = document.querySelector('.flash-messages');
+            if (container) {
+                container.appendChild(notification);
+            } else {
+                const newContainer = document.createElement('div');
+                newContainer.className = 'flash-messages';
+                newContainer.appendChild(notification);
+                document.body.appendChild(newContainer);
+            }
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Auto-hide flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
 </body>
 </html>
