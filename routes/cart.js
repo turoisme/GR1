@@ -10,6 +10,7 @@ router.get('/checkout', CartController.checkout);        // GET /cart/checkout -
 
 // API routes
 router.get('/api', CartController.getCartInfo);          // GET /cart/api - Lấy thông tin giỏ hàng
+router.get('/count', CartController.getCartCount);       // GET /cart/count - Lấy số lượng giỏ hàng (THÊM MỚI)
 router.post('/add', CartController.addItem);             // POST /cart/add - Thêm sản phẩm
 router.put('/update/:itemId', CartController.updateItem); // PUT /cart/update/:itemId - Cập nhật số lượng
 router.delete('/remove/:itemId', CartController.removeItem); // DELETE /cart/remove/:itemId - Xóa sản phẩm

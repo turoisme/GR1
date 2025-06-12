@@ -1,5 +1,9 @@
 // app.js - Updated với User Authentication System
+require('./models/Product');
+require('./models/Cart');
+require('./models/Order'); // ← Thêm dòng này để đảm bảo Order model được load
 
+console.log('✅ All models loaded successfully');
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -172,17 +176,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🛒 CART CONTEXT MIDDLEWARE
-// Get cart item count for header
 app.use(async (req, res, next) => {
   try {
     const Cart = require('./models/Cart');
     const sessionId = req.sessionID;
     const userId = req.session.user?.id || null;
     
+    console.log('🛒 Cart middleware - SessionID:', sessionId, 'UserID:', userId);
+    
     const cart = await Cart.findBySessionId(sessionId, userId);
+    
+    // Đảm bảo cart count chính xác
     res.locals.cartItemCount = cart ? cart.totalItems : 0;
     res.locals.cartTotal = cart ? cart.getFormattedFinalTotal() : '0₫';
+    
+    console.log('📊 Cart count set to:', res.locals.cartItemCount);
     
   } catch (error) {
     console.error('❌ Cart context error:', error);
@@ -192,7 +200,6 @@ app.use(async (req, res, next) => {
   
   next();
 });
-
 // 🔒 SECURITY HEADERS MIDDLEWARE
 app.use((req, res, next) => {
   // Basic security headers

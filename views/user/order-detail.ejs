@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/user.css">
+    <style>
+        .order-detail-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .order-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .order-id {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .order-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .order-status.pending { background: #fff3cd; color: #856404; }
+        .order-status.confirmed { background: #d4edda; color: #155724; }
+        .order-status.shipping { background: #cce7ff; color: #004085; }
+        .order-status.delivered { background: #d1ecf1; color: #0c5460; }
+        .order-status.cancelled { background: #f8d7da; color: #721c24; }
+
+        .order-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 2px solid #f8f9fa;
+        }
+
+        .info-card h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .info-value {
+            color: #495057;
+            text-align: right;
+        }
+
+        .items-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .items-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .items-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .order-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #e9ecef;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .item-variant {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .item-price {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .item-quantity {
+            background: #f8f9fa;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding-top: 15px;
+            border-top: 2px solid #dee2e6;
+            color: #dc3545;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #a71e2a);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+
+        .timeline {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-left: 3px solid #e9ecef;
+            padding-left: 20px;
+            margin-left: 10px;
+            position: relative;
+        }
+
+        .timeline-item.active {
+            border-left-color: #28a745;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e9ecef;
+        }
+
+        .timeline-item.active::before {
+            background: #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .order-info-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .order-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .item-image {
+                width: 100px;
+                height: 100px;
+            }
+
+            .order-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/">
+                    <span class="brand-icon">⚽</span>
+                    <span class="brand-text">SportShop</span>
+                </a>
+            </div>
+            
+            <div class="nav-links">
+                <a href="/products">Sản phẩm</a>
+                <a href="/about">Giới thiệu</a>
+                <a href="/contact">Liên hệ</a>
+            </div>
+            
+            <div class="nav-actions">
+                <a href="/cart" class="cart-link">
+                    🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
+                </a>
+                
+                <div class="user-avatar" onclick="window.location.href='/user/account'">
+                    TU
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <ul class="breadcrumb-list">
+                <li><a href="/user/account">Tài khoản</a></li>
+                <li class="breadcrumb-separator">→</li>
+                <li><a href="/user/orders">Đơn hàng</a></li>
+                <li class="breadcrumb-separator">→</li>
+                <li>Chi tiết đơn hàng</li>
+            </ul>
+        </nav>
+
+        <div class="order-detail-container">
+            <% if (order) { %>
+                <!-- Order Header -->
+                <div class="order-header">
+                    <div class="order-id">Đơn hàng #<%= order.orderId %></div>
+                    <div class="order-meta">
+                        <span class="order-status <%= order.statusDisplay.class %>">
+                            <%= order.statusDisplay.icon %> <%= order.statusDisplay.text %>
+                        </span>
+                        <div style="margin-top: 10px; opacity: 0.9;">
+                            Đặt hàng: <%= order.formattedDate %> | 
+                            Dự kiến giao: <%= order.estimatedDelivery.toLocaleDateString('vi-VN') %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Info Grid -->
+                <div class="order-info-grid">
+                    <!-- Customer Info -->
+                    <div class="info-card">
+                        <h3>👤 Thông tin khách hàng</h3>
+                        <div class="info-item">
+                            <span class="info-label">Họ tên:</span>
+                            <span class="info-value"><%= order.customer.name %></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value"><%= order.customer.email %></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Điện thoại:</span>
+                            <span class="info-value"><%= order.customer.phone %></span>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Info -->
+                    <div class="info-card">
+                        <h3>🚚 Thông tin giao hàng</h3>
+                        <div class="info-item">
+                            <span class="info-label">Địa chỉ:</span>
+                            <span class="info-value"><%= order.fullAddress %></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Thanh toán:</span>
+                            <span class="info-value">
+                                <% if (order.paymentMethod === 'cod') { %>
+                                    💵 Thanh toán khi nhận hàng
+                                <% } else if (order.paymentMethod === 'bank_transfer') { %>
+                                    🏦 Chuyển khoản ngân hàng
+                                <% } else { %>
+                                    💳 <%= order.paymentMethod %>
+                                <% } %>
+                            </span>
+                        </div>
+                        <% if (order.notes) { %>
+                        <div class="info-item">
+                            <span class="info-label">Ghi chú:</span>
+                            <span class="info-value"><%= order.notes %></span>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="items-card">
+                    <div class="items-header">
+                        <h3 class="items-title">📦 Sản phẩm đã đặt</h3>
+                        <span class="items-count"><%= order.totalItems %> sản phẩm</span>
+                    </div>
+
+                    <% order.items.forEach(item => { %>
+                        <div class="order-item">
+                            <img src="<%= item.productImage %>" alt="<%= item.productName %>" class="item-image">
+                            <div class="item-details">
+                                <div class="item-name"><%= item.productName %></div>
+                                <div class="item-variant">
+                                    Màu: <%= item.color %> | Size: <%= item.size %>
+                                </div>
+                                <div class="item-price">
+                                    <%= item.price.toLocaleString('vi-VN') %>đ × <%= item.quantity %>
+                                </div>
+                            </div>
+                            <div class="item-quantity">x<%= item.quantity %></div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="summary-card">
+                    <h3 style="margin-bottom: 15px; color: #495057;">💰 Tổng kết đơn hàng</h3>
+                    <div class="summary-row">
+                        <span>Tạm tính (<%= order.totalItems %> sản phẩm):</span>
+                        <span><%= order.totalPrice.toLocaleString('vi-VN') %>đ</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Phí vận chuyển:</span>
+                        <span><%= order.shippingFee.toLocaleString('vi-VN') %>đ</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tổng thanh toán:</span>
+                        <span><%= order.finalTotal.toLocaleString('vi-VN') %>đ</span>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div class="timeline">
+                    <h3 style="margin-bottom: 20px; color: #495057;">📅 Trạng thái đơn hàng</h3>
+                    <div class="timeline-item <%= order.status !== 'cancelled' ? 'active' : '' %>">
+                        <div>
+                            <strong>✅ Đặt hàng thành công</strong>
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                <%= order.createdAt.toLocaleString('vi-VN') %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['confirmed', 'shipping', 'delivered'].includes(order.status) ? 'active' : '' %>">
+                        <div>
+                            <strong>✅ Xác nhận đơn hàng</strong>
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                Đã xác nhận và chuẩn bị hàng
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= ['shipping', 'delivered'].includes(order.status) ? 'active' : '' %>">
+                        <div>
+                            <strong>🚚 Đang giao hàng</strong>
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                Shipper đang trên đường giao
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item <%= order.status === 'delivered' ? 'active' : '' %>">
+                        <div>
+                            <strong>📦 Giao hàng thành công</strong>
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                <% if (order.actualDelivery) { %>
+                                    <%= order.actualDelivery.toLocaleString('vi-VN') %>
+                                <% } else { %>
+                                    Dự kiến: <%= order.estimatedDelivery.toLocaleDateString('vi-VN') %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <% if (order.status === 'cancelled') { %>
+                    <div class="timeline-item active" style="border-left-color: #dc3545;">
+                        <div>
+                            <strong style="color: #dc3545;">❌ Đơn hàng đã hủy</strong>
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                Lý do: <%= order.cancelReason || 'Customer request' %>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Order Actions -->
+                <div class="order-actions">
+                    <a href="/user/orders" class="btn btn-secondary">
+                        ← Quay lại danh sách
+                    </a>
+
+                    <% if (order.status === 'pending' || order.status === 'confirmed') { %>
+                        <button class="btn btn-danger" onclick="cancelOrder('<%= order.orderId %>')">
+                            ❌ Hủy đơn hàng
+                        </button>
+                    <% } %>
+
+                    <% if (order.status === 'delivered') { %>
+                        <button class="btn btn-success" onclick="reorder('<%= order.orderId %>')">
+                            🔄 Đặt lại
+                        </button>
+                    <% } %>
+                </div>
+
+            <% } else { %>
+                <!-- Order Not Found -->
+                <div class="empty-state" style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">😕</div>
+                    <h2>Không tìm thấy đơn hàng</h2>
+                    <p style="color: #6c757d; margin-bottom: 30px;">
+                        Đơn hàng không tồn tại hoặc bạn không có quyền truy cập.
+                    </p>
+                    <a href="/user/orders" class="btn btn-primary">
+                        ← Về danh sách đơn hàng
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
+            <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
+        </div>
+    </footer>
+
+    <script>
+        // Cancel order
+        async function cancelOrder(orderId) {
+            const reason = prompt('Lý do hủy đơn hàng (tùy chọn):') || 'Customer request';
+            const confirmed = confirm(`Bạn có chắc chắn muốn hủy đơn hàng #${orderId}?`);
+            
+            if (confirmed) {
+                try {
+                    const response = await fetch(`/user/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ reason })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('✅ Đơn hàng đã được hủy thành công');
+                        location.reload();
+                    } else {
+                        alert('❌ ' + result.message);
+                    }
+                } catch (error) {
+                    alert('❌ Có lỗi xảy ra khi hủy đơn hàng');
+                }
+            }
+        }
+
+        // Reorder
+        async function reorder(orderId) {
+            const confirmed = confirm('Bạn muốn đặt lại đơn hàng này? Các sản phẩm sẽ được thêm vào giỏ hàng.');
+            
+            if (confirmed) {
+                try {
+                    const response = await fetch(`/user/orders/${orderId}/reorder`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('✅ ' + result.message);
+                        if (result.data && result.data.redirectUrl) {
+                            window.location.href = result.data.redirectUrl;
+                        }
+                    } else {
+                        alert('❌ ' + result.message);
+                    }
+                } catch (error) {
+                    alert('❌ Có lỗi xảy ra khi đặt lại đơn hàng');
+                }
+            }
+        }
+
+        // Page animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.info-card, .items-card, .summary-card, .timeline');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

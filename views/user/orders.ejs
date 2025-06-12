@@ -533,8 +533,8 @@
                     🛒 Giỏ hàng (<%= typeof cartItemCount !== 'undefined' ? cartItemCount : 0 %>)
                 </a>
                 
-                <div class="user-avatar" onclick="window.location.href='/user/account'">
-                    TU
+                <div class="user-avatar" title="<%= user.fullName %>">
+                    <%= user.initials || user.fullName.charAt(0) %>
                 </div>
             </div>
         </nav>
@@ -581,60 +581,84 @@
             </div>
 
             <!-- Orders List -->
-            <div class="orders-list" id="ordersList">
+            <div class="orders-list">
                 <% if (orders && orders.length > 0) { %>
                     <% orders.forEach(order => { %>
-                        <div class="order-card" data-status="<%= order.status %>" data-id="<%= order.id %>">
-                            <div class="order-header">
+                        <div class="order-card" data-status="<%= order.status %>" data-id="<%= order.orderId %>">
+                            <div class="order-card-header">
                                 <div class="order-id">
-                                    📦 Đơn hàng #<%= order.id %>
+                                    <strong>Đơn hàng #<%= order.orderId %></strong>
+                                    <span class="order-date"><%= order.formattedDate %></span>
                                 </div>
-                                <div class="order-status status-<%= order.status %>">
-                                    <%= order.statusText %>
-                                </div>
+                                <span class="order-status <%= order.statusDisplay.class %>">
+                                    <%= order.statusDisplay.icon %> <%= order.statusDisplay.text %>
+                                </span>
                             </div>
 
-                            <div class="order-info">
-                                <div class="info-item">
-                                    <div class="info-label">Ngày đặt</div>
-                                    <div class="info-value"><%= order.createdAt.toLocaleDateString('vi-VN') %></div>
+                            <div class="order-summary">
+                                <div class="order-info">
+                                    <div class="info-row">
+                                        <span class="info-label">👤 Khách hàng:</span>
+                                        <span class="info-value"><%= order.customer.name %></span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">📍 Giao đến:</span>
+                                        <span class="info-value"><%= order.shipping.district %>, <%= order.shipping.city %></span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">💳 Thanh toán:</span>
+                                        <span class="info-value">
+                                            <% if (order.paymentMethod === 'cod') { %>
+                                                💵 COD
+                                            <% } else if (order.paymentMethod === 'bank_transfer') { %>
+                                                🏦 Chuyển khoản
+                                            <% } else { %>
+                                                💳 <%= order.paymentMethod %>
+                                            <% } %>
+                                        </span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">🚚 Dự kiến giao:</span>
+                                        <span class="info-value"><%= order.estimatedDelivery.toLocaleDateString('vi-VN') %></span>
+                                    </div>
                                 </div>
-                                <div class="info-item">
-                                    <div class="info-label">Tổng tiền</div>
-                                    <div class="info-value"><%= order.total.toLocaleString('vi-VN') %>₫</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Phương thức thanh toán</div>
-                                    <div class="info-value"><%= order.paymentMethod %></div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Địa chỉ giao hàng</div>
-                                    <div class="info-value"><%= order.shippingAddress %></div>
+                                <div class="order-total">
+                                    <div class="total-amount"><%= order.finalTotal.toLocaleString('vi-VN') %>đ</div>
+                                    <div class="total-items"><%= order.totalItems %> sản phẩm</div>
                                 </div>
                             </div>
 
                             <div class="order-items">
-                                <div class="order-items-header">Sản phẩm (<%= order.itemCount %> món)</div>
+                                <div class="order-items-header">Sản phẩm (<%= order.totalItems %> món)</div>
                                 <div class="order-items-list">
-                                    <% order.items.forEach(item => { %>
+                                    <% order.items.slice(0, 3).forEach(item => { %>
                                         <div class="order-item">
-                                            <%= item.productName %> × <%= item.quantity %>
+                                            <%= item.productName %> 
+                                            <% if (item.color !== 'Mặc định' || item.size !== 'Mặc định') { %>
+                                                (<%= item.color %>, <%= item.size %>)
+                                            <% } %>
+                                            × <%= item.quantity %>
                                         </div>
                                     <% }) %>
+                                    <% if (order.items.length > 3) { %>
+                                        <div class="order-item">
+                                            ... và <%= order.items.length - 3 %> sản phẩm khác
+                                        </div>
+                                    <% } %>
                                 </div>
                             </div>
 
                             <div class="order-actions">
-                                <a href="/user/orders/<%= order.id %>" class="btn btn-primary">
+                                <a href="/user/orders/<%= order.orderId %>" class="btn btn-primary">
                                     👁️ Xem chi tiết
                                 </a>
-                                <% if (order.status === 'pending') { %>
-                                    <button class="btn btn-danger" onclick="cancelOrder('<%= order.id %>')">
+                                <% if (order.status === 'pending' || order.status === 'confirmed') { %>
+                                    <button class="btn btn-danger" onclick="cancelOrder('<%= order.orderId %>')">
                                         ❌ Hủy đơn hàng
                                     </button>
                                 <% } %>
                                 <% if (order.status === 'delivered') { %>
-                                    <button class="btn btn-secondary" onclick="reorder('<%= order.id %>')">
+                                    <button class="btn btn-secondary" onclick="reorder('<%= order.orderId %>')">
                                         🔄 Đặt lại
                                     </button>
                                 <% } %>
@@ -656,119 +680,123 @@
                 <% } %>
             </div>
 
-            <!-- Pagination -->
-            <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
-                <div class="pagination">
-                    <% if (pagination.hasPrev) { %>
-                        <a href="/user/orders?page=<%= pagination.prevPage %>" class="pagination-btn">
-                            ← Trước
-                        </a>
-                    <% } %>
-                    
-                    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
-                        <a href="/user/orders?page=<%= i %>" 
-                           class="pagination-btn <%= i === pagination.currentPage ? 'active' : '' %>">
-                            <%= i %>
-                        </a>
-                    <% } %>
-                    
-                    <% if (pagination.hasNext) { %>
-                        <a href="/user/orders?page=<%= pagination.nextPage %>" class="pagination-btn">
-                            Sau →
-                        </a>
-                    <% } %>
-                </div>
-            <% } %>
-        </div>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 SportShop - Dự án của Nguyễn Thanh Tân</p>
-            <p>📧 Tan.NT225923@sis.hust.edu.vn | 📱 0866 387 718</p>
-        </div>
-    </footer>
-
-    <script>
-        // Filter orders by status
-        function filterOrders() {
-            const statusFilter = document.getElementById('statusFilter').value;
-            const orderCards = document.querySelectorAll('.order-card');
-            
-            orderCards.forEach(card => {
-                const cardStatus = card.getAttribute('data-status');
-                if (!statusFilter || cardStatus === statusFilter) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // Search orders
-        function searchOrders() {
-            const searchInput = document.getElementById('searchInput').value.toLowerCase();
-            const orderCards = document.querySelectorAll('.order-card');
-            
-            orderCards.forEach(card => {
-                const orderId = card.getAttribute('data-id').toLowerCase();
-                if (orderId.includes(searchInput)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // Cancel order
-        async function cancelOrder(orderId) {
-            const confirmed = confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');
-            
-            if (confirmed) {
-                try {
-                    const response = await fetch(`/user/orders/${orderId}/cancel`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        alert('✅ Đơn hàng đã được hủy thành công');
-                        location.reload();
-                    } else {
-                        alert('❌ ' + result.message);
-                    }
-                } catch (error) {
-                    alert('❌ Có lỗi xảy ra khi hủy đơn hàng');
-                }
-            }
-        }
-
-        // Reorder
-        function reorder(orderId) {
-            if (confirm('Bạn muốn đặt lại đơn hàng này?')) {
-                // TODO: Implement reorder functionality
-                alert('Tính năng đặt lại đơn hàng sẽ được triển khai sớm');
-            }
-        }
-
-        // Page load animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const orderCards = document.querySelectorAll('.order-card');
-            orderCards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
+        <!-- Updated JavaScript for reorder functionality -->
+        <script>
+            // Filter orders by status
+            function filterOrders() {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const orderCards = document.querySelectorAll('.order-card');
                 
-                setTimeout(() => {
-                    card.style.transition = 'all 0.6s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
+                orderCards.forEach(card => {
+                    const cardStatus = card.getAttribute('data-status');
+                    if (!statusFilter || cardStatus === statusFilter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Search orders
+            function searchOrders() {
+                const searchInput = document.getElementById('searchInput').value.toLowerCase();
+                const orderCards = document.querySelectorAll('.order-card');
+                
+                orderCards.forEach(card => {
+                    const orderId = card.getAttribute('data-id').toLowerCase();
+                    if (orderId.includes(searchInput)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Cancel order - Updated with real functionality
+            async function cancelOrder(orderId) {
+                const reason = prompt('Lý do hủy đơn hàng (tùy chọn):') || 'Customer request';
+                const confirmed = confirm(`Bạn có chắc chắn muốn hủy đơn hàng #${orderId}?`);
+                
+                if (confirmed) {
+                    try {
+                        const response = await fetch(`/user/orders/${orderId}/cancel`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ reason })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('✅ Đơn hàng đã được hủy thành công');
+                            location.reload();
+                        } else {
+                            alert('❌ ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error cancelling order:', error);
+                        alert('❌ Có lỗi xảy ra khi hủy đơn hàng');
+                    }
+                }
+            }
+
+            // Reorder - Updated with real functionality
+            async function reorder(orderId) {
+                const confirmed = confirm('Bạn muốn đặt lại đơn hàng này? Các sản phẩm sẽ được thêm vào giỏ hàng.');
+                
+                if (confirmed) {
+                    try {
+                        const response = await fetch(`/user/orders/${orderId}/reorder`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('✅ ' + result.message);
+                            if (result.data && result.data.redirectUrl) {
+                                window.location.href = result.data.redirectUrl;
+                            } else {
+                                location.reload(); // Refresh to update cart count
+                            }
+                        } else {
+                            alert('❌ ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error reordering:', error);
+                        alert('❌ Có lỗi xảy ra khi đặt lại đơn hàng');
+                    }
+                }
+            }
+
+            // Set selected status filter if provided
+            document.addEventListener('DOMContentLoaded', function() {
+                const statusFilter = document.getElementById('statusFilter');
+                const selectedStatus = '<%= selectedStatus || "" %>';
+                
+                if (selectedStatus && statusFilter) {
+                    statusFilter.value = selectedStatus;
+                    filterOrders(); // Apply filter on page load
+                }
+
+                // Page load animations
+                const orderCards = document.querySelectorAll('.order-card');
+                orderCards.forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.6s ease';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
             });
-        });
-    </script>
+        </script>
 </body>
 </html>

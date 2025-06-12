@@ -1,6 +1,7 @@
 // routes/user.js
 const express = require('express');
 const router = express.Router();
+const Order = require('../models/Order');
 const UserController = require('../controllers/userController');
 const { 
   requireAuth, 
@@ -185,66 +186,249 @@ router.get('/favorites/check/:productId', async (req, res) => {
 });
 
 // =====================================
-// ORDER ROUTES (Placeholder)
+// ORDER ROUTES (REAL IMPLEMENTATION)
 // =====================================
 
 /**
- * Danh sách đơn hàng
+ * Danh sách đơn hàng - LẤY TỪ DATABASE
  * GET /user/orders
  */
 router.get('/orders', 
   logUserActivity('view_orders'),
-  (req, res) => {
-    // TODO: Implement when Order model is ready
-    res.render('user/orders', {
-      title: 'Đơn hàng của tôi - SportShop',
-      currentPage: 'orders',
-      orders: [],
-      pagination: {
-        currentPage: 1,
-        totalPages: 0,
-        hasNext: false,
-        hasPrev: false
-      },
-      success: req.flash('success'),
-      error: req.flash('error')
-    });
+  async (req, res) => {
+    try {
+      const sessionId = req.sessionID || req.session.id;
+      const userId = req.session?.user?.id || null;
+      
+      console.log('📦 Getting orders for:', {
+        sessionId: sessionId,
+        userId: userId,
+        url: req.originalUrl
+      });
+      
+      // Test Order model và database
+      try {
+        console.log('✅ Order model importing...');
+        
+        // Test database connection
+        const allOrders = await Order.find({}).limit(3);
+        console.log('📊 Total orders in database:', allOrders.length);
+        
+        if (allOrders.length > 0) {
+          console.log('📋 Sample orders:', allOrders.map(o => ({
+            orderId: o.orderId,
+            sessionId: o.sessionId ? o.sessionId.substring(0, 8) + '...' : 'N/A',
+            userId: o.userId || 'N/A',
+            status: o.status,
+            total: o.finalTotal
+          })));
+        }
+        
+        // Get orders for current user/session
+        const query = {};
+        if (userId) {
+          query.userId = userId;
+        } else if (sessionId) {
+          query.sessionId = sessionId;
+        }
+        
+        console.log('🔍 Query for orders:', query);
+        
+        const userOrders = await Order.find(query)
+          .populate('items.productId', 'name images price')
+          .sort({ createdAt: -1 })
+          .limit(50);
+        
+        console.log('👤 Orders found for user/session:', userOrders.length);
+        
+        if (userOrders.length > 0) {
+          console.log('📝 User orders details:', userOrders.map(o => ({
+            orderId: o.orderId,
+            status: o.status,
+            total: o.finalTotal,
+            items: o.items.length,
+            customer: o.customer.name
+          })));
+        }
+        
+        // Render với orders thực
+        res.render('user/orders', {
+          title: 'Đơn hàng của tôi - SportShop',
+          currentPage: 'orders',
+          orders: userOrders, // ← Orders thực từ database
+          pagination: {
+            currentPage: 1,
+            totalPages: userOrders.length > 0 ? 1 : 0,
+            hasNext: false,
+            hasPrev: false
+          },
+          selectedStatus: req.query.status || null,
+          success: req.flash('success'),
+          error: req.flash('error')
+        });
+        
+      } catch (modelError) {
+        console.error('❌ Order model error:', modelError);
+        res.render('user/orders', {
+          title: 'Đơn hàng của tôi - SportShop',
+          currentPage: 'orders',
+          orders: [],
+          pagination: { currentPage: 1, totalPages: 0, hasNext: false, hasPrev: false },
+          selectedStatus: null,
+          success: req.flash('success'),
+          error: `Lỗi Order model: ${modelError.message}`
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in orders route:', error);
+      res.render('user/orders', {
+        title: 'Đơn hàng của tôi - SportShop',
+        currentPage: 'orders',
+        orders: [],
+        pagination: { currentPage: 1, totalPages: 0, hasNext: false, hasPrev: false },
+        selectedStatus: null,
+        success: req.flash('success'),
+        error: `Lỗi: ${error.message}`
+      });
+    }
   }
 );
 
 /**
- * Chi tiết đơn hàng
+ * Chi tiết đơn hàng - LẤY TỪ DATABASE
  * GET /user/orders/:orderId
  */
 router.get('/orders/:orderId', 
   logUserActivity('view_order_detail'),
-  (req, res) => {
-    // TODO: Implement when Order model is ready
-    const { orderId } = req.params;
-    
-    res.render('user/order-detail', {
-      title: `Đơn hàng #${orderId} - SportShop`,
-      currentPage: 'orders',
-      order: null,
-      orderId: orderId,
-      success: req.flash('success'),
-      error: req.flash('error')
-    });
+  async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const sessionId = req.sessionID || req.session.id;
+      const userId = req.session?.user?.id || null;
+      
+      console.log('🔍 Getting order detail:', {
+        orderId,
+        sessionId: sessionId ? sessionId.substring(0, 8) + '...' : 'N/A',
+        userId
+      });
+      
+      // Find order by orderId
+      const order = await Order.findOne({ orderId })
+        .populate('items.productId', 'name images price');
+      
+      if (!order) {
+        req.flash('error', 'Không tìm thấy đơn hàng');
+        return res.redirect('/user/orders');
+      }
+      
+      // Check if order belongs to current user/session
+      const hasAccess = (userId && order.userId && order.userId.toString() === userId) || 
+                       (order.sessionId === sessionId);
+      
+      if (!hasAccess) {
+        req.flash('error', 'Bạn không có quyền xem đơn hàng này');
+        return res.redirect('/user/orders');
+      }
+      
+      console.log('✅ Order detail found:', {
+        orderId: order.orderId,
+        status: order.status,
+        total: order.finalTotal
+      });
+      
+      res.render('user/order-detail', {
+        title: `Đơn hàng #${order.orderId} - SportShop`,
+        currentPage: 'orders',
+        order: order,
+        success: req.flash('success'),
+        error: req.flash('error')
+      });
+      
+    } catch (error) {
+      console.error('❌ Error getting order detail:', error);
+      req.flash('error', 'Không thể tải chi tiết đơn hàng');
+      res.redirect('/user/orders');
+    }
   }
 );
 
 /**
- * Hủy đơn hàng
+ * Hủy đơn hàng - CẬP NHẬT DATABASE
  * POST /user/orders/:orderId/cancel
  */
 router.post('/orders/:orderId/cancel', 
   logUserActivity('cancel_order'),
-  (req, res) => {
-    // TODO: Implement when Order model is ready
-    res.json({
-      success: false,
-      message: 'Tính năng hủy đơn hàng chưa được triển khai'
-    });
+  async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { reason = 'Customer request' } = req.body;
+      const sessionId = req.sessionID || req.session.id;
+      const userId = req.session?.user?.id || null;
+      
+      console.log('❌ Cancelling order:', { orderId, reason });
+      
+      // Find order
+      const order = await Order.findOne({ orderId });
+      
+      if (!order) {
+        return res.json({
+          success: false,
+          message: 'Không tìm thấy đơn hàng'
+        });
+      }
+      
+      // Check access permission
+      const hasAccess = (userId && order.userId && order.userId.toString() === userId) || 
+                       (order.sessionId === sessionId);
+      
+      if (!hasAccess) {
+        return res.json({
+          success: false,
+          message: 'Bạn không có quyền hủy đơn hàng này'
+        });
+      }
+      
+      // Check if order can be cancelled
+      if (order.status === 'delivered') {
+        return res.json({
+          success: false,
+          message: 'Không thể hủy đơn hàng đã giao'
+        });
+      }
+      
+      if (order.status === 'cancelled') {
+        return res.json({
+          success: false,
+          message: 'Đơn hàng đã được hủy trước đó'
+        });
+      }
+      
+      // Cancel order
+      await order.cancel(reason);
+      
+      console.log('✅ Order cancelled successfully:', {
+        orderId: order.orderId,
+        reason: reason
+      });
+      
+      res.json({
+        success: true,
+        message: 'Đơn hàng đã được hủy thành công',
+        data: {
+          orderId: order.orderId,
+          status: order.status,
+          cancelReason: order.cancelReason
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error cancelling order:', error);
+      res.json({
+        success: false,
+        message: 'Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại.'
+      });
+    }
   }
 );
 
