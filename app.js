@@ -12,7 +12,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash'); // 📦 NEW: Flash messages
-
+const adminRoutes = require('./routes/admin');
 // Import database connection
 const connectDB = require('./config/database');
 
@@ -229,7 +229,8 @@ console.log('✅ Auth routes mounted at /auth');
 // 👤 User account routes
 app.use('/user', userRoutes);
 console.log('✅ User routes mounted at /user');
-
+app.use('/admin', adminRoutes);
+console.log('✅ Admin routes mounted at /admin');
 // 📱 API routes
 app.use('/api/auth', authRoutes); // Auth API endpoints
 app.use('/api/user', userRoutes); // User API endpoints

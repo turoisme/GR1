@@ -1,0 +1,501 @@
+<!-- views/admin/products/list.ejs -->
+<div class="admin-card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-box icon"></i>
+            Quản lý sản phẩm
+        </h2>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-outline" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+                Làm mới
+            </button>
+            <a href="/admin/products/add" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Thêm sản phẩm
+            </a>
+        </div>
+    </div>
+    
+    <!-- Search and Filter Bar -->
+    <div style="padding: 24px 32px; background: var(--light); border-bottom: 1px solid var(--border);">
+        <div style="display: grid; grid-template-columns: 1fr auto auto auto; gap: 16px; align-items: center;">
+            <div style="position: relative;">
+                <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--secondary);"></i>
+                <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm, thương hiệu..." 
+                       style="padding-left: 40px; max-width: none;" id="searchInput">
+            </div>
+            
+            <select class="form-control" style="min-width: 150px;" id="categoryFilter">
+                <option value="">Tất cả danh mục</option>
+                <option value="shoes">👟 Giày</option>
+                <option value="clothing">👕 Quần áo</option>
+                <option value="accessories">🎒 Phụ kiện</option>
+                <option value="equipment">⚽ Dụng cụ</option>
+            </select>
+            
+            <select class="form-control" style="min-width: 150px;" id="brandFilter">
+                <option value="">Tất cả thương hiệu</option>
+                <option value="nike">Nike</option>
+                <option value="adidas">Adidas</option>
+                <option value="puma">Puma</option>
+                <option value="under armour">Under Armour</option>
+            </select>
+            
+            <select class="form-control" style="min-width: 130px;" id="statusFilter">
+                <option value="">Tất cả trạng thái</option>
+                <option value="active">Đang bán</option>
+                <option value="inactive">Ngừng bán</option>
+            </select>
+        </div>
+    </div>
+
+    <% if (products && products.length > 0) { %>
+        <!-- Products Grid View -->
+        <div id="productsGrid" style="display: none; padding: 32px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+            <% products.forEach(product => { %>
+                <div class="product-card" style="background: white; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; transition: all 0.3s ease;">
+                    <div style="position: relative; height: 200px; background: var(--light);">
+                        <% if (product.images && product.images.length > 0) { %>
+                            <img src="/assets/products/<%= product.images[0] %>" 
+                                 alt="<%= product.name %>"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        <% } else { %>
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--secondary);">
+                                📦
+                            </div>
+                        <% } %>
+                        
+                        <!-- Status Badge -->
+                        <div style="position: absolute; top: 12px; right: 12px;">
+                            <% if (product.isActive) { %>
+                                <span class="status-badge active">
+                                    <i class="fas fa-check-circle"></i>
+                                    Đang bán
+                                </span>
+                            <% } else { %>
+                                <span class="status-badge inactive">
+                                    <i class="fas fa-times-circle"></i>
+                                    Ngừng bán
+                                </span>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Featured Badge -->
+                        <% if (product.isFeatured) { %>
+                            <div style="position: absolute; top: 12px; left: 12px;">
+                                <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase;">
+                                    <i class="fas fa-star"></i> Nổi bật
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 12px;">
+                            <h4 style="font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.4;">
+                                <%= product.name %>
+                            </h4>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--secondary);">
+                                <span><%= product.brand %></span>
+                                <span>•</span>
+                                <span>ID: <%= product._id.toString().slice(-6) %></span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--dark);">
+                                    <%= product.price.toLocaleString('vi-VN') %>₫
+                                </div>
+                                <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                    <div style="font-size: 12px; color: var(--secondary); text-decoration: line-through;">
+                                        <%= product.originalPrice.toLocaleString('vi-VN') %>₫
+                                    </div>
+                                <% } %>
+                            </div>
+                            
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 600; color: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;">
+                                    <%= product.stockQuantity > 0 ? product.stockQuantity + ' còn lại' : 'Hết hàng' %>
+                                </div>
+                                <div style="font-size: 11px; color: var(--secondary); text-transform: uppercase;">
+                                    <% 
+                                        let categoryName = 'Khác';
+                                        switch(product.category) {
+                                            case 'shoes': categoryName = 'Giày'; break;
+                                            case 'clothing': categoryName = 'Quần áo'; break;
+                                            case 'accessories': categoryName = 'Phụ kiện'; break;
+                                            case 'equipment': categoryName = 'Dụng cụ'; break;
+                                        }
+                                    %>
+                                    <%= categoryName %>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/products/<%= product._id %>" target="_blank" 
+                               class="btn btn-outline btn-sm" style="flex: 1;" 
+                               title="Xem sản phẩm">
+                                <i class="fas fa-eye"></i>
+                                Xem
+                            </a>
+                            <a href="/admin/products/<%= product._id %>/edit" 
+                               class="btn btn-primary btn-sm" style="flex: 1;"
+                               title="Sửa sản phẩm">
+                                <i class="fas fa-edit"></i>
+                                Sửa
+                            </a>
+                            <button onclick="deleteItem('/admin/products/<%= product._id %>', 'Bạn có chắc chắn muốn xóa sản phẩm này?')" 
+                                    class="btn btn-danger btn-sm"
+                                    title="Xóa sản phẩm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <!-- Products Table View -->
+        <div id="productsTable" style="overflow-x: auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Thương hiệu</th>
+                        <th>Giá</th>
+                        <th>Kho</th>
+                        <th>Trạng thái</th>
+                        <th style="width: 200px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% products.forEach(product => { %>
+                        <tr>
+                            <td>
+                                <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background: var(--light);">
+                                    <% if (product.images && product.images.length > 0) { %>
+                                        <img src="/assets/products/<%= product.images[0] %>" 
+                                             alt="<%= product.name %>"
+                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                    <% } else { %>
+                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--secondary);">
+                                            📦
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.4;">
+                                        <%= product.name %>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--secondary);">
+                                        <span>ID: <%= product._id.toString().slice(-6) %></span>
+                                        <% if (product.isFeatured) { %>
+                                            <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600;">
+                                                <i class="fas fa-star"></i> NỔI BẬT
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="background: var(--light); color: var(--dark); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                    <% 
+                                        let categoryIcon = '📦';
+                                        let categoryName = 'Khác';
+                                        switch(product.category) {
+                                            case 'shoes': 
+                                                categoryIcon = '👟';
+                                                categoryName = 'Giày'; 
+                                                break;
+                                            case 'clothing': 
+                                                categoryIcon = '👕';
+                                                categoryName = 'Quần áo'; 
+                                                break;
+                                            case 'accessories': 
+                                                categoryIcon = '🎒';
+                                                categoryName = 'Phụ kiện'; 
+                                                break;
+                                            case 'equipment': 
+                                                categoryIcon = '⚽';
+                                                categoryName = 'Dụng cụ'; 
+                                                break;
+                                        }
+                                    %>
+                                    <%= categoryIcon %> <%= categoryName %>
+                                </span>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--dark);">
+                                    <%= product.brand %>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div style="font-weight: 800; color: var(--dark); font-size: 16px;">
+                                        <%= product.price.toLocaleString('vi-VN') %>₫
+                                    </div>
+                                    <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                            <span style="font-size: 12px; color: var(--secondary); text-decoration: line-through;">
+                                                <%= product.originalPrice.toLocaleString('vi-VN') %>₫
+                                            </span>
+                                            <span style="background: var(--danger); color: white; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: 600;">
+                                                -<%= Math.round((1 - product.price/product.originalPrice) * 100) %>%
+                                            </span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;"></div>
+                                    <span style="font-weight: 600; color: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;">
+                                        <%= product.stockQuantity > 0 ? product.stockQuantity : 'Hết hàng' %>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <% if (product.isActive) { %>
+                                    <span class="status-badge active">
+                                        <i class="fas fa-check-circle"></i>
+                                        Đang bán
+                                    </span>
+                                <% } else { %>
+                                    <span class="status-badge inactive">
+                                        <i class="fas fa-times-circle"></i>
+                                        Ngừng bán
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <a href="/products/<%= product._id %>" target="_blank" 
+                                       class="btn btn-outline btn-sm" 
+                                       title="Xem sản phẩm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/admin/products/<%= product._id %>/edit" 
+                                       class="btn btn-primary btn-sm"
+                                       title="Sửa sản phẩm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button onclick="deleteItem('/admin/products/<%= product._id %>', 'Bạn có chắc chắn muốn xóa sản phẩm này?')" 
+                                            class="btn btn-danger btn-sm"
+                                            title="Xóa sản phẩm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- View Toggle & Pagination -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; background: var(--light); border-top: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 14px; color: var(--secondary); font-weight: 500;">Hiển thị:</span>
+                <div style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+                    <button id="tableViewBtn" class="btn btn-outline btn-sm" style="border: none; border-radius: 0;" onclick="toggleView('table')">
+                        <i class="fas fa-list"></i>
+                        Bảng
+                    </button>
+                    <button id="gridViewBtn" class="btn btn-outline btn-sm" style="border: none; border-radius: 0; border-left: 1px solid var(--border);" onclick="toggleView('grid')">
+                        <i class="fas fa-th-large"></i>
+                        Lưới
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (pagination && pagination.totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (pagination.hasPrev) { %>
+                        <a href="?page=<%= pagination.currentPage - 1 %>" class="pagination-btn">
+                            <i class="fas fa-chevron-left"></i>
+                            Trước
+                        </a>
+                    <% } %>
+                    
+                    <div class="pagination-info">
+                        Trang <%= pagination.currentPage %> / <%= pagination.totalPages %>
+                    </div>
+                    
+                    <% if (pagination.hasNext) { %>
+                        <a href="?page=<%= pagination.currentPage + 1 %>" class="pagination-btn">
+                            Sau
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+
+    <% } else { %>
+        <div class="card-body">
+            <div style="text-align: center; padding: 80px 20px; color: var(--secondary);">
+                <div style="font-size: 5rem; margin-bottom: 24px; opacity: 0.5;">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 style="color: var(--secondary); margin-bottom: 12px; font-weight: 700; font-size: 24px;">
+                    Chưa có sản phẩm nào
+                </h3>
+                <p style="margin-bottom: 32px; font-size: 16px; line-height: 1.6;">
+                    Hãy thêm sản phẩm đầu tiên cho cửa hàng của bạn.<br>
+                    Bắt đầu bán hàng và phát triển kinh doanh ngay hôm nay!
+                </p>
+                <a href="/admin/products/add" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i>
+                    Thêm sản phẩm đầu tiên
+                </a>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    // View Toggle
+    let currentView = 'table';
+    
+    function toggleView(view) {
+        const tableView = document.getElementById('productsTable');
+        const gridView = document.getElementById('productsGrid');
+        const tableBtn = document.getElementById('tableViewBtn');
+        const gridBtn = document.getElementById('gridViewBtn');
+        
+        if (view === 'grid') {
+            tableView.style.display = 'none';
+            gridView.style.display = 'grid';
+            tableBtn.classList.remove('btn-primary');
+            tableBtn.classList.add('btn-outline');
+            gridBtn.classList.remove('btn-outline');
+            gridBtn.classList.add('btn-primary');
+            currentView = 'grid';
+        } else {
+            tableView.style.display = 'block';
+            gridView.style.display = 'none';
+            gridBtn.classList.remove('btn-primary');
+            gridBtn.classList.add('btn-outline');
+            tableBtn.classList.remove('btn-outline');
+            tableBtn.classList.add('btn-primary');
+            currentView = 'table';
+        }
+        
+        localStorage.setItem('adminProductsView', view);
+    }
+    
+    // Restore saved view
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('adminProductsView') || 'table';
+        toggleView(savedView);
+    });
+
+    // Real-time search
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        filterProducts();
+    });
+
+    // Category filter
+    document.getElementById('categoryFilter').addEventListener('change', filterProducts);
+
+    // Brand filter
+    document.getElementById('brandFilter').addEventListener('change', filterProducts);
+
+    // Status filter
+    document.getElementById('statusFilter').addEventListener('change', filterProducts);
+
+    function filterProducts() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+        const brandFilter = document.getElementById('brandFilter').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        // Filter table rows
+        const tableRows = document.querySelectorAll('#productsTable tbody tr');
+        const gridCards = document.querySelectorAll('#productsGrid .product-card');
+        
+        // Filter table view
+        tableRows.forEach(row => {
+            const productName = row.cells[1].textContent.toLowerCase();
+            const category = row.cells[2].textContent.toLowerCase();
+            const brand = row.cells[3].textContent.toLowerCase();
+            const statusElement = row.cells[6].querySelector('.status-badge');
+            const isActive = statusElement.textContent.includes('Đang bán');
+            
+            let shouldShow = true;
+            
+            // Search filter
+            if (searchTerm && !productName.includes(searchTerm) && !brand.includes(searchTerm)) {
+                shouldShow = false;
+            }
+            
+            // Category filter
+            if (categoryFilter && !category.includes(categoryFilter)) {
+                shouldShow = false;
+            }
+            
+            // Brand filter
+            if (brandFilter && !brand.includes(brandFilter)) {
+                shouldShow = false;
+            }
+            
+            // Status filter
+            if (statusFilter && 
+                ((statusFilter === 'active' && !isActive) || 
+                 (statusFilter === 'inactive' && isActive))) {
+                shouldShow = false;
+            }
+            
+            row.style.display = shouldShow ? '' : 'none';
+        });
+        
+        // Filter grid view
+        gridCards.forEach(card => {
+            const productName = card.querySelector('h4').textContent.toLowerCase();
+            const brand = card.querySelector('.product-brand')?.textContent.toLowerCase() || '';
+            const statusElement = card.querySelector('.status-badge');
+            const isActive = statusElement.textContent.includes('Đang bán');
+            
+            let shouldShow = true;
+            
+            // Search filter
+            if (searchTerm && !productName.includes(searchTerm) && !brand.includes(searchTerm)) {
+                shouldShow = false;
+            }
+            
+            // Status filter
+            if (statusFilter && 
+                ((statusFilter === 'active' && !isActive) || 
+                 (statusFilter === 'inactive' && isActive))) {
+                shouldShow = false;
+            }
+            
+            card.style.display = shouldShow ? 'block' : 'none';
+        });
+    }
+
+    // Add hover effects
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+                this.style.boxShadow = 'var(--shadow-lg)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'var(--shadow)';
+            });
+        });
+    });
+</script>
