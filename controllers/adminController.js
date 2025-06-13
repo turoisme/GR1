@@ -1,4 +1,4 @@
-// controllers/adminController.js - COMPLETE ADMIN MANAGEMENT SYSTEM
+// controllers/adminController.js - COMPLETE ADMIN MANAGEMENT SYSTEM WITH REVENUE TRACKING
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Order = require('../models/Order');
@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
  * 
  * Features:
  * - Advanced Order Management with Status Tracking
+ * - REVENUE TRACKING & STATISTICS
  * - User CRUD Operations with Bulk Actions
  * - Product Management with Analytics
  * - System Settings Management
@@ -19,7 +20,7 @@ const bcrypt = require('bcrypt');
  * - Security & Audit Logging
  * - Real-time Notifications
  * 
- * @version 2.0.0
+ * @version 2.1.0 - Added Revenue Tracking
  * @author SportShop Development Team
  */
 class AdminController {
@@ -32,22 +33,49 @@ class AdminController {
    */
   static async dashboard(req, res) {
     try {
-      // Get comprehensive dashboard statistics
-      const [totalProducts, totalUsers, totalOrders, recentOrders] = await Promise.all([
+      // Get comprehensive dashboard statistics with revenue
+      const [
+        totalProducts, 
+        totalUsers, 
+        totalOrders, 
+        recentOrders,
+        totalRevenue,
+        monthlyRevenue
+      ] = await Promise.all([
         Product.countDocuments(),
         User.countDocuments({ role: 'user' }),
         Order.countDocuments(),
         Order.find()
           .populate('userId', 'firstName lastName email')
           .sort({ createdAt: -1 })
-          .limit(5)
+          .limit(5),
+        // ✨ REVENUE: Tổng doanh thu từ đơn hàng đã giao
+        Order.aggregate([
+          { $match: { status: 'delivered', isCompleted: true } },
+          { $group: { _id: null, total: { $sum: '$finalTotal' } } }
+        ]),
+        // ✨ REVENUE: Doanh thu tháng này
+        Order.aggregate([
+          { 
+            $match: { 
+              status: 'delivered', 
+              isCompleted: true,
+              deliveredAt: { 
+                $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+              }
+            }
+          },
+          { $group: { _id: null, total: { $sum: '$finalTotal' } } }
+        ])
       ]);
 
       const dashboardData = {
         stats: {
           totalProducts,
           totalUsers,
-          totalOrders
+          totalOrders,
+          totalRevenue: totalRevenue[0]?.total || 0,
+          monthlyRevenue: monthlyRevenue[0]?.total || 0
         },
         recentOrders
       };
@@ -222,7 +250,7 @@ class AdminController {
   }
 
   /**
-   * Update order status with validation and logging
+   * ✨ ENHANCED: Update order status with REVENUE TRACKING
    * POST /admin/orders/:id/status
    */
   static async updateOrderStatus(req, res) {
@@ -254,6 +282,8 @@ class AdminController {
           message: 'Không tìm thấy đơn hàng!' 
         });
       }
+
+      const oldStatus = order.status; // Lưu trạng thái cũ để theo dõi revenue
 
       // Validate status transitions
       const statusTransitions = {
@@ -301,11 +331,18 @@ class AdminController {
           updateData.deliveredAt = new Date();
           updateData.deliveredBy = adminUser.id;
           updateData.paymentStatus = 'paid';
+          // 🎯 REVENUE TRACKING: Đánh dấu đã hoàn thành để tính doanh thu
+          updateData.isCompleted = true;
+          updateData.completedAt = new Date();
+          updateData.revenueRecorded = true; // Flag để tránh tính doanh thu nhiều lần
           break;
         case 'cancelled':
           updateData.cancelledAt = new Date();
           updateData.cancelledBy = adminUser.id;
           updateData.cancelReason = notes || 'Cancelled by admin';
+          // 🎯 REVENUE: Nếu đơn hàng bị hủy, không tính doanh thu
+          updateData.isCompleted = false;
+          updateData.revenueRecorded = false;
           break;
       }
 
@@ -328,17 +365,27 @@ class AdminController {
       // Update order
       await Order.findByIdAndUpdate(order._id, updateData);
 
-      // Send notification (TODO: implement email service)
+      // 🎯 REVENUE ANALYTICS: Cập nhật thống kê doanh thu
+      try {
+        await AdminController.updateRevenueStatistics(order, oldStatus, status, adminUser);
+      } catch (revenueError) {
+        console.warn('⚠️ Revenue update failed:', revenueError.message);
+        // Không fail toàn bộ request nếu revenue update lỗi
+      }
+
+      // Send notification
       try {
         await AdminController.sendOrderStatusNotification(order, status);
       } catch (notificationError) {
         console.warn('⚠️ Notification failed:', notificationError.message);
       }
 
-      console.log('🔄 Order status updated:', {
+      console.log('🔄 Order status updated with revenue tracking:', {
         orderId: order.orderId,
-        oldStatus: order.status,
+        oldStatus: oldStatus,
         newStatus: status,
+        revenueImpact: status === 'delivered' ? `+${order.finalTotal.toLocaleString('vi-VN')}đ` : 
+                      status === 'cancelled' && oldStatus === 'delivered' ? `-${order.finalTotal.toLocaleString('vi-VN')}đ` : 'None',
         adminUser: adminUser.email
       });
 
@@ -349,7 +396,8 @@ class AdminController {
           orderId: order.orderId,
           newStatus: status,
           statusText: AdminController.getStatusText(status),
-          trackingCode: updateData.trackingCode || order.trackingCode
+          trackingCode: updateData.trackingCode || order.trackingCode,
+          revenueImpact: status === 'delivered' ? order.finalTotal : 0
         }
       });
 
@@ -363,66 +411,97 @@ class AdminController {
   }
 
   /**
-   * Bulk update order statuses
-   * POST /admin/orders/bulk-update
+   * 🎯 NEW: Update revenue statistics when order status changes
    */
-  static async bulkUpdateOrderStatus(req, res) {
+  static async updateRevenueStatistics(order, oldStatus, newStatus, adminUser) {
     try {
-      const { orderIds, status, notes } = req.body;
-      const adminUser = req.session.user;
+      const now = new Date();
+      const revenueData = {
+        orderId: order.orderId,
+        orderTotal: order.finalTotal,
+        changeDate: now,
+        adminUser: adminUser.email,
+        oldStatus: oldStatus,
+        newStatus: newStatus
+      };
 
-      if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
-        return res.json({ 
-          success: false, 
-          message: 'Vui lòng chọn ít nhất một đơn hàng!' 
+      // Case 1: Đơn hàng chuyển thành "delivered" - TĂNG doanh thu
+      if (newStatus === 'delivered' && oldStatus !== 'delivered') {
+        console.log('💰 Revenue INCREASED:', {
+          orderId: order.orderId,
+          amount: `+${order.finalTotal.toLocaleString('vi-VN')}đ`,
+          from: oldStatus,
+          to: newStatus
+        });
+
+        // Có thể lưu vào bảng Revenue riêng hoặc cập nhật cache
+        await AdminController.recordRevenueChange({
+          ...revenueData,
+          type: 'increase',
+          amount: order.finalTotal,
+          description: `Đơn hàng ${order.orderId} đã giao thành công`
         });
       }
 
-      const validStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'cancelled'];
-      if (!validStatuses.includes(status)) {
-        return res.json({ 
-          success: false, 
-          message: 'Trạng thái không hợp lệ!' 
+      // Case 2: Đơn hàng từ "delivered" chuyển thành "cancelled" - GIẢM doanh thu
+      else if (newStatus === 'cancelled' && oldStatus === 'delivered') {
+        console.log('💸 Revenue DECREASED:', {
+          orderId: order.orderId,
+          amount: `-${order.finalTotal.toLocaleString('vi-VN')}đ`,
+          from: oldStatus,
+          to: newStatus
+        });
+
+        await AdminController.recordRevenueChange({
+          ...revenueData,
+          type: 'decrease',
+          amount: -order.finalTotal,
+          description: `Đơn hàng ${order.orderId} bị hủy sau khi đã giao`
         });
       }
 
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
-
-      for (const orderId of orderIds) {
-        try {
-          await AdminController.updateSingleOrderStatus(orderId, status, notes, adminUser);
-          successCount++;
-        } catch (error) {
-          errorCount++;
-          errors.push(`${orderId}: ${error.message}`);
-        }
+      // Case 3: Các trường hợp khác - chỉ ghi log
+      else {
+        console.log('📊 Order status changed (no revenue impact):', {
+          orderId: order.orderId,
+          from: oldStatus,
+          to: newStatus
+        });
       }
 
-      console.log('📦 Bulk order status update:', {
-        totalOrders: orderIds.length,
-        successCount,
-        errorCount,
-        adminUser: adminUser.email
-      });
+    } catch (error) {
+      console.error('❌ Revenue statistics update failed:', error);
+      throw error;
+    }
+  }
 
-      res.json({
-        success: successCount > 0,
-        message: `Đã cập nhật ${successCount} đơn hàng thành công${errorCount > 0 ? `, ${errorCount} đơn hàng lỗi` : ''}!`,
-        details: {
-          success: successCount,
-          errors: errorCount,
-          errorDetails: errors
-        }
+  /**
+   * 🎯 NEW: Record revenue changes for analytics
+   */
+  static async recordRevenueChange(changeData) {
+    try {
+      // Option 1: Lưu vào collection riêng (nếu có Revenue model)
+      // const RevenueLog = require('../models/RevenueLog');
+      // await RevenueLog.create(changeData);
+
+      // Option 2: Lưu vào Settings với key đặc biệt
+      const revenueKey = `revenue_log_${Date.now()}`;
+      await Settings.setSetting(revenueKey, changeData, changeData.adminUser);
+
+      // Option 3: Cập nhật tổng doanh thu trong cache
+      const currentRevenue = await Settings.getSetting('total_revenue') || 0;
+      const newRevenue = currentRevenue + changeData.amount;
+      await Settings.setSetting('total_revenue', newRevenue, changeData.adminUser);
+
+      console.log('📈 Revenue change recorded:', {
+        type: changeData.type,
+        amount: changeData.amount,
+        newTotal: newRevenue
       });
 
     } catch (error) {
-      console.error('❌ Admin Bulk Update Order Status Error:', error);
-      res.json({ 
-        success: false, 
-        message: 'Lỗi cập nhật hàng loạt: ' + error.message 
-      });
+      console.error('❌ Failed to record revenue change:', error);
+      throw error;
     }
   }
 
@@ -468,11 +547,16 @@ class AdminController {
         updateData.deliveredAt = new Date();
         updateData.deliveredBy = adminUser.id;
         updateData.paymentStatus = 'paid';
+        updateData.isCompleted = true;
+        updateData.completedAt = new Date();
+        updateData.revenueRecorded = true;
         break;
       case 'cancelled':
         updateData.cancelledAt = new Date();
         updateData.cancelledBy = adminUser.id;
         updateData.cancelReason = notes || 'Bulk cancellation by admin';
+        updateData.isCompleted = false;
+        updateData.revenueRecorded = false;
         break;
     }
 
@@ -492,6 +576,10 @@ class AdminController {
     updateData.$push = { orderHistory: historyEntry };
 
     await Order.findByIdAndUpdate(order._id, updateData);
+    
+    // Update revenue for bulk operations too
+    await AdminController.updateRevenueStatistics(order, order.status, status, adminUser);
+    
     return order;
   }
 
@@ -518,6 +606,82 @@ class AdminController {
     };
     return statusMap[status] || status;
   }
+
+  /**
+   * 🎯 NEW: Get revenue statistics
+   * GET /admin/api/revenue-stats
+   */
+  static async getRevenueStats(req, res) {
+    try {
+      const { period = 'month' } = req.query;
+      const now = new Date();
+      
+      let startDate;
+      switch (period) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      const revenueStats = await Order.aggregate([
+        {
+          $match: {
+            status: 'delivered',
+            isCompleted: true,
+            deliveredAt: { $gte: startDate }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$deliveredAt' },
+              month: { $month: '$deliveredAt' },
+              day: { $dayOfMonth: '$deliveredAt' }
+            },
+            totalRevenue: { $sum: '$finalTotal' },
+            orderCount: { $sum: 1 },
+            avgOrderValue: { $avg: '$finalTotal' }
+          }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+      ]);
+
+      const totalRevenue = revenueStats.reduce((sum, item) => sum + item.totalRevenue, 0);
+      const totalOrders = revenueStats.reduce((sum, item) => sum + item.orderCount, 0);
+
+      res.json({
+        success: true,
+        data: {
+          period: period,
+          totalRevenue: totalRevenue,
+          totalOrders: totalOrders,
+          avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+          dailyStats: revenueStats,
+          formattedRevenue: totalRevenue.toLocaleString('vi-VN') + 'đ'
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Revenue Stats Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi lấy thống kê doanh thu: ' + error.message
+      });
+    }
+  }
+
+  // Các method khác giữ nguyên từ file gốc...
 
   /**
    * Export orders to CSV
@@ -580,192 +744,6 @@ class AdminController {
       res.status(500).json({ 
         success: false, 
         message: 'Lỗi xuất dữ liệu đơn hàng: ' + error.message 
-      });
-    }
-  }
-
-  /**
-   * Search orders for autocomplete
-   * GET /admin/orders/search
-   */
-  static async searchOrders(req, res) {
-    try {
-      const { q: query, limit = 10 } = req.query;
-      
-      if (!query || query.length < 2) {
-        return res.json({ success: true, orders: [] });
-      }
-
-      const searchRegex = new RegExp(query, 'i');
-      const orders = await Order.find({
-        $or: [
-          { orderId: searchRegex },
-          { 'customer.name': searchRegex },
-          { 'customer.email': searchRegex },
-          { 'customer.phone': searchRegex }
-        ]
-      })
-      .select('orderId customer status finalTotal createdAt')
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
-
-      res.json({
-        success: true,
-        orders: orders.map(order => ({
-          id: order._id,
-          orderId: order.orderId,
-          customerName: order.customer.name,
-          status: AdminController.getStatusText(order.status),
-          total: order.finalTotal.toLocaleString('vi-VN') + 'đ',
-          createdAt: new Date(order.createdAt).toLocaleDateString('vi-VN')
-        }))
-      });
-
-    } catch (error) {
-      console.error('❌ Admin Search Orders Error:', error);
-      res.json({ success: false, message: error.message });
-    }
-  }
-
-  // ===== USER MANAGEMENT SYSTEM =====
-
-  /**
-   * List users with filtering
-   * GET /admin/users
-   */
-  static async listUsers(req, res) {
-    try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 20;
-      const skip = (page - 1) * limit;
-
-      let filterQuery = {};
-      
-      if (req.query.role && req.query.role !== 'all') {
-        filterQuery.role = req.query.role;
-      }
-      
-      if (req.query.status === 'active') {
-        filterQuery.isActive = true;
-      } else if (req.query.status === 'inactive') {
-        filterQuery.isActive = false;
-      }
-      
-      if (req.query.search) {
-        const searchRegex = new RegExp(req.query.search, 'i');
-        filterQuery.$or = [
-          { firstName: searchRegex },
-          { lastName: searchRegex },
-          { email: searchRegex },
-          { phone: searchRegex }
-        ];
-      }
-
-      const [users, totalUsers] = await Promise.all([
-        User.find(filterQuery)
-          .select('-password')
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit),
-        User.countDocuments(filterQuery)
-      ]);
-
-      const totalPages = Math.ceil(totalUsers / limit);
-
-      res.render('admin/users/list', {
-        title: 'Quản lý người dùng - SportShop',
-        currentPage: 'admin-users',
-        users,
-        filters: req.query,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-          total: totalUsers
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Admin List Users Error:', error);
-      res.status(500).render('error', { 
-        title: 'Lỗi - SportShop',
-        error: 'Không thể tải danh sách người dùng',
-        currentPage: 'error' 
-      });
-    }
-  }
-
-  /**
-   * View user details
-   * GET /admin/users/:id
-   */
-  static async viewUser(req, res) {
-    try {
-      const user = await User.findById(req.params.id).select('-password');
-      if (!user) {
-        req.flash('error', 'Không tìm thấy người dùng');
-        return res.redirect('/admin/users');
-      }
-
-      const [userOrders, userCart] = await Promise.all([
-        Order.find({ userId: user._id }).sort({ createdAt: -1 }).limit(10),
-        Cart.findOne({ userId: user._id }).populate('items.product')
-      ]);
-
-      res.render('admin/users/view', {
-        title: `${user.firstName} ${user.lastName} - SportShop`,
-        currentPage: 'admin-users',
-        user,
-        userOrders,
-        userCart
-      });
-
-    } catch (error) {
-      console.error('❌ Admin View User Error:', error);
-      req.flash('error', 'Không thể tải thông tin người dùng');
-      res.redirect('/admin/users');
-    }
-  }
-
-  /**
-   * Update user status
-   * POST /admin/users/:id/status
-   */
-  static async updateUserStatus(req, res) {
-    try {
-      const { isActive } = req.body;
-      const userId = req.params.id;
-      const currentUserId = req.session.user.id;
-
-      if (userId === currentUserId) {
-        return res.json({ 
-          success: false, 
-          message: 'Không thể thay đổi trạng thái tài khoản của chính mình!' 
-        });
-      }
-
-      await User.findByIdAndUpdate(userId, { 
-        isActive: isActive,
-        updatedAt: new Date()
-      });
-
-      console.log('🔄 User status updated:', {
-        userId: userId,
-        newStatus: isActive,
-        updatedBy: req.session.user.email
-      });
-
-      res.json({ 
-        success: true, 
-        message: `${isActive ? 'Kích hoạt' : 'Tạm dừng'} người dùng thành công!` 
-      });
-
-    } catch (error) {
-      console.error('❌ Admin Update User Status Error:', error);
-      res.json({ 
-        success: false, 
-        message: 'Lỗi cập nhật trạng thái: ' + error.message 
       });
     }
   }
@@ -937,6 +915,149 @@ class AdminController {
     } catch (error) {
       console.error('❌ Admin Delete Product Error:', error);
       res.json({ success: false, message: 'Lỗi xóa sản phẩm: ' + error.message });
+    }
+  }
+
+  // ===== USER MANAGEMENT SYSTEM =====
+
+  /**
+   * List users with filtering
+   * GET /admin/users
+   */
+  static async listUsers(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const skip = (page - 1) * limit;
+
+      let filterQuery = {};
+      
+      if (req.query.role && req.query.role !== 'all') {
+        filterQuery.role = req.query.role;
+      }
+      
+      if (req.query.status === 'active') {
+        filterQuery.isActive = true;
+      } else if (req.query.status === 'inactive') {
+        filterQuery.isActive = false;
+      }
+      
+      if (req.query.search) {
+        const searchRegex = new RegExp(req.query.search, 'i');
+        filterQuery.$or = [
+          { firstName: searchRegex },
+          { lastName: searchRegex },
+          { email: searchRegex },
+          { phone: searchRegex }
+        ];
+      }
+
+      const [users, totalUsers] = await Promise.all([
+        User.find(filterQuery)
+          .select('-password')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        User.countDocuments(filterQuery)
+      ]);
+
+      const totalPages = Math.ceil(totalUsers / limit);
+
+      res.render('admin/users/list', {
+        title: 'Quản lý người dùng - SportShop',
+        currentPage: 'admin-users',
+        users,
+        filters: req.query,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+          total: totalUsers
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Admin List Users Error:', error);
+      res.status(500).render('error', { 
+        title: 'Lỗi - SportShop',
+        error: 'Không thể tải danh sách người dùng',
+        currentPage: 'error' 
+      });
+    }
+  }
+
+  /**
+   * View user details
+   * GET /admin/users/:id
+   */
+  static async viewUser(req, res) {
+    try {
+      const user = await User.findById(req.params.id).select('-password');
+      if (!user) {
+        req.flash('error', 'Không tìm thấy người dùng');
+        return res.redirect('/admin/users');
+      }
+
+      const [userOrders, userCart] = await Promise.all([
+        Order.find({ userId: user._id }).sort({ createdAt: -1 }).limit(10),
+        Cart.findOne({ userId: user._id }).populate('items.product')
+      ]);
+
+      res.render('admin/users/view', {
+        title: `${user.firstName} ${user.lastName} - SportShop`,
+        currentPage: 'admin-users',
+        user,
+        userOrders,
+        userCart
+      });
+
+    } catch (error) {
+      console.error('❌ Admin View User Error:', error);
+      req.flash('error', 'Không thể tải thông tin người dùng');
+      res.redirect('/admin/users');
+    }
+  }
+
+  /**
+   * Update user status
+   * POST /admin/users/:id/status
+   */
+  static async updateUserStatus(req, res) {
+    try {
+      const { isActive } = req.body;
+      const userId = req.params.id;
+      const currentUserId = req.session.user.id;
+
+      if (userId === currentUserId) {
+        return res.json({ 
+          success: false, 
+          message: 'Không thể thay đổi trạng thái tài khoản của chính mình!' 
+        });
+      }
+
+      await User.findByIdAndUpdate(userId, { 
+        isActive: isActive,
+        updatedAt: new Date()
+      });
+
+      console.log('🔄 User status updated:', {
+        userId: userId,
+        newStatus: isActive,
+        updatedBy: req.session.user.email
+      });
+
+      res.json({ 
+        success: true, 
+        message: `${isActive ? 'Kích hoạt' : 'Tạm dừng'} người dùng thành công!` 
+      });
+
+    } catch (error) {
+      console.error('❌ Admin Update User Status Error:', error);
+      res.json({ 
+        success: false, 
+        message: 'Lỗi cập nhật trạng thái: ' + error.message 
+      });
     }
   }
 
@@ -1146,7 +1267,7 @@ class AdminController {
   }
 
   /**
-   * Get dashboard summary statistics
+   * 🎯 ENHANCED: Get dashboard summary statistics with revenue
    * GET /admin/api/stats/overview
    */
   static async getStatsOverview(req, res) {
@@ -1158,15 +1279,38 @@ class AdminController {
       const [
         totalProducts, totalUsers, totalOrders,
         ordersToday, ordersThisMonth,
-        revenueThisMonth
+        totalRevenue, revenueThisMonth, revenueToday
       ] = await Promise.all([
         Product.countDocuments(),
         User.countDocuments({ role: 'user' }),
         Order.countDocuments(),
         Order.countDocuments({ createdAt: { $gte: startOfToday } }),
         Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
+        // 🎯 REVENUE: Tổng doanh thu tất cả thời gian
         Order.aggregate([
-          { $match: { createdAt: { $gte: startOfMonth }, status: { $ne: 'cancelled' } } },
+          { $match: { status: 'delivered', isCompleted: true } },
+          { $group: { _id: null, total: { $sum: '$finalTotal' } } }
+        ]),
+        // 🎯 REVENUE: Doanh thu tháng này
+        Order.aggregate([
+          { 
+            $match: { 
+              status: 'delivered', 
+              isCompleted: true,
+              deliveredAt: { $gte: startOfMonth }
+            }
+          },
+          { $group: { _id: null, total: { $sum: '$finalTotal' } } }
+        ]),
+        // 🎯 REVENUE: Doanh thu hôm nay
+        Order.aggregate([
+          { 
+            $match: { 
+              status: 'delivered', 
+              isCompleted: true,
+              deliveredAt: { $gte: startOfToday }
+            }
+          },
           { $group: { _id: null, total: { $sum: '$finalTotal' } } }
         ])
       ]);
@@ -1179,7 +1323,15 @@ class AdminController {
           totalOrders,
           ordersToday,
           ordersThisMonth,
-          revenueThisMonth: revenueThisMonth[0]?.total || 0
+          totalRevenue: totalRevenue[0]?.total || 0,
+          revenueThisMonth: revenueThisMonth[0]?.total || 0,
+          revenueToday: revenueToday[0]?.total || 0,
+          // 🎯 FORMATTED: Doanh thu đã format
+          formattedRevenue: {
+            total: (totalRevenue[0]?.total || 0).toLocaleString('vi-VN') + 'đ',
+            month: (revenueThisMonth[0]?.total || 0).toLocaleString('vi-VN') + 'đ',
+            today: (revenueToday[0]?.total || 0).toLocaleString('vi-VN') + 'đ'
+          }
         }
       });
 
@@ -1393,6 +1545,157 @@ class AdminController {
   }
 
   /**
+   * Get quick stats for admin header
+   * GET /admin/api/quick-stats
+   */
+  static async getQuickStats(req, res) {
+    try {
+      const [pendingOrders, lowStockProducts, newUsersToday] = await Promise.all([
+        Order.countDocuments({ status: 'pending' }),
+        Product.countDocuments({ stockQuantity: { $lt: 5 } }),
+        User.countDocuments({ 
+          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+          role: 'user'
+        })
+      ]);
+
+      res.json({
+        success: true,
+        stats: {
+          pendingOrders,
+          lowStockProducts,
+          newUsersToday,
+          alerts: {
+            hasLowStock: lowStockProducts > 0,
+            hasPendingOrders: pendingOrders > 0,
+            hasNewUsers: newUsersToday > 0
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Quick Stats Error:', error);
+      res.json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // ===== BULK UPDATE OPERATIONS =====
+
+  /**
+   * Bulk update order statuses
+   * POST /admin/orders/bulk-update
+   */
+  static async bulkUpdateOrderStatus(req, res) {
+    try {
+      const { orderIds, status, notes } = req.body;
+      const adminUser = req.session.user;
+
+      if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+        return res.json({ 
+          success: false, 
+          message: 'Vui lòng chọn ít nhất một đơn hàng!' 
+        });
+      }
+
+      const validStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.json({ 
+          success: false, 
+          message: 'Trạng thái không hợp lệ!' 
+        });
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      for (const orderId of orderIds) {
+        try {
+          await AdminController.updateSingleOrderStatus(orderId, status, notes, adminUser);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`${orderId}: ${error.message}`);
+        }
+      }
+
+      console.log('📦 Bulk order status update:', {
+        totalOrders: orderIds.length,
+        successCount,
+        errorCount,
+        adminUser: adminUser.email
+      });
+
+      res.json({
+        success: successCount > 0,
+        message: `Đã cập nhật ${successCount} đơn hàng thành công${errorCount > 0 ? `, ${errorCount} đơn hàng lỗi` : ''}!`,
+        details: {
+          success: successCount,
+          errors: errorCount,
+          errorDetails: errors
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Admin Bulk Update Order Status Error:', error);
+      res.json({ 
+        success: false, 
+        message: 'Lỗi cập nhật hàng loạt: ' + error.message 
+      });
+    }
+  }
+
+  // ===== SEARCH & FILTER OPERATIONS =====
+
+  /**
+   * Search orders for autocomplete
+   * GET /admin/orders/search
+   */
+  static async searchOrders(req, res) {
+    try {
+      const { q: query, limit = 10 } = req.query;
+      
+      if (!query || query.length < 2) {
+        return res.json({ success: true, orders: [] });
+      }
+
+      const searchRegex = new RegExp(query, 'i');
+      const orders = await Order.find({
+        $or: [
+          { orderId: searchRegex },
+          { 'customer.name': searchRegex },
+          { 'customer.email': searchRegex },
+          { 'customer.phone': searchRegex }
+        ]
+      })
+      .select('orderId customer status finalTotal createdAt')
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+      res.json({
+        success: true,
+        orders: orders.map(order => ({
+          id: order._id,
+          orderId: order.orderId,
+          customerName: order.customer.name,
+          status: AdminController.getStatusText(order.status),
+          total: order.finalTotal.toLocaleString('vi-VN') + 'đ',
+          createdAt: new Date(order.createdAt).toLocaleDateString('vi-VN')
+        }))
+      });
+
+    } catch (error) {
+      console.error('❌ Admin Search Orders Error:', error);
+      res.json({ success: false, message: error.message });
+    }
+  }
+
+  // ===== DATA EXPORT/IMPORT =====
+
+  /**
    * Export all system data
    * GET /admin/export/all-data
    */
@@ -1439,6 +1742,8 @@ class AdminController {
       });
     }
   }
+
+  // ===== MAINTENANCE & CLEANUP =====
 
   /**
    * Data cleanup operations
@@ -1488,44 +1793,6 @@ class AdminController {
       res.json({
         success: false,
         message: 'Lỗi dọn dẹp dữ liệu: ' + error.message
-      });
-    }
-  }
-
-  /**
-   * Get quick stats for admin header
-   * GET /admin/api/quick-stats
-   */
-  static async getQuickStats(req, res) {
-    try {
-      const [pendingOrders, lowStockProducts, newUsersToday] = await Promise.all([
-        Order.countDocuments({ status: 'pending' }),
-        Product.countDocuments({ stockQuantity: { $lt: 5 } }),
-        User.countDocuments({ 
-          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-          role: 'user'
-        })
-      ]);
-
-      res.json({
-        success: true,
-        stats: {
-          pendingOrders,
-          lowStockProducts,
-          newUsersToday,
-          alerts: {
-            hasLowStock: lowStockProducts > 0,
-            hasPendingOrders: pendingOrders > 0,
-            hasNewUsers: newUsersToday > 0
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Quick Stats Error:', error);
-      res.json({
-        success: false,
-        message: error.message
       });
     }
   }

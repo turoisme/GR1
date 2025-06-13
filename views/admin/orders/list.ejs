@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý đơn hàng - SportShop Admin</title>
+    <title><%= title %></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -343,9 +343,19 @@
             color: #856404;
         }
 
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
         .status-processing {
             background: #d4edda;
             color: #155724;
+        }
+
+        .status-shipping {
+            background: #cce5ff;
+            color: #004085;
         }
 
         .status-shipped {
@@ -368,6 +378,86 @@
             gap: 8px;
         }
 
+        /* Customer Info */
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .customer-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .customer-email {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Order ID Cell */
+        .order-id-cell h4 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .order-id-cell p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        /* Items Info */
+        .items-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .items-count {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .items-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Amount Cell */
+        .amount-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .total-amount {
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 2px;
+        }
+
+        .shipping-fee {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Date Cell */
+        .date-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .date-main {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .date-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
         /* Pagination */
         .pagination {
             display: flex;
@@ -385,6 +475,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
 
         .pagination-btn:hover {
@@ -399,6 +490,138 @@
         }
 
         .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* Status Update Modal */
+        .status-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .status-modal.show {
+            display: flex;
+        }
+
+        .status-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .status-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .status-option {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .status-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .status-option-icon {
+            font-size: 1.2rem;
+        }
+
+        .status-option-text {
+            font-weight: 500;
+        }
+
+        .status-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e2e8f0;
+        }
+
+        .modal-btn-confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #5a6fd8;
+        }
+
+        .modal-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -436,6 +659,11 @@
 
             .search-box input {
                 width: 200px;
+            }
+
+            .status-modal-content {
+                margin: 20px;
+                padding: 20px;
             }
         }
 
@@ -561,8 +789,8 @@
                     <select id="statusFilter" onchange="filterOrders()">
                         <option value="">Tất cả</option>
                         <option value="pending">Chờ xử lý</option>
-                        <option value="processing">Đang xử lý</option>
-                        <option value="shipped">Đã gửi</option>
+                        <option value="confirmed">Đã xác nhận</option>
+                        <option value="shipping">Đang giao</option>
                         <option value="delivered">Đã giao</option>
                         <option value="cancelled">Đã hủy</option>
                     </select>
@@ -624,117 +852,199 @@
                             </tr>
                         </thead>
                         <tbody id="ordersTableBody">
-                            <!-- Sample data -->
-                            <tr>
-                                <td><input type="checkbox" class="order-checkbox" value="1"></td>
-                                <td>
-                                    <div class="order-info">
-                                        <div class="order-details">
-                                            <h4>#ORD-001</h4>
-                                            <p>ID: 67890</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong>Nguyễn Văn A</strong><br>
-                                        <small>nguyenvana@email.com</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong>3 sản phẩm</strong><br>
-                                        <small>Giày Nike, Áo Adidas...</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong>2.450.000₫</strong>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-processing">Đang xử lý</span>
-                                </td>
-                                <td>15/01/2024</td>
-                                <td>
-                                    <div class="action-buttons-cell">
-                                        <button class="btn btn-sm btn-primary" onclick="viewOrder(1)" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-success" onclick="updateOrderStatus(1)" title="Cập nhật">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" onclick="cancelOrder(1)" title="Hủy đơn">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox" class="order-checkbox" value="2"></td>
-                                <td>
-                                    <div class="order-info">
-                                        <div class="order-details">
-                                            <h4>#ORD-002</h4>
-                                            <p>ID: 67891</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong>Trần Thị B</strong><br>
-                                        <small>tranthib@email.com</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong>2 sản phẩm</strong><br>
-                                        <small>Quần Under Armour...</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong>1.800.000₫</strong>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-shipped">Đã gửi</span>
-                                </td>
-                                <td>14/01/2024</td>
-                                <td>
-                                    <div class="action-buttons-cell">
-                                        <button class="btn btn-sm btn-primary" onclick="viewOrder(2)" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-success" onclick="updateOrderStatus(2)" title="Cập nhật">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" onclick="cancelOrder(2)" title="Hủy đơn">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <!-- ✅ HIỂN THỊ DỮ LIỆU THẬT TỪ DATABASE -->
+                            <% if (orders && orders.length > 0) { %>
+                                <% orders.forEach((order, index) => { %>
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="order-checkbox" value="<%= order._id %>">
+                                        </td>
+                                        <td>
+                                            <div class="order-id-cell">
+                                                <h4><%= order.orderId %></h4>
+                                                <p>ID: <%= order._id.toString().substring(0, 8) %>...</p>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="customer-info">
+                                                <div class="customer-name"><%= order.customer.name %></div>
+                                                <div class="customer-email"><%= order.customer.email %></div>
+                                                <% if (order.customer.phone) { %>
+                                                    <div style="font-size: 0.8rem; color: #666;">📱 <%= order.customer.phone %></div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="items-info">
+                                                <div class="items-count"><%= order.totalItems %> sản phẩm</div>
+                                                <% if (order.items && order.items.length > 0) { %>
+                                                    <div class="items-details">
+                                                        <%= order.items.slice(0, 2).map(item => item.productName).join(', ') %>
+                                                        <% if (order.items.length > 2) { %>
+                                                            và <%= order.items.length - 2 %> sản phẩm khác
+                                                        <% } %>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="amount-cell">
+                                                <div class="total-amount"><%= order.finalTotal.toLocaleString('vi-VN') %>₫</div>
+                                                <% if (order.shippingFee > 0) { %>
+                                                    <div class="shipping-fee">(+ <%= order.shippingFee.toLocaleString('vi-VN') %>₫ ship)</div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                const statusConfig = {
+                                                    'pending': { text: 'Chờ xử lý', class: 'status-pending' },
+                                                    'confirmed': { text: 'Đã xác nhận', class: 'status-confirmed' },
+                                                    'shipping': { text: 'Đang giao', class: 'status-shipping' },
+                                                    'delivered': { text: 'Đã giao', class: 'status-delivered' },
+                                                    'cancelled': { text: 'Đã hủy', class: 'status-cancelled' }
+                                                };
+                                                const status = statusConfig[order.status] || statusConfig['pending'];
+                                            %>
+                                            <span class="status-badge <%= status.class %>">
+                                                <%= status.text %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="date-cell">
+                                                <div class="date-main"><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></div>
+                                                <div class="date-time"><%= new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons-cell">
+                                                <button class="btn btn-sm btn-primary" onclick="viewOrder('<%= order._id %>')" title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-success" onclick="updateOrderStatus('<%= order._id %>')" title="Cập nhật">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <% if (order.status !== 'delivered' && order.status !== 'cancelled') { %>
+                                                    <button class="btn btn-sm btn-danger" onclick="cancelOrder('<%= order._id %>')" title="Hủy đơn">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <!-- Empty State -->
+                                <tr>
+                                    <td colspan="8" class="empty-state">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <h3>Chưa có đơn hàng nào</h3>
+                                        <p>
+                                            <% if (filters && (filters.search || filters.status || filters.fromDate)) { %>
+                                                Không tìm thấy đơn hàng nào phù hợp với bộ lọc hiện tại.<br>
+                                                <button class="btn btn-secondary btn-sm" onclick="clearFilters()" style="margin-top: 10px;">
+                                                    <i class="fas fa-times"></i> Xóa bộ lọc
+                                                </button>
+                                            <% } else { %>
+                                                Khi khách hàng đặt hàng, đơn hàng sẽ hiển thị ở đây.<br>
+                                                <small style="color: #9ca3af;">💡 Kiểm tra xem quá trình checkout có hoạt động đúng không.</small>
+                                            <% } %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Pagination -->
                 <div class="pagination">
-                    <button class="pagination-btn" disabled>
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button class="pagination-btn active">1</button>
-                    <button class="pagination-btn">2</button>
-                    <button class="pagination-btn">3</button>
-                    <button class="pagination-btn">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    <div style="margin-left: 20px; color: #666; font-size: 0.9rem;">
-                        Hiển thị 1-25 trong 47 đơn hàng
-                    </div>
+                    <% if (pagination && pagination.total > 0) { %>
+                        <% if (pagination.hasPrev) { %>
+                            <a href="?page=<%= pagination.currentPage - 1 %>" class="pagination-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        <% } else { %>
+                            <button class="pagination-btn" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        <% } %>
+                        
+                        <% 
+                            const startPage = Math.max(1, pagination.currentPage - 2);
+                            const endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+                        %>
+                        
+                        <% for (let i = startPage; i <= endPage; i++) { %>
+                            <% if (i === pagination.currentPage) { %>
+                                <button class="pagination-btn active"><%= i %></button>
+                            <% } else { %>
+                                <a href="?page=<%= i %>" class="pagination-btn"><%= i %></a>
+                            <% } %>
+                        <% } %>
+                        
+                        <% if (pagination.hasNext) { %>
+                            <a href="?page=<%= pagination.currentPage + 1 %>" class="pagination-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        <% } else { %>
+                            <button class="pagination-btn" disabled>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        <% } %>
+                        
+                        <div style="margin-left: 20px; color: #666; font-size: 0.9rem;">
+                            Hiển thị <%= Math.min(pagination.limit, pagination.total) %> trong <%= pagination.total %> đơn hàng
+                            (Trang <%= pagination.currentPage %>/<%= pagination.totalPages %>)
+                        </div>
+                    <% } else { %>
+                        <div style="color: #666; font-size: 0.9rem;">
+                            Không có dữ liệu để hiển thị
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Status Update Modal -->
+    <div class="status-modal" id="statusModal">
+        <div class="status-modal-content">
+            <h3>Cập nhật trạng thái đơn hàng</h3>
+            <div class="status-options" id="statusOptions">
+                <div class="status-option" data-status="pending">
+                    <span class="status-option-icon">⏳</span>
+                    <span class="status-option-text">Chờ xử lý</span>
+                </div>
+                <div class="status-option" data-status="confirmed">
+                    <span class="status-option-icon">✅</span>
+                    <span class="status-option-text">Đã xác nhận</span>
+                </div>
+                <div class="status-option" data-status="shipping">
+                    <span class="status-option-icon">🚚</span>
+                    <span class="status-option-text">Đang giao</span>
+                </div>
+                <div class="status-option" data-status="delivered">
+                    <span class="status-option-icon">📦</span>
+                    <span class="status-option-text">Đã giao</span>
+                </div>
+                <div class="status-option" data-status="cancelled">
+                    <span class="status-option-icon">❌</span>
+                    <span class="status-option-text">Đã hủy</span>
+                </div>
+            </div>
+            <div class="status-modal-actions">
+                <button class="modal-btn modal-btn-cancel" onclick="closeStatusModal()">Hủy</button>
+                <button class="modal-btn modal-btn-confirm" id="confirmStatusBtn" onclick="confirmStatusUpdate()" disabled>Cập nhật</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Global variables for status modal
+        let currentOrderId = '';
+        let selectedStatus = '';
+
         // Filter orders
         function filterOrders() {
             console.log('Filtering orders...');
@@ -772,30 +1082,100 @@
             window.location.href = `/admin/orders/${id}`;
         }
 
-        // Update order status
+        // Update order status - NEW VERSION with Modal
         function updateOrderStatus(id) {
-            const newStatus = prompt('Chọn trạng thái mới:\n1. pending\n2. processing\n3. shipped\n4. delivered\n5. cancelled');
-            const statusMap = {
-                '1': 'pending',
-                '2': 'processing', 
-                '3': 'shipped',
-                '4': 'delivered',
-                '5': 'cancelled'
-            };
+            currentOrderId = id;
+            selectedStatus = '';
             
-            if (statusMap[newStatus]) {
-                // Call API to update status
+            // Reset modal state
+            document.querySelectorAll('.status-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.getElementById('confirmStatusBtn').disabled = true;
+            
+            // Show modal
+            document.getElementById('statusModal').classList.add('show');
+        }
+
+        // Close status modal
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('show');
+            currentOrderId = '';
+            selectedStatus = '';
+        }
+
+        // Handle status option selection
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.status-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.status-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    selectedStatus = this.dataset.status;
+                    
+                    // Enable confirm button
+                    document.getElementById('confirmStatusBtn').disabled = false;
+                });
+            });
+        });
+
+        // Confirm status update
+        function confirmStatusUpdate() {
+            if (!selectedStatus || !currentOrderId) {
+                showNotification('Vui lòng chọn trạng thái!', 'warning');
+                return;
+            }
+
+            // Call API to update status
+            fetch(`/admin/orders/${currentOrderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: selectedStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Cập nhật trạng thái thành công!', 'success');
+                    closeStatusModal();
+                    location.reload();
+                } else {
+                    showNotification('Lỗi: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Có lỗi xảy ra!', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('statusModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeStatusModal();
+            }
+        });
+
+        // Cancel order
+        function cancelOrder(id) {
+            if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+                // Call API to cancel order
                 fetch(`/admin/orders/${id}/status`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ status: statusMap[newStatus] })
+                    body: JSON.stringify({ status: 'cancelled' })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showNotification('Cập nhật trạng thái thành công!', 'success');
+                        showNotification('Đơn hàng đã được hủy!', 'success');
                         location.reload();
                     } else {
                         showNotification('Lỗi: ' + data.message, 'error');
@@ -807,13 +1187,6 @@
             }
         }
 
-        // Cancel order
-        function cancelOrder(id) {
-            if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-                updateOrderStatus(id, 'cancelled');
-            }
-        }
-
         // Refresh orders
         function refreshOrders() {
             location.reload();
@@ -822,10 +1195,10 @@
         // Export orders
         function exportOrders() {
             showNotification('Đang xuất dữ liệu...', 'success');
-            // Implement export functionality
+            window.open('/admin/orders/export', '_blank');
         }
 
-        // Bulk update status
+        // Bulk update status - IMPROVED VERSION
         function bulkUpdateStatus() {
             const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
             if (selectedOrders.length === 0) {
@@ -833,23 +1206,98 @@
                 return;
             }
             
-            const newStatus = prompt('Cập nhật trạng thái cho ' + selectedOrders.length + ' đơn hàng:\n1. pending\n2. processing\n3. shipped\n4. delivered\n5. cancelled');
-            const statusMap = {
-                '1': 'pending',
-                '2': 'processing', 
-                '3': 'shipped',
-                '4': 'delivered',
-                '5': 'cancelled'
-            };
+            // Use the same modal for bulk update
+            currentOrderId = selectedOrders; // Store array of IDs
+            selectedStatus = '';
             
-            if (statusMap[newStatus]) {
-                showNotification(`Đã cập nhật ${selectedOrders.length} đơn hàng!`, 'success');
+            // Reset modal state
+            document.querySelectorAll('.status-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.getElementById('confirmStatusBtn').disabled = true;
+            
+            // Update modal title for bulk update
+            document.querySelector('.status-modal h3').textContent = `Cập nhật trạng thái cho ${selectedOrders.length} đơn hàng`;
+            
+            // Show modal
+            document.getElementById('statusModal').classList.add('show');
+        }
+
+        // Updated confirm function to handle both single and bulk updates
+        function confirmStatusUpdate() {
+            if (!selectedStatus) {
+                showNotification('Vui lòng chọn trạng thái!', 'warning');
+                return;
             }
+
+            const isArray = Array.isArray(currentOrderId);
+            const orders = isArray ? currentOrderId : [currentOrderId];
+            
+            if (isArray) {
+                // Bulk update
+                Promise.all(orders.map(orderId => 
+                    fetch(`/admin/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status: selectedStatus })
+                    })
+                ))
+                .then(responses => Promise.all(responses.map(r => r.json())))
+                .then(results => {
+                    const successCount = results.filter(r => r.success).length;
+                    showNotification(`Đã cập nhật ${successCount}/${orders.length} đơn hàng!`, 'success');
+                    closeStatusModal();
+                    location.reload();
+                })
+                .catch(error => {
+                    showNotification('Có lỗi xảy ra khi cập nhật hàng loạt!', 'error');
+                    console.error('Error:', error);
+                });
+            } else {
+                // Single update
+                fetch(`/admin/orders/${currentOrderId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: selectedStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Cập nhật trạng thái thành công!', 'success');
+                        closeStatusModal();
+                        location.reload();
+                    } else {
+                        showNotification('Lỗi: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Có lỗi xảy ra!', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        // Updated close modal function
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('show');
+            currentOrderId = '';
+            selectedStatus = '';
+            
+            // Reset modal title
+            document.querySelector('.status-modal h3').textContent = 'Cập nhật trạng thái đơn hàng';
         }
 
         // Change items per page
         function changeItemsPerPage() {
-            console.log('Changed items per page');
+            const itemsPerPage = document.getElementById('itemsPerPage').value;
+            const url = new URL(window.location);
+            url.searchParams.set('limit', itemsPerPage);
+            url.searchParams.set('page', 1);
+            window.location = url;
         }
 
         // Show notification
@@ -862,13 +1310,77 @@
             setTimeout(() => notification.classList.add('show'), 100);
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => document.body.removeChild(notification), 300);
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
             }, 3000);
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Orders management initialized');
+            
+            // Set current filter values from URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('status')) {
+                document.getElementById('statusFilter').value = urlParams.get('status');
+            }
+            if (urlParams.get('fromDate')) {
+                document.getElementById('fromDate').value = urlParams.get('fromDate');
+            }
+            if (urlParams.get('toDate')) {
+                document.getElementById('toDate').value = urlParams.get('toDate');
+            }
+            if (urlParams.get('search')) {
+                document.getElementById('searchInput').value = urlParams.get('search');
+            }
+        });
+
+        // Real-time filter functionality
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const minAmount = document.getElementById('minAmount').value;
+            const maxAmount = document.getElementById('maxAmount').value;
+            const search = document.getElementById('searchInput').value;
+            
+            const url = new URL(window.location);
+            url.searchParams.set('page', 1);
+            
+            if (status) url.searchParams.set('status', status);
+            else url.searchParams.delete('status');
+            
+            if (fromDate) url.searchParams.set('fromDate', fromDate);
+            else url.searchParams.delete('fromDate');
+            
+            if (toDate) url.searchParams.set('toDate', toDate);
+            else url.searchParams.delete('toDate');
+            
+            if (search) url.searchParams.set('search', search);
+            else url.searchParams.delete('search');
+            
+            window.location = url;
+        }
+
+        // Update filter functions to use real filtering
+        function filterOrders() {
+            applyFilters();
+        }
+
+        function searchOrders() {
+            applyFilters();
+        }
+
+        // Debounce search input
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
         });
     </script>
 </body>
