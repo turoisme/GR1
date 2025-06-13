@@ -154,10 +154,32 @@
             z-index: 100;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .header-left h1 {
             font-size: 1.8rem;
             color: #333;
             font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #f1f5f9;
+            color: #333;
         }
 
         .header-right {
@@ -272,6 +294,9 @@
             font-weight: 700;
             color: #333;
             margin-bottom: 5px;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
         }
 
         .stat-label {
@@ -443,6 +468,47 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(51, 51, 51, 0.3);
+            border-radius: 50%;
+            border-top-color: #333;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #ef4444;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -496,21 +562,6 @@
             .mobile-menu-btn {
                 display: block;
             }
-        }
-
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -579,6 +630,9 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h1>Dashboard</h1>
+                <button class="refresh-btn" onclick="refreshStats()" title="Refresh dữ liệu">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                </button>
             </div>
             <div class="header-right">
                 <div class="user-menu">
@@ -620,11 +674,13 @@
                             <i class="fas fa-shopping-cart"></i>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalOrders">1,247</div>
+                    <div class="stat-value" id="totalOrders">
+                        <div class="loading"></div>
+                    </div>
                     <div class="stat-label">Tổng đơn hàng</div>
-                    <div class="stat-trend trend-up">
+                    <div class="stat-trend trend-up" id="ordersToday">
                         <i class="fas fa-arrow-up"></i>
-                        +12% so với tháng trước
+                        <span>Hôm nay: <span id="ordersTodayCount">...</span></span>
                     </div>
                 </div>
 
@@ -634,11 +690,13 @@
                             <i class="fas fa-box"></i>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalProducts">356</div>
+                    <div class="stat-value" id="totalProducts">
+                        <div class="loading"></div>
+                    </div>
                     <div class="stat-label">Sản phẩm</div>
                     <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        +5% so với tháng trước
+                        <i class="fas fa-info-circle"></i>
+                        <span>Đang hoạt động</span>
                     </div>
                 </div>
 
@@ -648,11 +706,13 @@
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalUsers">8,432</div>
+                    <div class="stat-value" id="totalUsers">
+                        <div class="loading"></div>
+                    </div>
                     <div class="stat-label">Khách hàng</div>
-                    <div class="stat-trend trend-up">
+                    <div class="stat-trend trend-up" id="usersThisMonth">
                         <i class="fas fa-arrow-up"></i>
-                        +18% so với tháng trước
+                        <span>Tháng này: <span id="usersThisMonthCount">...</span></span>
                     </div>
                 </div>
 
@@ -662,11 +722,13 @@
                             <i class="fas fa-dollar-sign"></i>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalRevenue">2.4M</div>
+                    <div class="stat-value" id="totalRevenue">
+                        <div class="loading"></div>
+                    </div>
                     <div class="stat-label">Doanh thu (VNĐ)</div>
-                    <div class="stat-trend trend-up">
+                    <div class="stat-trend trend-up" id="revenueToday">
                         <i class="fas fa-arrow-up"></i>
-                        +23% so với tháng trước
+                        <span>Hôm nay: <span id="revenueTodayAmount">...</span></span>
                     </div>
                 </div>
             </div>
@@ -686,6 +748,7 @@
                         <div style="text-align: center;">
                             <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i>
                             <br>Biểu đồ doanh thu theo thời gian
+                            <br><small style="color: #94a3b8;">Dữ liệu: <span id="revenueChartData">Đang tải...</span></small>
                         </div>
                     </div>
                 </div>
@@ -698,6 +761,7 @@
                         <div style="text-align: center;">
                             <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i>
                             <br>Sản phẩm bán chạy nhất
+                            <br><small style="color: #94a3b8;">Dữ liệu: <span id="topProductsData">Đang tải...</span></small>
                         </div>
                     </div>
                 </div>
@@ -709,32 +773,14 @@
                     <div class="activity-header">
                         <h3>Đơn hàng gần đây</h3>
                     </div>
-                    <div class="activity-list">
+                    <div class="activity-list" id="recentOrders">
                         <div class="activity-item">
                             <div class="activity-icon new-order">
-                                <i class="fas fa-shopping-cart"></i>
+                                <i class="fas fa-spinner fa-spin"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-title">Đơn hàng #1247 - Nguyễn Văn A</div>
-                                <div class="activity-time">2 phút trước</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon new-order">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Đơn hàng #1246 - Trần Thị B</div>
-                                <div class="activity-time">15 phút trước</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon new-order">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Đơn hàng #1245 - Lê Văn C</div>
-                                <div class="activity-time">1 giờ trước</div>
+                                <div class="activity-title">Đang tải đơn hàng...</div>
+                                <div class="activity-time">Vui lòng chờ</div>
                             </div>
                         </div>
                     </div>
@@ -747,29 +793,29 @@
                     <div class="activity-list">
                         <div class="activity-item">
                             <div class="activity-icon new-user">
-                                <i class="fas fa-user-plus"></i>
+                                <i class="fas fa-server"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-title">Người dùng mới đăng ký</div>
-                                <div class="activity-time">5 phút trước</div>
+                                <div class="activity-title">Hệ thống hoạt động bình thường</div>
+                                <div class="activity-time">Cập nhật: <span id="systemTime">...</span></div>
                             </div>
                         </div>
                         <div class="activity-item">
                             <div class="activity-icon product-update">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-database"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-title">Cập nhật sản phẩm</div>
-                                <div class="activity-time">30 phút trước</div>
+                                <div class="activity-title">Database kết nối</div>
+                                <div class="activity-time">Trạng thái: <span id="dbStatus">Đang kiểm tra...</span></div>
                             </div>
                         </div>
                         <div class="activity-item">
                             <div class="activity-icon new-user">
-                                <i class="fas fa-user-plus"></i>
+                                <i class="fas fa-shield-alt"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-title">Người dùng mới đăng ký</div>
-                                <div class="activity-time">2 giờ trước</div>
+                                <div class="activity-title">Bảo mật hệ thống</div>
+                                <div class="activity-time">Không có cảnh báo</div>
                             </div>
                         </div>
                     </div>
@@ -779,7 +825,12 @@
     </div>
 
     <script>
-        // Toggle Sidebar
+        // ✅ GLOBAL VARIABLES
+        let isLoading = false;
+        let lastUpdateTime = null;
+        let autoRefreshInterval = null;
+
+        // ✅ UTILITY FUNCTIONS
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
@@ -788,45 +839,295 @@
             mainContent.classList.toggle('expanded');
         }
 
-        // Mobile Menu Toggle
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('mobile-open');
         }
 
-        // Load dashboard stats from API
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function getTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffInMinutes < 1) return 'Vừa xong';
+            if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
+            if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} giờ trước`;
+            return `${Math.floor(diffInMinutes / 1440)} ngày trước`;
+        }
+
+        // ✅ MAIN FUNCTION: Load dashboard stats
         async function loadDashboardStats() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            console.log('📊 Loading dashboard stats from API...');
+            
             try {
                 const response = await fetch('/admin/api/stats/overview');
-                const data = await response.json();
                 
-                if (data.success) {
-                    document.getElementById('totalOrders').textContent = data.data.totalOrders.toLocaleString();
-                    document.getElementById('totalProducts').textContent = data.data.totalProducts.toLocaleString();
-                    document.getElementById('totalUsers').textContent = data.data.totalUsers.toLocaleString();
-                    document.getElementById('totalRevenue').textContent = (data.data.totalRevenue / 1000000).toFixed(1) + 'M';
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
+                const result = await response.json();
+                console.log('📊 API Response:', result);
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // ✅ UPDATE: Real data from database
+                    document.getElementById('totalOrders').textContent = data.totalOrders.toLocaleString('vi-VN');
+                    document.getElementById('totalProducts').textContent = data.totalProducts.toLocaleString('vi-VN');
+                    document.getElementById('totalUsers').textContent = data.totalUsers.toLocaleString('vi-VN');
+                    
+                    // ✅ REVENUE: Format properly
+                    const revenueInMillions = (data.totalRevenue / 1000000).toFixed(1);
+                    document.getElementById('totalRevenue').textContent = revenueInMillions + 'M';
+                    
+                    // ✅ UPDATE: Additional stats
+                    document.getElementById('ordersTodayCount').textContent = data.ordersToday?.toLocaleString('vi-VN') || '0';
+                    document.getElementById('revenueTodayAmount').textContent = data.formattedRevenue?.today || '0đ';
+                    
+                    // ✅ UPDATE: Chart data info
+                    document.getElementById('revenueChartData').textContent = `Tổng: ${data.formattedRevenue?.total || '0đ'}`;
+                    document.getElementById('topProductsData').textContent = `${data.totalProducts} sản phẩm`;
+                    
+                    // Update system info
+                    lastUpdateTime = new Date();
+                    document.getElementById('systemTime').textContent = lastUpdateTime.toLocaleTimeString('vi-VN');
+                    document.getElementById('dbStatus').textContent = 'Ổn định';
+                    
+                    console.log('✅ Dashboard updated successfully:', {
+                        totalRevenue: data.totalRevenue,
+                        totalOrders: data.totalOrders,
+                        totalProducts: data.totalProducts,
+                        totalUsers: data.totalUsers,
+                        timestamp: lastUpdateTime.toISOString()
+                    });
+                    
+                    showNotification('📊 Dữ liệu đã được cập nhật!');
+                    
+                } else {
+                    throw new Error(result.message || 'API returned unsuccessful response');
+                }
+                
             } catch (error) {
-                console.error('Error loading dashboard stats:', error);
+                console.error('❌ Error loading dashboard stats:', error);
+                
+                // Show error state
+                document.getElementById('totalOrders').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('totalProducts').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('totalUsers').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('totalRevenue').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                
+                document.getElementById('ordersTodayCount').textContent = 'Lỗi';
+                document.getElementById('revenueTodayAmount').textContent = 'Lỗi';
+                document.getElementById('revenueChartData').textContent = 'Không thể tải';
+                document.getElementById('topProductsData').textContent = 'Không thể tải';
+                document.getElementById('dbStatus').textContent = 'Lỗi kết nối';
+                
+                showNotification('❌ Không thể tải dữ liệu: ' + error.message, 'error');
+                
+                // Retry after 10 seconds
+                setTimeout(() => {
+                    console.log('🔄 Retrying to load stats...');
+                    loadDashboardStats();
+                }, 10000);
+                
+            } finally {
+                isLoading = false;
             }
         }
 
-        // Auto-update stats (demo)
-        function updateStats() {
-            const statValues = document.querySelectorAll('.stat-value');
-            statValues.forEach(stat => {
-                if (stat.id !== 'totalRevenue') {
-                    const currentValue = parseInt(stat.textContent.replace(/[^\d]/g, ''));
-                    const newValue = currentValue + Math.floor(Math.random() * 5);
-                    stat.textContent = newValue.toLocaleString();
+        // ✅ FUNCTION: Load recent orders
+        async function loadRecentOrders() {
+            try {
+                console.log('📦 Loading recent orders...');
+                const response = await fetch('/admin/orders?limit=5&format=json');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load recent orders');
                 }
-            });
+                
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    const recentOrdersContainer = document.getElementById('recentOrders');
+                    recentOrdersContainer.innerHTML = '';
+                    
+                    result.data.forEach(order => {
+                        const orderItem = document.createElement('div');
+                        orderItem.className = 'activity-item';
+                        orderItem.innerHTML = `
+                            <div class="activity-icon new-order">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Đơn hàng #${order.orderId} - ${order.customer?.name || 'Khách hàng'}</div>
+                                <div class="activity-time">${getTimeAgo(order.createdAt)} - ${order.finalTotal?.toLocaleString('vi-VN')}đ</div>
+                            </div>
+                        `;
+                        recentOrdersContainer.appendChild(orderItem);
+                    });
+                    
+                    console.log('✅ Recent orders loaded successfully');
+                } else {
+                    // Fallback message
+                    document.getElementById('recentOrders').innerHTML = `
+                        <div class="activity-item">
+                            <div class="activity-icon new-order">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Chưa có đơn hàng nào</div>
+                                <div class="activity-time">Hệ thống sẵn sàng nhận đơn</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not load recent orders:', error);
+                // Show fallback
+                document.getElementById('recentOrders').innerHTML = `
+                    <div class="activity-item">
+                        <div class="activity-icon new-order">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Không thể tải đơn hàng</div>
+                            <div class="activity-time">Đang thử lại...</div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
-        // Simulate real-time updates
-        setInterval(updateStats, 30000); // Update every 30 seconds
+        // ✅ FUNCTION: Manual refresh
+        async function refreshStats() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+            
+            console.log('🔄 Manual refresh triggered...');
+            
+            try {
+                await Promise.all([
+                    loadDashboardStats(),
+                    loadRecentOrders()
+                ]);
+                
+                showNotification('🔄 Dữ liệu đã được làm mới!');
+            } catch (error) {
+                console.error('❌ Manual refresh failed:', error);
+                showNotification('❌ Không thể làm mới dữ liệu', 'error');
+            } finally {
+                setTimeout(() => {
+                    refreshIcon.classList.remove('fa-spin');
+                }, 1000);
+            }
+        }
 
-        // Close mobile menu when clicking outside
+        // ✅ FUNCTION: Auto-refresh
+        function startAutoRefresh() {
+            // Clear existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(async () => {
+                if (!isLoading) {
+                    console.log('⏰ Auto-refreshing dashboard stats...');
+                    try {
+                        await loadDashboardStats();
+                    } catch (error) {
+                        console.warn('⚠️ Auto-refresh failed:', error);
+                    }
+                }
+            }, 30000); // 30 seconds
+            
+            console.log('✅ Auto-refresh started (30s interval)');
+        }
+
+        // ✅ FUNCTION: Health check
+        async function checkApiHealth() {
+            try {
+                console.log('🏥 Checking API health...');
+                const response = await fetch('/admin/api/health-check');
+                
+                if (!response.ok) {
+                    throw new Error(`Health check failed: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ API Health Check passed');
+                    return true;
+                } else {
+                    console.warn('⚠️ API Health Check failed:', result);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ API Health Check error:', error);
+                return false;
+            }
+        }
+
+        // ✅ EVENT LISTENERS
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 SportShop Admin Dashboard initializing...');
+            
+            // Update system time immediately
+            document.getElementById('systemTime').textContent = new Date().toLocaleTimeString('vi-VN');
+            
+            // Check API health first
+            const apiHealthy = await checkApiHealth();
+            
+            if (apiHealthy) {
+                console.log('✅ API is healthy, loading data...');
+                
+                // Load initial data
+                await Promise.all([
+                    loadDashboardStats(),
+                    loadRecentOrders()
+                ]);
+                
+                // Start auto-refresh
+                startAutoRefresh();
+                
+                console.log('✅ Dashboard fully initialized with API integration');
+                showNotification('✅ Dashboard đã sẵn sàng!');
+                
+            } else {
+                console.warn('⚠️ API not healthy, running in offline mode');
+                showNotification('⚠️ API không hoạt động. Chế độ ngoại tuyến.', 'error');
+                
+                // Try to load data anyway (fallback)
+                try {
+                    await loadDashboardStats();
+                } catch (error) {
+                    console.error('❌ Fallback data load failed:', error);
+                }
+            }
+        });
+
+        // Mobile menu close on outside click
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
             const mobileBtn = document.querySelector('.mobile-menu-btn');
@@ -838,17 +1139,68 @@
             }
         });
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('SportShop Admin Dashboard initialized');
-            loadDashboardStats();
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // F5 or Ctrl+R: Refresh stats
+            if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+                event.preventDefault();
+                refreshStats();
+            }
+            
+            // Ctrl+D: Toggle sidebar
+            if (event.ctrlKey && event.key === 'd') {
+                event.preventDefault();
+                toggleSidebar();
+            }
+            
+            // Ctrl+Shift+R: Force refresh with cache clear
+            if (event.ctrlKey && event.shiftKey && event.key === 'R') {
+                event.preventDefault();
+                location.reload(true);
+            }
         });
 
-        // Show section (for settings)
-        function showSection(section) {
-            console.log('Navigating to:', section);
-            alert(`Chức năng ${section} đang được phát triển`);
-        }
+        // ✅ GLOBAL EXPORT: Make functions available
+        window.adminDashboard = {
+            loadDashboardStats,
+            loadRecentOrders,
+            refreshStats,
+            checkApiHealth,
+            startAutoRefresh
+        };
+
+        // ✅ ORDER STATUS UPDATE LISTENER
+        // This will be triggered when admin updates order status
+        window.addEventListener('adminOrderUpdated', function(event) {
+            console.log('🔄 Order status updated, refreshing dashboard...', event.detail);
+            
+            // Show notification about the update
+            if (event.detail && event.detail.revenueImpact > 0) {
+                showNotification(`💰 Doanh thu đã cập nhật: +${event.detail.revenueImpact.toLocaleString('vi-VN')}đ`);
+            }
+            
+            // Refresh stats after a short delay
+            setTimeout(() => {
+                refreshStats();
+            }, 1500);
+        });
+
+        // ✅ WINDOW FOCUS/BLUR EVENTS
+        window.addEventListener('focus', function() {
+            console.log('🔍 Window focused, refreshing data...');
+            if (!isLoading) {
+                loadDashboardStats();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            // Clean up intervals
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+        console.log('📊 Dashboard script loaded successfully');
     </script>
 </body>
 </html>

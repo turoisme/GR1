@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thống kê - SportShop Admin</title>
+    <title>Thống kê & Báo cáo - SportShop Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -19,7 +19,7 @@
             line-height: 1.6;
         }
 
-        /* Copy sidebar và header styles từ dashboard */
+        /* Sidebar - Same as Dashboard */
         .sidebar {
             position: fixed;
             left: 0;
@@ -30,11 +30,15 @@
             color: white;
             overflow-y: auto;
             z-index: 1000;
+            transition: all 0.3s ease;
         }
 
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .sidebar-header h2 {
@@ -88,11 +92,14 @@
             font-size: 1.1rem;
         }
 
+        /* Main Content */
         .main-content {
             margin-left: 260px;
+            transition: margin-left 0.3s ease;
             min-height: 100vh;
         }
 
+        /* Header */
         .header {
             background: white;
             padding: 15px 30px;
@@ -105,10 +112,32 @@
             z-index: 100;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .header-left h1 {
             font-size: 1.8rem;
             color: #333;
             font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #f1f5f9;
+            color: #333;
         }
 
         .header-right {
@@ -135,11 +164,43 @@
             font-weight: 600;
         }
 
-        .content {
+        /* Statistics Content */
+        .statistics-content {
             padding: 30px;
         }
 
-        /* Statistics specific styles */
+        /* Period Selector */
+        .period-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .period-selector label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .period-selector select {
+            padding: 8px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .period-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Stats Overview */
         .stats-overview {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -152,8 +213,14 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
         .stat-card::before {
@@ -163,22 +230,7 @@
             left: 0;
             right: 0;
             height: 4px;
-        }
-
-        .stat-card.revenue::before {
             background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .stat-card.orders::before {
-            background: linear-gradient(90deg, #4facfe, #00f2fe);
-        }
-
-        .stat-card.users::before {
-            background: linear-gradient(90deg, #fa709a, #fee140);
-        }
-
-        .stat-card.products::before {
-            background: linear-gradient(90deg, #43e97b, #38f9d7);
         }
 
         .stat-header {
@@ -207,12 +259,12 @@
             background: linear-gradient(135deg, #4facfe, #00f2fe);
         }
 
-        .stat-icon.users {
-            background: linear-gradient(135deg, #fa709a, #fee140);
+        .stat-icon.growth {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
         }
 
-        .stat-icon.products {
-            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        .stat-icon.avg {
+            background: linear-gradient(135deg, #fa709a, #fee140);
         }
 
         .stat-value {
@@ -243,8 +295,8 @@
             color: #ef4444;
         }
 
-        /* Charts section */
-        .charts-grid {
+        /* Detailed Stats */
+        .detailed-stats {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 30px;
@@ -286,79 +338,98 @@
         }
 
         .chart-placeholder {
-            height: 350px;
+            height: 400px;
             background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #64748b;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             border: 2px dashed #cbd5e1;
-            flex-direction: column;
-            gap: 15px;
+            text-align: center;
         }
 
-        .chart-placeholder i {
-            font-size: 4rem;
-            opacity: 0.3;
-        }
-
-        /* Tables */
-        .stats-tables {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .table-card {
+        /* Revenue Breakdown */
+        .revenue-breakdown {
             background: white;
+            padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            overflow: hidden;
         }
 
-        .table-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px 25px;
-        }
-
-        .table-header h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .table-content {
-            padding: 20px 25px;
-        }
-
-        .stats-item {
+        .breakdown-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 15px 0;
             border-bottom: 1px solid #f1f5f9;
         }
 
-        .stats-item:last-child {
+        .breakdown-item:last-child {
             border-bottom: none;
         }
 
-        .item-name {
-            color: #333;
+        .breakdown-label {
             font-weight: 500;
+            color: #333;
         }
 
-        .item-value {
-            color: #667eea;
+        .breakdown-value {
             font-weight: 600;
+            color: #667eea;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(51, 51, 51, 0.3);
+            border-radius: 50%;
+            border-top-color: #333;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #ef4444;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
             }
 
             .main-content {
@@ -369,23 +440,36 @@
                 grid-template-columns: 1fr;
             }
 
-            .charts-grid {
+            .detailed-stats {
                 grid-template-columns: 1fr;
             }
 
-            .stats-tables {
-                grid-template-columns: 1fr;
+            .period-selector {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
+        }
 
-            .content {
-                padding: 20px;
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #333;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2>SportShop Admin</h2>
         </div>
@@ -427,15 +511,27 @@
                     <span>Cài đặt</span>
                 </a>
             </div>
+            <div class="menu-item">
+                <a href="/auth/logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
         </nav>
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <!-- Header -->
         <header class="header">
             <div class="header-left">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <h1>Thống kê & Báo cáo</h1>
+                <button class="refresh-btn" onclick="refreshStatistics()" title="Refresh dữ liệu">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                </button>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -448,160 +544,214 @@
             </div>
         </header>
 
-        <!-- Content -->
-        <div class="content">
+        <!-- Statistics Content -->
+        <div class="statistics-content">
+            <!-- Period Selector -->
+            <div class="period-selector">
+                <label for="periodSelect">Khoảng thời gian:</label>
+                <select id="periodSelect" onchange="changePeriod(this.value)">
+                    <option value="today">Hôm nay</option>
+                    <option value="week">7 ngày qua</option>
+                    <option value="month" selected>Tháng này</option>
+                    <option value="year">Năm này</option>
+                </select>
+                <span id="lastUpdated" style="color: #666; font-size: 0.9rem;">
+                    Cập nhật lần cuối: <span id="updateTime">...</span>
+                </span>
+            </div>
+
             <!-- Stats Overview -->
             <div class="stats-overview">
-                <div class="stat-card revenue">
+                <div class="stat-card">
                     <div class="stat-header">
-                        <div>
-                            <div class="stat-value">15.2M</div>
-                            <div class="stat-label">Doanh thu tháng này</div>
-                            <div class="stat-change change-positive">
-                                <i class="fas fa-arrow-up"></i>
-                                +23.4% so với tháng trước
-                            </div>
-                        </div>
                         <div class="stat-icon revenue">
                             <i class="fas fa-dollar-sign"></i>
                         </div>
                     </div>
+                    <div class="stat-value" id="totalRevenue">
+                        <div class="loading"></div>
+                    </div>
+                    <div class="stat-label">Tổng doanh thu</div>
+                    <div class="stat-change change-positive" id="revenueChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+<span id="revenueGrowth">...</span>% so với kỳ trước</span>
+                    </div>
                 </div>
 
-                <div class="stat-card orders">
+                <div class="stat-card">
                     <div class="stat-header">
-                        <div>
-                            <div class="stat-value">2,847</div>
-                            <div class="stat-label">Đơn hàng tháng này</div>
-                            <div class="stat-change change-positive">
-                                <i class="fas fa-arrow-up"></i>
-                                +18.2% so với tháng trước
-                            </div>
-                        </div>
                         <div class="stat-icon orders">
                             <i class="fas fa-shopping-cart"></i>
                         </div>
                     </div>
-                </div>
-
-                <div class="stat-card users">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-value">1,429</div>
-                            <div class="stat-label">Người dùng mới</div>
-                            <div class="stat-change change-positive">
-                                <i class="fas fa-arrow-up"></i>
-                                +31.5% so với tháng trước
-                            </div>
-                        </div>
-                        <div class="stat-icon users">
-                            <i class="fas fa-users"></i>
-                        </div>
+                    <div class="stat-value" id="totalOrders">
+                        <div class="loading"></div>
+                    </div>
+                    <div class="stat-label">Đơn hàng hoàn thành</div>
+                    <div class="stat-change change-positive" id="ordersChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+<span id="ordersGrowth">...</span>% so với kỳ trước</span>
                     </div>
                 </div>
 
-                <div class="stat-card products">
+                <div class="stat-card">
                     <div class="stat-header">
-                        <div>
-                            <div class="stat-value">89.3%</div>
-                            <div class="stat-label">Tỷ lệ chuyển đổi</div>
-                            <div class="stat-change change-negative">
-                                <i class="fas fa-arrow-down"></i>
-                                -2.1% so với tháng trước
-                            </div>
-                        </div>
-                        <div class="stat-icon products">
+                        <div class="stat-icon avg">
                             <i class="fas fa-chart-line"></i>
                         </div>
+                    </div>
+                    <div class="stat-value" id="avgOrderValue">
+                        <div class="loading"></div>
+                    </div>
+                    <div class="stat-label">Giá trị đơn hàng trung bình</div>
+                    <div class="stat-change change-positive" id="avgChange">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+<span id="avgGrowth">...</span>% so với kỳ trước</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon growth">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="growthRate">
+                        <div class="loading"></div>
+                    </div>
+                    <div class="stat-label">Tỷ lệ tăng trưởng</div>
+                    <div class="stat-change change-positive" id="growthChange">
+                        <i class="fas fa-info-circle"></i>
+                        <span>So với cùng kỳ năm trước</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Grid -->
-            <div class="charts-grid">
+            <!-- Detailed Statistics -->
+            <div class="detailed-stats">
+                <!-- Revenue Chart -->
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3 class="chart-title">Doanh thu theo thời gian</h3>
+                        <h3 class="chart-title">Biểu đồ doanh thu theo thời gian</h3>
                         <div class="chart-controls">
-                            <select>
-                                <option>7 ngày qua</option>
-                                <option>30 ngày qua</option>
-                                <option>3 tháng qua</option>
-                                <option>1 năm qua</option>
+                            <select id="chartType" onchange="changeChartType(this.value)">
+                                <option value="line">Đường</option>
+                                <option value="bar">Cột</option>
+                                <option value="area">Vùng</option>
                             </select>
                         </div>
                     </div>
                     <div class="chart-placeholder">
-                        <i class="fas fa-chart-area"></i>
-                        <div>Biểu đồ doanh thu theo thời gian</div>
+                        <i class="fas fa-chart-area" style="font-size: 4rem; margin-bottom: 15px; color: #cbd5e1;"></i>
+                        <div><strong>Biểu đồ doanh thu chi tiết</strong></div>
+                        <div style="margin-top: 10px; font-size: 0.9rem;">
+                            Tổng: <span id="chartTotalRevenue">Đang tải...</span><br>
+                            Kỳ: <span id="chartPeriod">Tháng này</span><br>
+                            Điểm dữ liệu: <span id="chartDataPoints">...</span>
+                        </div>
+                        <div style="margin-top: 15px; font-size: 0.8rem; color: #94a3b8;">
+                            Chart.js integration coming soon
+                        </div>
                     </div>
                 </div>
 
-                <div class="chart-card">
+                <!-- Revenue Breakdown -->
+                <div class="revenue-breakdown">
                     <div class="chart-header">
-                        <h3 class="chart-title">Phân bổ doanh thu</h3>
+                        <h3 class="chart-title">Chi tiết doanh thu</h3>
                     </div>
-                    <div class="chart-placeholder" style="height: 280px;">
-                        <i class="fas fa-chart-pie"></i>
-                        <div>Biểu đồ tròn phân bổ doanh thu</div>
+                    
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Doanh thu thô</span>
+                        <span class="breakdown-value" id="grossRevenue">...</span>
+                    </div>
+                    
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Phí vận chuyển</span>
+                        <span class="breakdown-value" id="shippingFees">...</span>
+                    </div>
+                    
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Đơn hàng đã hủy</span>
+                        <span class="breakdown-value" id="cancelledOrders" style="color: #ef4444;">...</span>
+                    </div>
+                    
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Đơn hàng hoàn trả</span>
+                        <span class="breakdown-value" id="refundsAmount" style="color: #ef4444;">...</span>
+                    </div>
+                    
+                    <div class="breakdown-item" style="border-top: 2px solid #667eea; padding-top: 15px; margin-top: 15px;">
+                        <span class="breakdown-label"><strong>Doanh thu thuần</strong></span>
+                        <span class="breakdown-value" id="netRevenue" style="font-size: 1.2rem; color: #667eea;"><strong>...</strong></span>
+                    </div>
+
+                    <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                        <h4 style="margin-bottom: 15px; color: #333;">Phương thức thanh toán</h4>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">COD (Tiền mặt)</span>
+                            <span class="breakdown-value" id="codRevenue">...</span>
+                        </div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Chuyển khoản</span>
+                            <span class="breakdown-value" id="bankTransferRevenue">...</span>
+                        </div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Ví điện tử</span>
+                            <span class="breakdown-value" id="eWalletRevenue">...</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats Tables -->
-            <div class="stats-tables">
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Sản phẩm bán chạy</h3>
+            <!-- Additional Stats Row -->
+            <div class="detailed-stats">
+                <!-- Top Products -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Sản phẩm bán chạy</h3>
                     </div>
-                    <div class="table-content">
-                        <div class="stats-item">
-                            <div class="item-name">Giày Nike Air Max 270</div>
-                            <div class="item-value">247 bán</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="item-name">Áo Adidas Originals</div>
-                            <div class="item-value">189 bán</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="item-name">Quần Under Armour</div>
-                            <div class="item-value">156 bán</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="item-name">Mũ Puma Cap</div>
-                            <div class="item-value">134 bán</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="item-name">Giày Adidas Ultraboost</div>
-                            <div class="item-value">112 bán</div>
+                    <div class="chart-placeholder" style="height: 300px;">
+                        <i class="fas fa-trophy" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i>
+                        <div><strong>Top sản phẩm theo doanh thu</strong></div>
+                        <div style="margin-top: 10px; font-size: 0.9rem;" id="topProductsInfo">
+                            Đang tải dữ liệu...
                         </div>
                     </div>
                 </div>
 
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Khách hàng VIP</h3>
+                <!-- Performance Metrics -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Chỉ số hiệu quả</h3>
                     </div>
-                    <div class="table-content">
-                        <div class="stats-item">
-                            <div class="item-name">Nguyễn Văn A</div>
-                            <div class="item-value">12.5M VNĐ</div>
+                    <div style="padding: 20px 0;">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Tỷ lệ chuyển đổi</span>
+                            <span class="breakdown-value" id="conversionRate">...</span>
                         </div>
-                        <div class="stats-item">
-                            <div class="item-name">Trần Thị B</div>
-                            <div class="item-value">8.9M VNĐ</div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Thời gian xử lý đơn TB</span>
+                            <span class="breakdown-value" id="avgProcessingTime">...</span>
                         </div>
-                        <div class="stats-item">
-                            <div class="item-name">Lê Văn C</div>
-                            <div class="item-value">7.2M VNĐ</div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Đánh giá TB</span>
+                            <span class="breakdown-value" id="avgRating">...</span>
                         </div>
-                        <div class="stats-item">
-                            <div class="item-name">Phạm Thị D</div>
-                            <div class="item-value">6.8M VNĐ</div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Khách hàng quay lại</span>
+                            <span class="breakdown-value" id="returnCustomers">...</span>
                         </div>
-                        <div class="stats-item">
-                            <div class="item-name">Hoàng Văn E</div>
-                            <div class="item-value">5.4M VNĐ</div>
+                        
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Tỷ lệ hủy đơn</span>
+                            <span class="breakdown-value" id="cancellationRate" style="color: #ef4444;">...</span>
                         </div>
                     </div>
                 </div>
@@ -610,7 +760,212 @@
     </div>
 
     <script>
-        console.log('Statistics page loaded');
+        // ✅ GLOBAL VARIABLES
+        let currentPeriod = 'month';
+        let isLoading = false;
+        let lastUpdateTime = null;
+
+        // ✅ UTILITY FUNCTIONS
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // ✅ MAIN FUNCTION: Load revenue statistics
+        async function loadRevenueStatistics(period = 'month') {
+            if (isLoading) return;
+            
+            isLoading = true;
+            console.log(`📊 Loading revenue statistics for period: ${period}`);
+            
+            try {
+                const response = await fetch(`/admin/api/revenue-stats?period=${period}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('📊 Revenue Stats Response:', result);
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // ✅ UPDATE: Revenue statistics
+                    document.getElementById('totalRevenue').textContent = data.formatted?.totalRevenue || '0đ';
+                    document.getElementById('totalOrders').textContent = data.totalOrders.toLocaleString('vi-VN');
+                    document.getElementById('avgOrderValue').textContent = data.formatted?.avgOrderValue || '0đ';
+                    
+                    // ✅ CALCULATE: Growth rate (mock for now)
+                    const growthRate = data.totalRevenue > 0 ? 15.2 : 0;
+                    document.getElementById('growthRate').textContent = growthRate + '%';
+                    
+                    // ✅ UPDATE: Chart info
+                    document.getElementById('chartTotalRevenue').textContent = data.formatted?.totalRevenue || '0đ';
+                    document.getElementById('chartPeriod').textContent = getPeriodText(period);
+                    document.getElementById('chartDataPoints').textContent = data.chartData?.length || 0;
+                    
+                    // ✅ UPDATE: Revenue breakdown
+                    document.getElementById('grossRevenue').textContent = data.formatted?.totalRevenue || '0đ';
+                    document.getElementById('netRevenue').textContent = data.formatted?.totalRevenue || '0đ';
+                    
+                    // Mock additional data
+                    document.getElementById('shippingFees').textContent = '2,500,000đ';
+                    document.getElementById('cancelledOrders').textContent = '1,200,000đ';
+                    document.getElementById('refundsAmount').textContent = '800,000đ';
+                    document.getElementById('codRevenue').textContent = Math.round(data.totalRevenue * 0.7).toLocaleString('vi-VN') + 'đ';
+                    document.getElementById('bankTransferRevenue').textContent = Math.round(data.totalRevenue * 0.25).toLocaleString('vi-VN') + 'đ';
+                    document.getElementById('eWalletRevenue').textContent = Math.round(data.totalRevenue * 0.05).toLocaleString('vi-VN') + 'đ';
+                    
+                    // ✅ UPDATE: Performance metrics
+                    document.getElementById('conversionRate').textContent = '3.2%';
+                    document.getElementById('avgProcessingTime').textContent = '2.5 giờ';
+                    document.getElementById('avgRating').textContent = '4.6/5';
+                    document.getElementById('returnCustomers').textContent = '68%';
+                    document.getElementById('cancellationRate').textContent = '5.2%';
+                    
+                    // ✅ UPDATE: Growth indicators (mock)
+                    document.getElementById('revenueGrowth').textContent = '12.3';
+                    document.getElementById('ordersGrowth').textContent = '8.7';
+                    document.getElementById('avgGrowth').textContent = '4.1';
+                    
+                    // ✅ UPDATE: Top products info
+                    document.getElementById('topProductsInfo').textContent = `${data.totalOrders} đơn hàng • ${data.chartData?.length || 0} sản phẩm khác nhau`;
+                    
+                    // Update timestamp
+                    lastUpdateTime = new Date();
+                    document.getElementById('updateTime').textContent = lastUpdateTime.toLocaleTimeString('vi-VN');
+                    
+                    console.log('✅ Revenue statistics updated successfully');
+                    showNotification('📊 Thống kê đã được cập nhật!');
+                    
+                } else {
+                    throw new Error(result.message || 'API returned unsuccessful response');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading revenue statistics:', error);
+                
+                // Show error state
+                document.getElementById('totalRevenue').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('totalOrders').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('avgOrderValue').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                document.getElementById('growthRate').innerHTML = '<span style="color: #ef4444;">Lỗi</span>';
+                
+                showNotification('❌ Không thể tải thống kê: ' + error.message, 'error');
+                
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // ✅ FUNCTION: Change period
+        function changePeriod(period) {
+            currentPeriod = period;
+            console.log(`🔄 Changing period to: ${period}`);
+            loadRevenueStatistics(period);
+        }
+
+        // ✅ FUNCTION: Manual refresh
+        async function refreshStatistics() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+            
+            console.log('🔄 Manual refresh triggered...');
+            
+            try {
+                await loadRevenueStatistics(currentPeriod);
+                showNotification('🔄 Thống kê đã được làm mới!');
+            } catch (error) {
+                console.error('❌ Manual refresh failed:', error);
+                showNotification('❌ Không thể làm mới thống kê', 'error');
+            } finally {
+                setTimeout(() => {
+                    refreshIcon.classList.remove('fa-spin');
+                }, 1000);
+            }
+        }
+
+        // ✅ FUNCTION: Change chart type
+        function changeChartType(type) {
+            console.log(`📈 Changing chart type to: ${type}`);
+            showNotification(`📈 Đã chuyển sang biểu đồ ${type === 'line' ? 'đường' : type === 'bar' ? 'cột' : 'vùng'}`);
+        }
+
+        // ✅ UTILITY: Get period text
+        function getPeriodText(period) {
+            const periodMap = {
+                'today': 'Hôm nay',
+                'week': '7 ngày qua',
+                'month': 'Tháng này',
+                'year': 'Năm này'
+            };
+            return periodMap[period] || period;
+        }
+
+        // ✅ INITIALIZATION
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📊 Statistics page initializing...');
+            
+            // Update time immediately
+            document.getElementById('updateTime').textContent = new Date().toLocaleTimeString('vi-VN');
+            
+            // Load initial statistics
+            loadRevenueStatistics(currentPeriod);
+            
+            console.log('✅ Statistics page fully initialized');
+        });
+
+        // ✅ KEYBOARD SHORTCUTS
+        document.addEventListener('keydown', function(event) {
+            // F5 or Ctrl+R: Refresh
+            if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+                event.preventDefault();
+                refreshStatistics();
+            }
+            
+            // Number keys for period selection
+            if (event.key >= '1' && event.key <= '4') {
+                const periods = ['today', 'week', 'month', 'year'];
+                const selectedPeriod = periods[parseInt(event.key) - 1];
+                document.getElementById('periodSelect').value = selectedPeriod;
+                changePeriod(selectedPeriod);
+            }
+        });
+
+        // ✅ AUTO-REFRESH: Every 2 minutes
+        setInterval(() => {
+            if (!isLoading) {
+                console.log('⏰ Auto-refreshing statistics...');
+                loadRevenueStatistics(currentPeriod);
+            }
+        }, 120000); // 2 minutes
+
+        // ✅ EXPORT FUNCTIONS
+        window.statisticsPage = {
+            loadRevenueStatistics,
+            refreshStatistics,
+            changePeriod,
+            changeChartType
+        };
+
+        console.log('📊 Statistics script loaded successfully');
     </script>
 </body>
 </html>
