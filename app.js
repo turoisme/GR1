@@ -2,7 +2,7 @@
 require('./models/Product');
 require('./models/Cart');
 require('./models/Order'); // ← Thêm dòng này để đảm bảo Order model được load
-
+require('./models/Settings');
 console.log('✅ All models loaded successfully');
 require('dotenv').config();
 const express = require('express');

@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt - SportShop Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .flash-message {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .flash-success {
+            background: #28a745;
+        }
+
+        .flash-error {
+            background: #dc3545;
+        }
+
+        .flash-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-item a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .menu-item a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .menu-item a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 30px;
+        }
+
+        /* Settings Tabs */
+        .settings-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tab-button:hover {
+            background: #f8fafc;
+            color: #333;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* Settings Cards */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .settings-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .settings-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .card-icon.shop {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .card-icon.contact {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .card-icon.social {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .card-icon.system {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f1f5f9;
+        }
+
+        /* File Upload */
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .file-upload-label:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-preview {
+            margin-top: 10px;
+            max-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .file-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Color Picker */
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-tabs {
+                flex-direction: column;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .preview-header .card-icon {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+
+        .shop-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .preview-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .preview-info h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .preview-info p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .preview-info strong {
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .preview-logo {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .preview-logo img {
+            max-width: 150px;
+            max-height: 80px;
+            border-radius: 8px;
+        }
+
+        .preview-logo .placeholder {
+            width: 150px;
+            height: 80px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        <!-- Flash messages will be added here by JavaScript -->
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>SportShop Admin</h2>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <div class="menu-item">
+                <a href="/admin/">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/products">
+                    <i class="fas fa-box"></i>
+                    <span>Quản lý sản phẩm</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Quản lý đơn hàng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/users">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý người dùng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/statistics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Thống kê</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/settings" class="active">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/auth/logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Cài đặt hệ thống</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="user-avatar">AS</div>
+                    <div>
+                        <div style="font-weight: 500;">Admin SportShop</div>
+                        <div style="font-size: 0.8rem; color: #666;">admin@sportshop.com</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <button class="tab-button active" data-tab="shop">
+                    <i class="fas fa-store"></i>
+                    Thông tin Shop
+                </button>
+                <button class="tab-button" data-tab="contact">
+                    <i class="fas fa-address-book"></i>
+                    Liên hệ
+                </button>
+                <button class="tab-button" data-tab="social">
+                    <i class="fas fa-share-alt"></i>
+                    Mạng xã hội
+                </button>
+                <button class="tab-button" data-tab="system">
+                    <i class="fas fa-cogs"></i>
+                    Hệ thống
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="shop-tab" class="tab-content">
+                <div class="settings-grid">
+                    <!-- Shop Information -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon shop">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="card-title">Thông tin cửa hàng</div>
+                        </div>
+
+                        <form id="shopInfoForm">
+                            <div class="form-group">
+                                <label for="shopName">Tên cửa hàng <span class="required">*</span></label>
+                                <input type="text" id="shopName" name="shopName" value="SportShop" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopSlogan">Slogan</label>
+                                <input type="text" id="shopSlogan" name="shopSlogan" value="Thể thao - Phong cách - Chất lượng">
+                                <div class="help-text">Khẩu hiệu ngắn gọn của cửa hàng</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopDescription">Mô tả</label>
+                                <textarea id="shopDescription" name="shopDescription" rows="4">SportShop là cửa hàng thể thao hàng đầu, chuyên cung cấp các sản phẩm thể thao chất lượng cao từ những thương hiệu uy tín trên thế giới.</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="shopLogo">Logo cửa hàng</label>
+                                <div class="file-upload">
+                                    <input type="file" id="shopLogo" name="shopLogo" accept="image/*">
+                                    <label for="shopLogo" class="file-upload-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Chọn file logo</span>
+                                    </label>
+                                </div>
+                                <div id="logoPreview" class="file-preview" style="display: none;">
+                                    <img id="logoImage" src="" alt="Logo preview">
+                                </div>
+                                <div class="help-text">Định dạng: JPG, PNG. Kích thước khuyến nghị: 200x100px</div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu thông tin
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i>
+                                    Đặt lại
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Brand Colors -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon shop">
+                                <i class="fas fa-palette"></i>
+                            </div>
+                            <div class="card-title">Màu sắc thương hiệu</div>
+                        </div>
+
+                        <form id="brandColorsForm">
+                            <div class="form-group">
+                                <label for="primaryColor">Màu chính</label>
+                                <div class="color-picker">
+                                    <input type="color" id="primaryColor" name="primaryColor" value="#667eea">
+                                    <input type="text" value="#667eea" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="secondaryColor">Màu phụ</label>
+                                <div class="color-picker">
+                                    <input type="color" id="secondaryColor" name="secondaryColor" value="#764ba2">
+                                    <input type="text" value="#764ba2" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="accentColor">Màu nhấn</label>
+                                <div class="color-picker">
+                                    <input type="color" id="accentColor" name="accentColor" value="#28a745">
+                                    <input type="text" value="#28a745" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="darkMode">Chế độ tối</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="darkMode" name="darkMode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div class="help-text">Bật/tắt chế độ giao diện tối</div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu màu sắc
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="resetColors()">
+                                    <i class="fas fa-undo"></i>
+                                    Mặc định
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contact-tab" class="tab-content" style="display: none;">
+                <div class="settings-grid">
+                    <!-- Contact Information -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon contact">
+                                <i class="fas fa-address-book"></i>
+                            </div>
+                            <div class="card-title">Thông tin liên hệ</div>
+                        </div>
+
+                        <form id="contactForm">
+                            <div class="form-group">
+                                <label for="email">Email <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" value="contact@sportshop.com" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="phone">Số điện thoại</label>
+                                    <input type="tel" id="phone" name="phone" value="0866387718">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotline">Hotline</label>
+                                    <input type="tel" id="hotline" name="hotline" value="1900-1234">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Địa chỉ</label>
+                                <textarea id="address" name="address" rows="3">123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="workingHours">Giờ làm việc</label>
+                                    <input type="text" id="workingHours" name="workingHours" value="8:00 - 22:00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="workingDays">Ngày làm việc</label>
+                                    <input type="text" id="workingDays" name="workingDays" value="Thứ 2 - Chủ nhật">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Map Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon contact">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="card-title">Bản đồ</div>
+                        </div>
+
+                        <form id="mapForm">
+                            <div class="form-group">
+                                <label for="latitude">Vĩ độ</label>
+                                <input type="number" id="latitude" name="latitude" value="10.7769" step="any">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="longitude">Kinh độ</label>
+                                <input type="number" id="longitude" name="longitude" value="106.7009" step="any">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="mapEmbed">Embed Map Code</label>
+                                <textarea id="mapEmbed" name="mapEmbed" rows="4" placeholder="Dán code embed Google Maps vào đây..."></textarea>
+                                <div class="help-text">Lấy code từ Google Maps > Share > Embed</div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu bản đồ
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="getCurrentLocation()">
+                                    <i class="fas fa-location-arrow"></i>
+                                    Lấy vị trí hiện tại
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="social-tab" class="tab-content" style="display: none;">
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="card-icon social">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                        <div class="card-title">Mạng xã hội</div>
+                    </div>
+
+                    <form id="socialForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="facebook">Facebook</label>
+                                <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/sportshop">
+                            </div>
+                            <div class="form-group">
+                                <label for="instagram">Instagram</label>
+                                <input type="url" id="instagram" name="instagram" placeholder="https://instagram.com/sportshop">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="youtube">YouTube</label>
+                                <input type="url" id="youtube" name="youtube" placeholder="https://youtube.com/sportshop">
+                            </div>
+                            <div class="form-group">
+                                <label for="tiktok">TikTok</label>
+                                <input type="url" id="tiktok" name="tiktok" placeholder="https://tiktok.com/@sportshop">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="twitter">Twitter</label>
+                                <input type="url" id="twitter" name="twitter" placeholder="https://twitter.com/sportshop">
+                            </div>
+                            <div class="form-group">
+                                <label for="linkedin">LinkedIn</label>
+                                <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/company/sportshop">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="zalo">Zalo</label>
+                            <input type="text" id="zalo" name="zalo" placeholder="Số điện thoại Zalo">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Lưu mạng xã hội
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="system-tab" class="tab-content" style="display: none;">
+                <div class="settings-grid">
+                    <!-- System Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon system">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="card-title">Cài đặt hệ thống</div>
+                        </div>
+
+                        <form id="systemForm">
+                            <div class="form-group">
+                                <label for="siteName">Tên website</label>
+                                <input type="text" id="siteName" name="siteName" value="SportShop - Thể thao chuyên nghiệp">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="metaDescription">Meta Description</label>
+                                <textarea id="metaDescription" name="metaDescription" rows="3">SportShop - Cửa hàng thể thao chuyên nghiệp với đầy đủ các sản phẩm từ giày dép, quần áo đến phụ kiện thể thao chất lượng cao.</textarea>
+                                <div class="help-text">Mô tả ngắn cho SEO (150-160 ký tự)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="keywords">Từ khóa SEO</label>
+                                <input type="text" id="keywords" name="keywords" value="thể thao, giày thể thao, quần áo thể thao, phụ kiện thể thao">
+                                <div class="help-text">Các từ khóa cách nhau bằng dấu phẩy</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="currency">Tiền tệ</label>
+                                <select id="currency" name="currency">
+                                    <option value="VND" selected>Việt Nam Đồng (VND)</option>
+                                    <option value="USD">US Dollar (USD)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="timezone">Múi giờ</label>
+                                <select id="timezone" name="timezone">
+                                    <option value="Asia/Ho_Chi_Minh" selected>Việt Nam (GMT+7)</option>
+                                    <option value="UTC">UTC (GMT+0)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="language">Ngôn ngữ mặc định</label>
+                                <select id="language" name="language">
+                                    <option value="vi" selected>Tiếng Việt</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu cài đặt
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Advanced Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon system">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="card-title">Cài đặt nâng cao</div>
+                        </div>
+
+                        <form id="advancedForm">
+                            <div class="form-group">
+                                <label>Bảo trì website</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="maintenanceMode" name="maintenanceMode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div class="help-text">Kích hoạt chế độ bảo trì</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Cho phép đăng ký</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="allowRegistration" name="allowRegistration" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div class="help-text">Cho phép người dùng tạo tài khoản mới</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Xác thực email</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="requireEmailVerification" name="requireEmailVerification" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div class="help-text">Yêu cầu xác thực email khi đăng ký</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="maxLoginAttempts">Số lần đăng nhập tối đa</label>
+                                <input type="number" id="maxLoginAttempts" name="maxLoginAttempts" value="5" min="1" max="10">
+                                <div class="help-text">Số lần thử đăng nhập sai trước khi khóa</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sessionTimeout">Thời gian phiên (phút)</label>
+                                <input type="number" id="sessionTimeout" name="sessionTimeout" value="1440" min="30">
+                                <div class="help-text">Thời gian tự động đăng xuất (mặc định: 24h)</div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Lưu cài đặt
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="clearCache()">
+                                    <i class="fas fa-trash"></i>
+                                    Xóa Cache
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section">
+                <div class="preview-header">
+                    <div class="card-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="card-title">Xem trước thông tin</div>
+                </div>
+
+                <div class="shop-preview">
+                    <div class="preview-info">
+                        <h4>Thông tin hiển thị</h4>
+                        <p><strong>Tên shop:</strong> <span id="previewShopName">SportShop</span></p>
+                        <p><strong>Slogan:</strong> <span id="previewSlogan">Thể thao - Phong cách - Chất lượng</span></p>
+                        <p><strong>Email:</strong> <span id="previewEmail">contact@sportshop.com</span></p>
+                        <p><strong>Điện thoại:</strong> <span id="previewPhone">0866387718</span></p>
+                        <p><strong>Địa chỉ:</strong> <span id="previewAddress">123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</span></p>
+                        <p><strong>Giờ mở cửa:</strong> <span id="previewHours">8:00 - 22:00 (Thứ 2 - Chủ nhật)</span></p>
+                    </div>
+
+                    <div class="preview-logo">
+                        <h4 style="margin-bottom: 15px;">Logo</h4>
+                        <div id="previewLogoContainer">
+                            <div class="placeholder">
+                                <i class="fas fa-image"></i><br>
+                                Chưa có logo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.style.display = 'none');
+                    
+                    // Add active class to clicked button and show corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tabId + '-tab').style.display = 'block';
+                });
+            });
+
+            // Initialize color picker listeners
+            initializeColorPickers();
+            
+            // Initialize file upload
+            initializeFileUpload();
+            
+            // Initialize preview updates
+            initializePreviewUpdates();
+        });
+
+        // Color picker functionality
+        function initializeColorPickers() {
+            const colorInputs = document.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(input => {
+                const textInput = input.nextElementSibling;
+                
+                input.addEventListener('change', function() {
+                    textInput.value = this.value;
+                });
+                
+                textInput.addEventListener('change', function() {
+                    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                        input.value = this.value;
+                    }
+                });
+            });
+        }
+
+        // File upload functionality
+        function initializeFileUpload() {
+            const logoInput = document.getElementById('shopLogo');
+            const logoPreview = document.getElementById('logoPreview');
+            const logoImage = document.getElementById('logoImage');
+            
+            logoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            logoImage.src = e.target.result;
+                            logoPreview.style.display = 'block';
+                            updatePreviewLogo(e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        showNotification('Vui lòng chọn file hình ảnh!', 'error');
+                    }
+                }
+            });
+        }
+
+        // Preview updates
+        function initializePreviewUpdates() {
+            // Shop name
+            document.getElementById('shopName').addEventListener('input', function() {
+                document.getElementById('previewShopName').textContent = this.value || 'SportShop';
+            });
+            
+            // Slogan
+            document.getElementById('shopSlogan').addEventListener('input', function() {
+                document.getElementById('previewSlogan').textContent = this.value || 'Chưa có slogan';
+            });
+            
+            // Email
+            document.getElementById('email').addEventListener('input', function() {
+                document.getElementById('previewEmail').textContent = this.value || 'Chưa có email';
+            });
+            
+            // Phone
+            document.getElementById('phone').addEventListener('input', function() {
+                document.getElementById('previewPhone').textContent = this.value || 'Chưa có số điện thoại';
+            });
+            
+            // Address
+            document.getElementById('address').addEventListener('input', function() {
+                document.getElementById('previewAddress').textContent = this.value || 'Chưa có địa chỉ';
+            });
+            
+            // Working hours
+            document.getElementById('workingHours').addEventListener('input', function() {
+                const days = document.getElementById('workingDays').value || 'Chưa cập nhật';
+                document.getElementById('previewHours').textContent = `${this.value} (${days})`;
+            });
+            
+            document.getElementById('workingDays').addEventListener('input', function() {
+                const hours = document.getElementById('workingHours').value || 'Chưa cập nhật';
+                document.getElementById('previewHours').textContent = `${hours} (${this.value})`;
+            });
+        }
+
+        function updatePreviewLogo(src) {
+            const previewContainer = document.getElementById('previewLogoContainer');
+            previewContainer.innerHTML = `<img src="${src}" alt="Logo preview" style="max-width: 150px; max-height: 80px; border-radius: 8px;">`;
+        }
+
+        // Form submissions
+        document.getElementById('shopInfoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('shop-info', this);
+        });
+
+        document.getElementById('brandColorsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('brand-colors', this);
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('contact', this);
+        });
+
+        document.getElementById('mapForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('map', this);
+        });
+
+        document.getElementById('socialForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('social', this);
+        });
+
+        document.getElementById('systemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('system', this);
+        });
+
+        document.getElementById('advancedForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings('advanced', this);
+        });
+
+        // Save settings function
+        function saveSettings(type, form) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            
+            // Show loading
+            submitBtn.innerHTML = '<div class="loading"></div> Đang lưu...';
+            submitBtn.classList.add('loading');
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const settings = {};
+            
+            for (let [key, value] of formData.entries()) {
+                settings[key] = value;
+            }
+
+            // Simulate API call
+            setTimeout(() => {
+                // Reset button
+                submitBtn.innerHTML = originalContent;
+                submitBtn.classList.remove('loading');
+                
+                // Show success message
+                showNotification(`Đã lưu cài đặt ${getSettingTypeName(type)} thành công!`, 'success');
+                
+                // Log for development
+                console.log(`Saved ${type} settings:`, settings);
+                
+                // Here you would normally send to backend:
+                // fetch(`/admin/settings/${type}`, {
+                //     method: 'POST',
+                //     body: formData
+                // })
+                
+            }, 1500);
+        }
+
+        function getSettingTypeName(type) {
+            const names = {
+                'shop-info': 'thông tin cửa hàng',
+                'brand-colors': 'màu sắc thương hiệu',
+                'contact': 'thông tin liên hệ',
+                'map': 'bản đồ',
+                'social': 'mạng xã hội',
+                'system': 'hệ thống',
+                'advanced': 'nâng cao'
+            };
+            return names[type] || type;
+        }
+
+        // Utility functions
+        function resetColors() {
+            if (confirm('Bạn có chắc chắn muốn đặt lại màu sắc mặc định?')) {
+                document.getElementById('primaryColor').value = '#667eea';
+                document.getElementById('secondaryColor').value = '#764ba2';
+                document.getElementById('accentColor').value = '#28a745';
+                
+                // Update text inputs
+                document.querySelector('#primaryColor + input').value = '#667eea';
+                document.querySelector('#secondaryColor + input').value = '#764ba2';
+                document.querySelector('#accentColor + input').value = '#28a745';
+                
+                showNotification('Đã đặt lại màu sắc mặc định!', 'success');
+            }
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    showNotification('Đã lấy vị trí hiện tại!', 'success');
+                }, function(error) {
+                    showNotification('Không thể lấy vị trí hiện tại!', 'error');
+                });
+            } else {
+                showNotification('Trình duyệt không hỗ trợ Geolocation!', 'error');
+            }
+        }
+
+        function clearCache() {
+            if (confirm('Bạn có chắc chắn muốn xóa cache hệ thống?')) {
+                showNotification('Đang xóa cache...', 'info');
+                
+                // Simulate cache clearing
+                setTimeout(() => {
+                    showNotification('Đã xóa cache thành công!', 'success');
+                }, 2000);
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `flash-message flash-${type}`;
+            
+            const icon = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'warning': 'fas fa-exclamation-triangle',
+                'info': 'fas fa-info-circle'
+            };
+            
+            notification.innerHTML = `<i class="${icon[type]}"></i> ${message}`;
+            
+            const flashContainer = document.querySelector('.flash-messages');
+            flashContainer.appendChild(notification);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
