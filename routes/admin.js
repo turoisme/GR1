@@ -29,6 +29,13 @@ router.get('/users', AdminController.listUsers);
 router.get('/users/:id', AdminController.viewUser);
 router.post('/users/:id/status', AdminController.updateUserStatus);
 
+// ✨ THÊM MỚI: Settings routes
+router.get('/settings', AdminController.showSettings);
+router.get('/api/settings', AdminController.getSettings);
+router.get('/api/settings/:type', AdminController.getSettings);
+router.post('/settings/:type', AdminController.updateSettings);
+router.post('/settings/:type/reset', AdminController.resetSettings);
+
 // Thống kê
 router.get('/statistics', AdminController.statistics);
 

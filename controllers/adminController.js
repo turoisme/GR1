@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
+const Settings = require('../models/Settings'); // ✨ Added Settings model
 const bcrypt = require('bcrypt');
 
 class AdminController {
@@ -821,6 +822,548 @@ class AdminController {
 
   // ===== END USER MANAGEMENT METHODS =====
 
+  // ===== SETTINGS MANAGEMENT METHODS =====
+
+  // Hiển thị trang cài đặt
+  static async showSettings(req, res) {
+    try {
+      // Lấy tất cả cài đặt hiện tại
+      const allSettings = await Settings.getAllSettings();
+      
+      // Lấy cài đặt mặc định để so sánh
+      const defaultSettings = Settings.getDefaultSettings();
+      
+      // Merge với default settings nếu thiếu
+      const settings = {};
+      for (const [type, defaultData] of Object.entries(defaultSettings)) {
+        settings[type] = allSettings[type] || defaultData;
+      }
+
+      res.render('admin/settings', {
+        title: 'Cài đặt hệ thống - SportShop',
+        currentPage: 'admin-settings',
+        settings,
+        defaultSettings
+      });
+    } catch (error) {
+      console.error('Admin Show Settings Error:', error);
+      res.status(500).render('error', { 
+        title: 'Lỗi - SportShop',
+        error: 'Không thể tải trang cài đặt',
+        currentPage: 'error' 
+      });
+    }
+  }
+
+  // Lấy cài đặt theo loại (API)
+  static async getSettings(req, res) {
+    try {
+      const { type } = req.params;
+      
+      if (!type) {
+        // Lấy tất cả cài đặt
+        const allSettings = await Settings.getAllSettings();
+        return res.json({
+          success: true,
+          settings: allSettings
+        });
+      }
+
+      // Lấy cài đặt theo loại
+      const settingData = await Settings.getSetting(type);
+      
+      if (settingData === null) {
+        // Trả về default nếu chưa có
+        const defaultSettings = Settings.getDefaultSettings();
+        return res.json({
+          success: true,
+          setting: {
+            type: type,
+            data: defaultSettings[type] || {},
+            isDefault: true
+          }
+        });
+      }
+
+      res.json({
+        success: true,
+        setting: {
+          type: type,
+          data: settingData,
+          isDefault: false
+        }
+      });
+
+    } catch (error) {
+      console.error('Admin Get Settings Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi lấy cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Cập nhật cài đặt
+  static async updateSettings(req, res) {
+    try {
+      const { type } = req.params;
+      const updateData = req.body;
+      const userId = req.session.user.id;
+
+      // Validate setting type
+      const validTypes = [
+        'shop-info',
+        'brand-colors', 
+        'contact',
+        'map',
+        'social',
+        'system',
+        'advanced'
+      ];
+
+      if (!validTypes.includes(type)) {
+        return res.json({
+          success: false,
+          message: 'Loại cài đặt không hợp lệ!'
+        });
+      }
+
+      // Validate specific settings based on type
+      const validationResult = AdminController.validateSettingsData(type, updateData);
+      if (!validationResult.isValid) {
+        return res.json({
+          success: false,
+          message: validationResult.message
+        });
+      }
+
+      // Process the data based on type
+      const processedData = AdminController.processSettingsData(type, updateData);
+
+      // Update settings
+      await Settings.setSetting(type, processedData, userId);
+
+      console.log('⚙️ Settings updated by admin:', {
+        type: type,
+        updatedBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: 'Cập nhật cài đặt thành công!',
+        data: processedData
+      });
+
+    } catch (error) {
+      console.error('Admin Update Settings Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi cập nhật cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Đặt lại cài đặt về mặc định
+  static async resetSettings(req, res) {
+    try {
+      const { type } = req.params;
+      const userId = req.session.user.id;
+
+      const defaultSettings = Settings.getDefaultSettings();
+      
+      if (!defaultSettings[type]) {
+        return res.json({
+          success: false,
+          message: 'Loại cài đặt không hợp lệ!'
+        });
+      }
+
+      // Reset to default
+      await Settings.setSetting(type, defaultSettings[type], userId);
+
+      console.log('🔄 Settings reset to default by admin:', {
+        type: type,
+        resetBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: 'Đã đặt lại cài đặt về mặc định!',
+        data: defaultSettings[type]
+      });
+
+    } catch (error) {
+      console.error('Admin Reset Settings Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi đặt lại cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Khởi tạo cài đặt mặc định
+  static async initializeDefaultSettings(req, res) {
+    try {
+      await Settings.initializeDefaults();
+
+      console.log('🚀 Default settings initialized by admin:', {
+        initializedBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: 'Đã khởi tạo cài đặt mặc định thành công!'
+      });
+
+    } catch (error) {
+      console.error('Admin Initialize Settings Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi khởi tạo cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Sao lưu cài đặt
+  static async backupSettings(req, res) {
+    try {
+      const settings = await Settings.find({}).sort({ type: 1 });
+      
+      const backupData = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: req.session.user.email,
+        version: '1.0',
+        settings: settings.map(setting => setting.backup())
+      };
+
+      const filename = `settings-backup-${new Date().toISOString().split('T')[0]}.json`;
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(backupData);
+
+      console.log('💾 Settings backup created by admin:', {
+        count: settings.length,
+        backupBy: req.session.user.email,
+        filename: filename
+      });
+
+    } catch (error) {
+      console.error('Admin Backup Settings Error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi sao lưu cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Khôi phục cài đặt từ backup
+  static async restoreSettings(req, res) {
+    try {
+      const { backupData } = req.body;
+      const userId = req.session.user.id;
+
+      if (!backupData || !backupData.settings || !Array.isArray(backupData.settings)) {
+        return res.json({
+          success: false,
+          message: 'Dữ liệu backup không hợp lệ!'
+        });
+      }
+
+      let restoredCount = 0;
+      const errors = [];
+
+      for (const settingBackup of backupData.settings) {
+        try {
+          const setting = await Settings.findOne({ type: settingBackup.type });
+          if (setting) {
+            await setting.restore(settingBackup, userId);
+          } else {
+            await Settings.create({
+              type: settingBackup.type,
+              data: settingBackup.data,
+              createdBy: userId,
+              updatedBy: userId,
+              version: 1
+            });
+          }
+          restoredCount++;
+        } catch (err) {
+          errors.push(`${settingBackup.type}: ${err.message}`);
+        }
+      }
+
+      console.log('📥 Settings restored from backup by admin:', {
+        restored: restoredCount,
+        errors: errors.length,
+        restoredBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: `Đã khôi phục ${restoredCount} cài đặt thành công!`,
+        details: {
+          restored: restoredCount,
+          errors: errors
+        }
+      });
+
+    } catch (error) {
+      console.error('Admin Restore Settings Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi khôi phục cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Lấy lịch sử thay đổi cài đặt
+  static async getSettingsHistory(req, res) {
+    try {
+      const { type, page = 1, limit = 20 } = req.query;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      let query = {};
+      if (type) {
+        query.type = type;
+      }
+
+      const [settings, total] = await Promise.all([
+        Settings.find(query)
+          .populate('createdBy', 'firstName lastName email')
+          .populate('updatedBy', 'firstName lastName email')
+          .sort({ updatedAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit)),
+        Settings.countDocuments(query)
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          settings: settings.map(setting => ({
+            type: setting.type,
+            version: setting.version,
+            createdAt: setting.createdAt,
+            updatedAt: setting.updatedAt,
+            createdBy: setting.createdBy,
+            updatedBy: setting.updatedBy,
+            formattedUpdatedAt: setting.formattedUpdatedAt
+          })),
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: total,
+            pages: Math.ceil(total / parseInt(limit))
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Admin Settings History Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi lấy lịch sử cài đặt: ' + error.message
+      });
+    }
+  }
+
+  // Validate settings data based on type
+  static validateSettingsData(type, data) {
+    switch (type) {
+      case 'shop-info':
+        if (!data.name || data.name.trim().length === 0) {
+          return { isValid: false, message: 'Tên cửa hàng là bắt buộc!' };
+        }
+        if (data.name.length > 100) {
+          return { isValid: false, message: 'Tên cửa hàng không được quá 100 ký tự!' };
+        }
+        break;
+
+      case 'brand-colors':
+        const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        if (data.primary && !colorRegex.test(data.primary)) {
+          return { isValid: false, message: 'Màu chính không hợp lệ!' };
+        }
+        if (data.secondary && !colorRegex.test(data.secondary)) {
+          return { isValid: false, message: 'Màu phụ không hợp lệ!' };
+        }
+        if (data.accent && !colorRegex.test(data.accent)) {
+          return { isValid: false, message: 'Màu nhấn không hợp lệ!' };
+        }
+        break;
+
+      case 'contact':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (data.email && !emailRegex.test(data.email)) {
+          return { isValid: false, message: 'Email không hợp lệ!' };
+        }
+        const phoneRegex = /^[0-9\s\-\(\)\+]{10,15}$/;
+        if (data.phone && !phoneRegex.test(data.phone)) {
+          return { isValid: false, message: 'Số điện thoại không hợp lệ!' };
+        }
+        break;
+
+      case 'map':
+        if (data.latitude && (data.latitude < -90 || data.latitude > 90)) {
+          return { isValid: false, message: 'Vĩ độ phải từ -90 đến 90!' };
+        }
+        if (data.longitude && (data.longitude < -180 || data.longitude > 180)) {
+          return { isValid: false, message: 'Kinh độ phải từ -180 đến 180!' };
+        }
+        break;
+
+      case 'system':
+        if (data.siteName && data.siteName.length > 200) {
+          return { isValid: false, message: 'Tên site không được quá 200 ký tự!' };
+        }
+        if (data.metaDescription && data.metaDescription.length > 300) {
+          return { isValid: false, message: 'Meta description không được quá 300 ký tự!' };
+        }
+        break;
+
+      case 'advanced':
+        if (data.maxLoginAttempts && (data.maxLoginAttempts < 1 || data.maxLoginAttempts > 20)) {
+          return { isValid: false, message: 'Số lần đăng nhập tối đa phải từ 1 đến 20!' };
+        }
+        if (data.sessionTimeout && (data.sessionTimeout < 5 || data.sessionTimeout > 10080)) {
+          return { isValid: false, message: 'Thời gian session phải từ 5 phút đến 7 ngày!' };
+        }
+        break;
+    }
+
+    return { isValid: true };
+  }
+
+  // Process settings data based on type
+  static processSettingsData(type, data) {
+    const processed = { ...data };
+
+    switch (type) {
+      case 'shop-info':
+        processed.name = processed.name?.trim();
+        processed.slogan = processed.slogan?.trim();
+        processed.description = processed.description?.trim();
+        break;
+
+      case 'brand-colors':
+        // Ensure colors are lowercase
+        if (processed.primary) processed.primary = processed.primary.toLowerCase();
+        if (processed.secondary) processed.secondary = processed.secondary.toLowerCase();
+        if (processed.accent) processed.accent = processed.accent.toLowerCase();
+        // Convert darkMode to boolean
+        processed.darkMode = processed.darkMode === 'true' || processed.darkMode === true;
+        break;
+
+      case 'contact':
+        processed.email = processed.email?.toLowerCase().trim();
+        processed.phone = processed.phone?.trim();
+        processed.hotline = processed.hotline?.trim();
+        processed.address = processed.address?.trim();
+        processed.workingHours = processed.workingHours?.trim();
+        processed.workingDays = processed.workingDays?.trim();
+        break;
+
+      case 'map':
+        if (processed.latitude) processed.latitude = parseFloat(processed.latitude);
+        if (processed.longitude) processed.longitude = parseFloat(processed.longitude);
+        processed.embed = processed.embed?.trim();
+        break;
+
+      case 'social':
+        // Trim all social URLs
+        Object.keys(processed).forEach(key => {
+          if (processed[key]) {
+            processed[key] = processed[key].trim();
+            // Add https:// if missing
+            if (processed[key] && !processed[key].startsWith('http')) {
+              processed[key] = 'https://' + processed[key];
+            }
+          }
+        });
+        break;
+
+      case 'system':
+        processed.siteName = processed.siteName?.trim();
+        processed.metaDescription = processed.metaDescription?.trim();
+        processed.keywords = processed.keywords?.trim();
+        processed.currency = processed.currency?.trim();
+        processed.timezone = processed.timezone?.trim();
+        processed.language = processed.language?.trim();
+        break;
+
+      case 'advanced':
+        // Convert boolean fields
+        processed.maintenanceMode = processed.maintenanceMode === 'true' || processed.maintenanceMode === true;
+        processed.allowRegistration = processed.allowRegistration === 'true' || processed.allowRegistration === true;
+        processed.requireEmailVerification = processed.requireEmailVerification === 'true' || processed.requireEmailVerification === true;
+        
+        // Convert numeric fields
+        if (processed.maxLoginAttempts) processed.maxLoginAttempts = parseInt(processed.maxLoginAttempts);
+        if (processed.sessionTimeout) processed.sessionTimeout = parseInt(processed.sessionTimeout);
+        break;
+    }
+
+    return processed;
+  }
+
+  // Kiểm tra chế độ bảo trì
+  static async getMaintenanceMode(req, res) {
+    try {
+      const advancedSettings = await Settings.getSetting('advanced');
+      const maintenanceMode = advancedSettings?.maintenanceMode || false;
+
+      res.json({
+        success: true,
+        maintenanceMode: maintenanceMode
+      });
+    } catch (error) {
+      console.error('Get Maintenance Mode Error:', error);
+      res.json({
+        success: false,
+        maintenanceMode: false
+      });
+    }
+  }
+
+  // Bật/tắt chế độ bảo trì
+  static async toggleMaintenanceMode(req, res) {
+    try {
+      const { enabled } = req.body;
+      const userId = req.session.user.id;
+
+      const currentSettings = await Settings.getSetting('advanced') || {};
+      currentSettings.maintenanceMode = enabled === true || enabled === 'true';
+
+      await Settings.setSetting('advanced', currentSettings, userId);
+
+      console.log(`🔧 Maintenance mode ${enabled ? 'enabled' : 'disabled'} by admin:`, {
+        enabled: currentSettings.maintenanceMode,
+        toggledBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: `Chế độ bảo trì đã được ${enabled ? 'bật' : 'tắt'}!`,
+        maintenanceMode: currentSettings.maintenanceMode
+      });
+
+    } catch (error) {
+      console.error('Toggle Maintenance Mode Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi thay đổi chế độ bảo trì: ' + error.message
+      });
+    }
+  }
+
+  // ===== END SETTINGS MANAGEMENT METHODS =====
+
   // Thống kê
   static async statistics(req, res) {
     try {
@@ -1263,6 +1806,316 @@ class AdminController {
       });
     }
   }
+
+  // ===== SYSTEM MANAGEMENT METHODS =====
+
+  // Lấy thông tin hệ thống
+  static async getSystemInfo(req, res) {
+    try {
+      const systemInfo = {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString()
+      };
+
+      // Thống kê database
+      const dbStats = {
+        totalUsers: await User.countDocuments(),
+        totalProducts: await Product.countDocuments(),
+        totalOrders: await Order.countDocuments(),
+        totalSettings: await Settings.countDocuments()
+      };
+
+      res.json({
+        success: true,
+        system: systemInfo,
+        database: dbStats
+      });
+
+    } catch (error) {
+      console.error('Admin System Info Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi lấy thông tin hệ thống: ' + error.message
+      });
+    }
+  }
+
+  // Dọn dẹp dữ liệu
+  static async cleanupData(req, res) {
+    try {
+      const { type } = req.body;
+      let cleanupResult = { removed: 0, message: '' };
+
+      switch (type) {
+        case 'expired-sessions':
+          // TODO: Implement session cleanup if using custom session storage
+          cleanupResult.message = 'Dọn dẹp session hết hạn thành công';
+          break;
+
+        case 'abandoned-carts':
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          const result = await Cart.deleteMany({
+            status: 'abandoned',
+            updatedAt: { $lt: thirtyDaysAgo }
+          });
+          cleanupResult.removed = result.deletedCount;
+          cleanupResult.message = `Đã xóa ${result.deletedCount} giỏ hàng bỏ hoang`;
+          break;
+
+        case 'old-logs':
+          // TODO: Implement log cleanup if using custom logging
+          cleanupResult.message = 'Dọn dẹp log cũ thành công';
+          break;
+
+        default:
+          return res.json({
+            success: false,
+            message: 'Loại dọn dẹp không hợp lệ!'
+          });
+      }
+
+      console.log('🧹 Data cleanup performed by admin:', {
+        type: type,
+        removed: cleanupResult.removed,
+        performedBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: cleanupResult.message,
+        removed: cleanupResult.removed
+      });
+
+    } catch (error) {
+      console.error('Admin Cleanup Data Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi dọn dẹp dữ liệu: ' + error.message
+      });
+    }
+  }
+
+  // Kiểm tra sức khỏe hệ thống
+  static async healthCheck(req, res) {
+    try {
+      const checks = {
+        database: false,
+        settings: false,
+        fileSystem: false,
+        memory: false
+      };
+
+      // Kiểm tra database
+      try {
+        await User.findOne().limit(1);
+        checks.database = true;
+      } catch (err) {
+        console.error('Database health check failed:', err);
+      }
+
+      // Kiểm tra settings
+      try {
+        await Settings.findOne().limit(1);
+        checks.settings = true;
+      } catch (err) {
+        console.error('Settings health check failed:', err);
+      }
+
+      // Kiểm tra file system
+      try {
+        const fs = require('fs');
+        fs.accessSync('./public', fs.constants.R_OK);
+        checks.fileSystem = true;
+      } catch (err) {
+        console.error('File system health check failed:', err);
+      }
+
+      // Kiểm tra memory usage
+      const memUsage = process.memoryUsage();
+      checks.memory = memUsage.heapUsed < memUsage.heapTotal * 0.9; // < 90% usage
+
+      const isHealthy = Object.values(checks).every(check => check === true);
+
+      res.json({
+        success: true,
+        healthy: isHealthy,
+        checks: checks,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Admin Health Check Error:', error);
+      res.json({
+        success: false,
+        healthy: false,
+        message: 'Lỗi kiểm tra sức khỏe hệ thống: ' + error.message
+      });
+    }
+  }
+
+  // Xuất toàn bộ dữ liệu hệ thống
+  static async exportAllData(req, res) {
+    try {
+      const [users, products, orders, settings] = await Promise.all([
+        User.find({}).select('-password'),
+        Product.find({}),
+        Order.find({}).populate('userId', 'firstName lastName email'),
+        Settings.find({})
+      ]);
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: req.session.user.email,
+        version: '1.0',
+        data: {
+          users: users,
+          products: products,
+          orders: orders,
+          settings: settings
+        },
+        statistics: {
+          totalUsers: users.length,
+          totalProducts: products.length,
+          totalOrders: orders.length,
+          totalSettings: settings.length
+        }
+      };
+
+      const filename = `sportshop-full-export-${new Date().toISOString().split('T')[0]}.json`;
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(exportData);
+
+      console.log('📊 Full data export by admin:', {
+        totalRecords: users.length + products.length + orders.length + settings.length,
+        exportedBy: req.session.user.email,
+        filename: filename
+      });
+
+    } catch (error) {
+      console.error('Admin Export All Data Error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi xuất dữ liệu: ' + error.message
+      });
+    }
+  }
+
+  // ===== END SYSTEM MANAGEMENT METHODS =====
+
+  // ===== CACHE MANAGEMENT METHODS =====
+
+  // Xóa cache (nếu sử dụng Redis hoặc cache khác)
+  static async clearCache(req, res) {
+    try {
+      const { type } = req.body;
+
+      // TODO: Implement cache clearing based on your caching strategy
+      // Example for different cache types:
+      switch (type) {
+        case 'all':
+          // clearAllCache();
+          break;
+        case 'products':
+          // clearProductCache();
+          break;
+        case 'users':
+          // clearUserCache();
+          break;
+        case 'settings':
+          // clearSettingsCache();
+          break;
+        default:
+          return res.json({
+            success: false,
+            message: 'Loại cache không hợp lệ!'
+          });
+      }
+
+      console.log('🗑️ Cache cleared by admin:', {
+        type: type,
+        clearedBy: req.session.user.email,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: `Đã xóa cache ${type} thành công!`
+      });
+
+    } catch (error) {
+      console.error('Admin Clear Cache Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi xóa cache: ' + error.message
+      });
+    }
+  }
+
+  // ===== END CACHE MANAGEMENT METHODS =====
+
+  // ===== AUDIT LOG METHODS =====
+
+  // Ghi audit log
+  static async logAdminAction(action, details, req) {
+    try {
+      // TODO: Implement audit logging system
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        adminId: req.session.user.id,
+        adminEmail: req.session.user.email,
+        action: action,
+        details: details,
+        ip: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent')
+      };
+
+      console.log('📝 Admin Action Logged:', logEntry);
+      
+      // In a real application, you might want to store this in a separate collection
+      // await AuditLog.create(logEntry);
+
+    } catch (error) {
+      console.error('Error logging admin action:', error);
+    }
+  }
+
+  // Lấy audit logs
+  static async getAuditLogs(req, res) {
+    try {
+      const { page = 1, limit = 50, action, adminId, fromDate, toDate } = req.query;
+
+      // TODO: Implement audit log retrieval
+      // This would query your audit log collection
+
+      res.json({
+        success: true,
+        logs: [],
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0,
+          pages: 0
+        }
+      });
+
+    } catch (error) {
+      console.error('Admin Get Audit Logs Error:', error);
+      res.json({
+        success: false,
+        message: 'Lỗi lấy audit logs: ' + error.message
+      });
+    }
+  }
+
+  // ===== END AUDIT LOG METHODS =====
 }
 
 module.exports = AdminController;

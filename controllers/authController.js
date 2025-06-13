@@ -12,6 +12,10 @@ class AuthController {
     try {
       // Redirect if already logged in
       if (req.session.user) {
+        // ✨ KIỂM TRA ROLE ĐỂ REDIRECT ĐÚNG
+        if (req.session.user.role === 'admin') {
+          return res.redirect('/admin');
+        }
         return res.redirect('/user/account');
       }
       
@@ -102,21 +106,38 @@ class AuthController {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
       }
       
-      // Merge guest cart with user cart
-      await AuthController.mergeGuestCart(req);
+      // Merge guest cart with user cart (only for regular users)
+      if (user.role !== 'admin') {
+        await AuthController.mergeGuestCart(req);
+      }
       
       console.log('✅ User logged in successfully:', {
         userId: user._id,
         email: user.email,
         fullName: user.fullName,
+        role: user.role, // ✨ THÊM ROLE VÀO LOG
         sessionId: req.sessionID
       });
       
-      // Redirect to intended page or account
-      const redirectTo = req.body.returnTo || req.session.returnTo || '/user/account';
+      // ✨ REDIRECT DỰA TRÊN ROLE
+      let redirectTo;
+      let welcomeMessage;
+      
+      if (user.role === 'admin') {
+        // Admin redirect to admin dashboard
+        redirectTo = req.body.returnTo || req.session.returnTo || '/admin';
+        welcomeMessage = `Chào mừng Admin ${user.firstName}! Đăng nhập thành công.`;
+      } else {
+        // Regular user redirect to user account
+        redirectTo = req.body.returnTo || req.session.returnTo || '/user/account';
+        welcomeMessage = `Chào mừng ${user.firstName}! Đăng nhập thành công.`;
+      }
+      
+      // Clear stored return URL
       delete req.session.returnTo;
       
-      req.flash('success', `Chào mừng ${user.firstName}! Đăng nhập thành công.`);
+      console.log('🔄 Redirecting to:', redirectTo);
+      req.flash('success', welcomeMessage);
       res.redirect(redirectTo);
       
     } catch (error) {
@@ -133,6 +154,10 @@ class AuthController {
   static async showRegister(req, res) {
     try {
       if (req.session.user) {
+        // ✨ KIỂM TRA ROLE ĐỂ REDIRECT ĐÚNG
+        if (req.session.user.role === 'admin') {
+          return res.redirect('/admin');
+        }
         return res.redirect('/user/account');
       }
       
@@ -237,11 +262,22 @@ class AuthController {
         isVerified: user.isVerified
       };
       
-      // Merge guest cart with new user account
-      await AuthController.mergeGuestCart(req);
+      // Merge guest cart with new user account (only for regular users)
+      if (user.role !== 'admin') {
+        await AuthController.mergeGuestCart(req);
+      }
       
-      req.flash('success', `Chào mừng ${user.firstName}! Tài khoản đã được tạo thành công. Hãy hoàn thiện thông tin cá nhân của bạn.`);
-      res.redirect('/user/account');
+      // ✨ REDIRECT DỰA TRÊN ROLE AFTER REGISTRATION
+      let redirectTo = '/user/account';
+      let welcomeMessage = `Chào mừng ${user.firstName}! Tài khoản đã được tạo thành công. Hãy hoàn thiện thông tin cá nhân của bạn.`;
+      
+      if (user.role === 'admin') {
+        redirectTo = '/admin';
+        welcomeMessage = `Chào mừng Admin ${user.firstName}! Tài khoản đã được tạo thành công.`;
+      }
+      
+      req.flash('success', welcomeMessage);
+      res.redirect(redirectTo);
       
     } catch (error) {
       console.error('Auth Register Error:', error);
@@ -268,6 +304,7 @@ class AuthController {
       console.log('👋 User logout:', {
         userId: userInfo?.id,
         email: userInfo?.email,
+        role: userInfo?.role, // ✨ THÊM ROLE VÀO LOG
         sessionId: req.sessionID
       });
       
@@ -296,6 +333,10 @@ class AuthController {
   static async showForgotPassword(req, res) {
     try {
       if (req.session.user) {
+        // ✨ KIỂM TRA ROLE ĐỂ REDIRECT ĐÚNG
+        if (req.session.user.role === 'admin') {
+          return res.redirect('/admin');
+        }
         return res.redirect('/user/account');
       }
       
