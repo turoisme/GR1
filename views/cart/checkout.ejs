@@ -954,7 +954,7 @@
                 if (momoAmountSpan) {
                     const amount = '<%= cart.finalTotal.toLocaleString("vi-VN") %>đ';
                     momoAmountSpan.textContent = amount;
-                    momoAmountText.textContent = amount;
+                    if (momoAmountText) momoAmountText.textContent = amount;
                 }
                 
                 // Update transfer content suggestion in steps
@@ -1038,7 +1038,7 @@
                 }
             });
             
-            // Place order handler
+            // Place order handler - CẬP NHẬT ĐỂ CHUYỂN ĐẾN TRANG ĐƠN HÀNG
             placeOrderBtn.addEventListener('click', function() {
                 if (!validateForm()) {
                     showNotification('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
@@ -1090,31 +1090,27 @@
                     
                     if (data.success) {
                         // Success handling
-                        const paymentMethod = orderData.paymentMethod;
-                        let successMessage = data.message;
-                        
-                        if (paymentMethod === 'bank' || paymentMethod === 'momo') {
-                            successMessage += '\n\n💡 Hãy chụp ảnh màn hình thông tin thanh toán để tham khảo.';
-                        }
-                        
-                        showNotification('🎉 ' + successMessage, 'success');
-                        
-                        // Redirect based on payment method
-                        setTimeout(() => {
-                            if (paymentMethod === 'bank' || paymentMethod === 'momo') {
-                                // Keep user on page to see QR code
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            } else {
-                                // Redirect to success page or cart
-                                window.location.href = '/cart?success=1&orderId=' + (data.data?.orderId || '');
-                            }
-                        }, (paymentMethod === 'bank' || paymentMethod === 'momo') ? 5000 : 2000);
+                        showNotification('🎉 ' + data.message, 'success');
                         
                         // Disable form after successful submission
                         const inputs = form.querySelectorAll('input, select, textarea, button');
                         inputs.forEach(input => input.disabled = true);
                         placeOrderBtn.disabled = true;
                         placeOrderBtn.textContent = '✅ Đặt hàng thành công';
+                        
+                        // Redirect to orders page after 2 seconds
+                        setTimeout(() => {
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                            } else {
+                                // Fallback redirect
+                                <% if (typeof user !== 'undefined' && user) { %>
+                                    window.location.href = '/user/orders';
+                                <% } else { %>
+                                    window.location.href = '/auth/login?redirect=/user/orders';
+                                <% } %>
+                            }
+                        }, 2000);
                         
                     } else {
                         // Error handling

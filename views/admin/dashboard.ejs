@@ -1,418 +1,854 @@
-<!-- views/admin/dashboard.ejs -->
-<!-- Stats Grid -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-title">Tổng sản phẩm</div>
-            <div class="stat-icon products">
-                <i class="fas fa-box"></i>
-            </div>
-        </div>
-        <div class="stat-number"><%= stats.totalProducts %></div>
-        <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            <span>+12% so với tháng trước</span>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-title">Người dùng</div>
-            <div class="stat-icon users">
-                <i class="fas fa-users"></i>
-            </div>
-        </div>
-        <div class="stat-number"><%= stats.totalUsers %></div>
-        <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            <span>+8% so với tháng trước</span>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-title">Đơn hàng</div>
-            <div class="stat-icon orders">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-        </div>
-        <div class="stat-number"><%= stats.totalOrders %></div>
-        <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            <span>+25% so với tháng trước</span>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-header">
-            <div class="stat-title">Doanh thu tháng</div>
-            <div class="stat-icon revenue">
-                <i class="fas fa-dollar-sign"></i>
-            </div>
-        </div>
-        <div class="stat-number">₫2.5M</div>
-        <div class="stat-change positive">
-            <i class="fas fa-arrow-up"></i>
-            <span>+18% so với tháng trước</span>
-        </div>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SportShop Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<!-- Quick Actions -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
-    <div class="admin-card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <i class="fas fa-bolt icon"></i>
-                Hành động nhanh
-            </h3>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed .sidebar-header h2 {
+            opacity: 0;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-item a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .menu-item a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .menu-item a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar.collapsed .menu-item a {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.collapsed .menu-item i {
+            margin-right: 0;
+        }
+
+        .sidebar.collapsed .menu-item span {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 25px;
+            transition: background 0.3s ease;
+        }
+
+        .user-info:hover {
+            background: #f8fafc;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Dashboard Content */
+        .dashboard-content {
+            padding: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.orders {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .stat-icon.products {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .stat-icon.users {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .stat-icon.revenue {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1.1rem;
+            border: 2px dashed #cbd5e1;
+        }
+
+        /* Recent Activity */
+        .recent-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .activity-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .activity-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .activity-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .activity-list {
+            padding: 20px 25px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .activity-icon.new-order {
+            background: #3b82f6;
+        }
+
+        .activity-icon.new-user {
+            background: #10b981;
+        }
+
+        .activity-icon.product-update {
+            background: #f59e0b;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .activity-time {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .recent-section {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                flex-wrap: wrap;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .dashboard-content {
+                padding: 20px;
+            }
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #333;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2>SportShop Admin</h2>
         </div>
-        <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                <a href="/admin/products/add" class="btn btn-primary btn-lg">
+        
+        <nav class="sidebar-menu">
+            <div class="menu-item">
+                <a href="/admin/" class="active">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/products">
+                    <i class="fas fa-box"></i>
+                    <span>Quản lý sản phẩm</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Quản lý đơn hàng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/users">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý người dùng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/statistics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Thống kê</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/auth/logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu">
+                    <div class="user-info">
+                        <div class="user-avatar">AS</div>
+                        <div>
+                            <div style="font-weight: 500;">Admin SportShop</div>
+                            <div style="font-size: 0.8rem; color: #666;">admin@sportshop.com</div>
+                        </div>
+                        <i class="fas fa-chevron-down" style="margin-left: 5px; color: #666;"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="/admin/products/add" class="quick-btn">
                     <i class="fas fa-plus"></i>
                     Thêm sản phẩm
                 </a>
-                <a href="/admin/orders" class="btn btn-info btn-lg">
+                <a href="/admin/orders" class="quick-btn">
                     <i class="fas fa-eye"></i>
                     Xem đơn hàng
                 </a>
-                <a href="/admin/users" class="btn btn-success btn-lg">
-                    <i class="fas fa-user-plus"></i>
-                    Quản lý user
-                </a>
-                <a href="/admin/statistics" class="btn btn-warning btn-lg">
-                    <i class="fas fa-chart-bar"></i>
-                    Thống kê
+                <a href="/admin/statistics" class="quick-btn">
+                    <i class="fas fa-chart-line"></i>
+                    Báo cáo
                 </a>
             </div>
-        </div>
-    </div>
-    
-    <div class="admin-card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <i class="fas fa-clock icon"></i>
-                Hoạt động hôm nay
-            </h3>
-        </div>
-        <div class="card-body">
-            <div style="space-y: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon orders">
                             <i class="fas fa-shopping-cart"></i>
                         </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Đơn hàng mới</div>
-                            <div style="font-size: 12px; color: var(--secondary);">5 phút trước</div>
+                    </div>
+                    <div class="stat-value" id="totalOrders">1,247</div>
+                    <div class="stat-label">Tổng đơn hàng</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        +12% so với tháng trước
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon products">
+                            <i class="fas fa-box"></i>
                         </div>
                     </div>
-                    <span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">+5</span>
+                    <div class="stat-value" id="totalProducts">356</div>
+                    <div class="stat-label">Sản phẩm</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        +5% so với tháng trước
+                    </div>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Người dùng mới</div>
-                            <div style="font-size: 12px; color: var(--secondary);">15 phút trước</div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon users">
+                            <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">+2</span>
+                    <div class="stat-value" id="totalUsers">8,432</div>
+                    <div class="stat-label">Khách hàng</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        +18% so với tháng trước
+                    </div>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon revenue">
                             <i class="fas fa-dollar-sign"></i>
                         </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Doanh thu</div>
-                            <div style="font-size: 12px; color: var(--secondary);">Cập nhật liên tục</div>
-                        </div>
                     </div>
-                    <span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">₫850K</span>
+                    <div class="stat-value" id="totalRevenue">2.4M</div>
+                    <div class="stat-label">Doanh thu (VNĐ)</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        +23% so với tháng trước
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- Recent Orders -->
-<div class="admin-card">
-    <div class="card-header">
-        <h2 class="card-title">
-            <i class="fas fa-shopping-cart icon"></i>
-            Đơn hàng gần đây
-        </h2>
-        <div style="display: flex; gap: 12px;">
-            <a href="/admin/orders" class="btn btn-outline">
-                <i class="fas fa-eye"></i>
-                Xem tất cả
-            </a>
-            <button class="btn btn-primary" onclick="location.reload()">
-                <i class="fas fa-sync-alt"></i>
-                Làm mới
-            </button>
-        </div>
-    </div>
-    
-    <% if (recentOrders && recentOrders.length > 0) { %>
-        <div style="overflow-x: auto;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Khách hàng</th>
-                        <th>Ngày đặt</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% recentOrders.forEach(order => { %>
-                        <tr>
-                            <td>
-                                <div style="font-weight: 600; color: var(--primary);">
-                                    #<%= order.orderNumber || order._id.toString().slice(-6) %>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600;">
-                                        <% if (order.userId) { %>
-                                            <%= order.userId.firstName.charAt(0) %><%= order.userId.lastName.charAt(0) %>
-                                        <% } else { %>
-                                            <i class="fas fa-user"></i>
-                                        <% } %>
-                                    </div>
-                                    <div>
-                                        <div style="font-weight: 600; color: var(--dark);">
-                                            <% if (order.userId) { %>
-                                                <%= order.userId.firstName %> <%= order.userId.lastName %>
-                                            <% } else { %>
-                                                Khách vãng lai
-                                            <% } %>
-                                        </div>
-                                        <% if (order.userId) { %>
-                                            <div style="font-size: 12px; color: var(--secondary);">
-                                                <%= order.userId.email %>
-                                            </div>
-                                        <% } %>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="font-weight: 500;">
-                                    <%= new Date(order.createdAt).toLocaleDateString('vi-VN') %>
-                                </div>
-                                <div style="font-size: 12px; color: var(--secondary);">
-                                    <%= new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="font-weight: 700; font-size: 16px; color: var(--dark);">
-                                    <%= order.totalAmount ? order.totalAmount.toLocaleString('vi-VN') : '0' %>₫
-                                </div>
-                            </td>
-                            <td>
-                                <% 
-                                    let statusClass = 'pending';
-                                    let statusText = 'Chờ xử lý';
-                                    let statusIcon = 'clock';
-                                    
-                                    switch(order.status) {
-                                        case 'pending':
-                                            statusClass = 'pending';
-                                            statusText = 'Chờ xử lý';
-                                            statusIcon = 'clock';
-                                            break;
-                                        case 'confirmed':
-                                            statusClass = 'active';
-                                            statusText = 'Đã xác nhận';
-                                            statusIcon = 'check';
-                                            break;
-                                        case 'shipping':
-                                            statusClass = 'active';
-                                            statusText = 'Đang giao';
-                                            statusIcon = 'truck';
-                                            break;
-                                        case 'completed':
-                                            statusClass = 'completed';
-                                            statusText = 'Hoàn thành';
-                                            statusIcon = 'check-circle';
-                                            break;
-                                        case 'cancelled':
-                                            statusClass = 'inactive';
-                                            statusText = 'Đã hủy';
-                                            statusIcon = 'times-circle';
-                                            break;
-                                    }
-                                %>
-                                <span class="status-badge <%= statusClass %>">
-                                    <i class="fas fa-<%= statusIcon %>"></i>
-                                    <%= statusText %>
-                                </span>
-                            </td>
-                            <td>
-                                <div style="display: flex; gap: 8px;">
-                                    <a href="/admin/orders/<%= order._id %>" class="btn btn-primary btn-sm" title="Xem chi tiết">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <% if (order.status === 'pending') { %>
-                                        <button onclick="updateStatus('/admin/orders/<%= order._id %>/status', 'confirmed')" 
-                                                class="btn btn-success btn-sm" title="Xác nhận">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    <% } %>
-                                    <% if (order.status !== 'cancelled' && order.status !== 'completed') { %>
-                                        <button onclick="updateStatus('/admin/orders/<%= order._id %>/status', 'cancelled')" 
-                                                class="btn btn-danger btn-sm" title="Hủy đơn">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    <% } %>
-                                </div>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } else { %>
-        <div class="card-body">
-            <div style="text-align: center; padding: 60px 20px; color: var(--secondary);">
-                <div style="font-size: 4rem; margin-bottom: 16px; opacity: 0.5;">
-                    <i class="fas fa-shopping-cart"></i>
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Biểu đồ doanh thu</h3>
+                        <select style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option>7 ngày qua</option>
+                            <option>30 ngày qua</option>
+                            <option>3 tháng qua</option>
+                        </select>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i>
+                            <br>Biểu đồ doanh thu theo thời gian
+                        </div>
+                    </div>
                 </div>
-                <h3 style="color: var(--secondary); margin-bottom: 8px; font-weight: 600;">Chưa có đơn hàng nào</h3>
-                <p style="margin-bottom: 24px;">Các đơn hàng mới sẽ xuất hiện ở đây</p>
-                <a href="/admin/products" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    Thêm sản phẩm để bắt đầu
-                </a>
-            </div>
-        </div>
-    <% } %>
-</div>
 
-<!-- Additional Dashboard Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; margin-top: 32px;">
-    <!-- Top Products -->
-    <div class="admin-card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <i class="fas fa-fire icon"></i>
-                Sản phẩm bán chạy
-            </h3>
-            <a href="/admin/products" class="btn btn-outline btn-sm">Xem tất cả</a>
-        </div>
-        <div class="card-body">
-            <div style="space-y: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 48px; height: 48px; background: var(--light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-running" style="color: var(--primary); font-size: 20px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Giày Nike Air Max</div>
-                            <div style="font-size: 12px; color: var(--secondary);">Giày thể thao</div>
-                        </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top sản phẩm</h3>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: var(--success);">23 đã bán</div>
-                        <div style="font-size: 12px; color: var(--secondary);">₫1.2M</div>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i>
+                            <br>Sản phẩm bán chạy nhất
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 48px; height: 48px; background: var(--light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-tshirt" style="color: var(--info); font-size: 20px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Áo Adidas Classic</div>
-                            <div style="font-size: 12px; color: var(--secondary);">Áo thể thao</div>
-                        </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-section">
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3>Đơn hàng gần đây</h3>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: var(--success);">18 đã bán</div>
-                        <div style="font-size: 12px; color: var(--secondary);">₫450K</div>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon new-order">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Đơn hàng #1247 - Nguyễn Văn A</div>
+                                <div class="activity-time">2 phút trước</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon new-order">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Đơn hàng #1246 - Trần Thị B</div>
+                                <div class="activity-time">15 phút trước</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon new-order">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Đơn hàng #1245 - Lê Văn C</div>
+                                <div class="activity-time">1 giờ trước</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 48px; height: 48px; background: var(--light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-baseball-ball" style="color: var(--warning); font-size: 20px;"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--dark);">Quần Puma Sport</div>
-                            <div style="font-size: 12px; color: var(--secondary);">Quần thể thao</div>
-                        </div>
+
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3>Hoạt động hệ thống</h3>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: var(--success);">15 đã bán</div>
-                        <div style="font-size: 12px; color: var(--secondary);">₫380K</div>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon new-user">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Người dùng mới đăng ký</div>
+                                <div class="activity-time">5 phút trước</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon product-update">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Cập nhật sản phẩm</div>
+                                <div class="activity-time">30 phút trước</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon new-user">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Người dùng mới đăng ký</div>
+                                <div class="activity-time">2 giờ trước</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Recent Activity -->
-    <div class="admin-card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <i class="fas fa-history icon"></i>
-                Hoạt động gần đây
-            </h3>
-        </div>
-        <div class="card-body">
-            <div style="space-y: 16px;">
-                <div style="display: flex; align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-top: 8px;"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
-                            Đơn hàng #DH001 đã được xác nhận
-                        </div>
-                        <div style="font-size: 12px; color: var(--secondary);">2 phút trước</div>
-                    </div>
-                </div>
+
+    <script>
+        // Toggle Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        // Load dashboard stats from API
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/admin/api/stats/overview');
+                const data = await response.json();
                 
-                <div style="display: flex; align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="width: 8px; height: 8px; background: var(--info); border-radius: 50%; margin-top: 8px;"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
-                            Người dùng mới đăng ký: nguyenvana@email.com
-                        </div>
-                        <div style="font-size: 12px; color: var(--secondary);">5 phút trước</div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <div style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 8px;"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
-                            Sản phẩm "Giày Nike Air Force" đã được cập nhật
-                        </div>
-                        <div style="font-size: 12px; color: var(--secondary);">10 phút trước</div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; align-items: start; gap: 12px; padding: 12px 0;">
-                    <div style="width: 8px; height: 8px; background: var(--warning); border-radius: 50%; margin-top: 8px;"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
-                            Cảnh báo: Sản phẩm "Áo Adidas" sắp hết hàng
-                        </div>
-                        <div style="font-size: 12px; color: var(--secondary);">15 phút trước</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                if (data.success) {
+                    document.getElementById('totalOrders').textContent = data.data.totalOrders.toLocaleString();
+                    document.getElementById('totalProducts').textContent = data.data.totalProducts.toLocaleString();
+                    document.getElementById('totalUsers').textContent = data.data.totalUsers.toLocaleString();
+                    document.getElementById('totalRevenue').textContent = (data.data.totalRevenue / 1000000).toFixed(1) + 'M';
+                }
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        // Auto-update stats (demo)
+        function updateStats() {
+            const statValues = document.querySelectorAll('.stat-value');
+            statValues.forEach(stat => {
+                if (stat.id !== 'totalRevenue') {
+                    const currentValue = parseInt(stat.textContent.replace(/[^\d]/g, ''));
+                    const newValue = currentValue + Math.floor(Math.random() * 5);
+                    stat.textContent = newValue.toLocaleString();
+                }
+            });
+        }
+
+        // Simulate real-time updates
+        setInterval(updateStats, 30000); // Update every 30 seconds
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !mobileBtn.contains(event.target)) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('SportShop Admin Dashboard initialized');
+            loadDashboardStats();
+        });
+
+        // Show section (for settings)
+        function showSection(section) {
+            console.log('Navigating to:', section);
+            alert(`Chức năng ${section} đang được phát triển`);
+        }
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+
 class CartController {
   /**
    * Hiển thị giỏ hàng
@@ -534,238 +535,239 @@ class CartController {
     }
   }
 
-// controllers/cartController.js - Phần processCheckout được cải tiến
-
-/**
- * Xử lý thanh toán - CẢI TIẾN VỚI REDIRECT ĐẾN TRANG SUCCESS
- * POST /cart/checkout
- */
-static async processCheckout(req, res) {
-  try {
-    const sessionId = req.sessionID || req.session.id;
-    const userId = req.session?.user?.id || null;
-    
-    const {
-      customerName,
-      customerEmail,
-      customerPhone,
-      shippingAddress,
-      ward = '',
-      district,
-      city,
-      paymentMethod = 'cod',
-      notes = ''
-    } = req.body;
-    
-    console.log('💳 Processing checkout:', {
-      sessionId,
-      userId,
-      customerName,
-      paymentMethod
-    });
-    
-    // Get current cart
-    const cart = await Cart.findBySessionId(sessionId, userId);
-    
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Giỏ hàng trống hoặc không tìm thấy'
-      });
-    }
-    
-    // Validate required fields
-    if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !district) {
-      const missingFields = [];
-      if (!customerName) missingFields.push('Họ tên');
-      if (!customerEmail) missingFields.push('Email');
-      if (!customerPhone) missingFields.push('Số điện thoại');
-      if (!shippingAddress) missingFields.push('Địa chỉ giao hàng');
-      if (!district) missingFields.push('Quận/Huyện');
-      
-      return res.status(400).json({
-        success: false,
-        message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`
-      });
-    }
-    
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerEmail)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email không hợp lệ'
-      });
-    }
-    
-    // Validate phone number (Vietnam format)
-    const cleanPhone = customerPhone.replace(/\D/g, '');
-    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
-      return res.status(400).json({
-        success: false,
-        message: 'Số điện thoại không hợp lệ'
-      });
-    }
-    
-    // Generate order ID and delivery date
-    const orderId = `SP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-6)}`;
-    const deliveryDate = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
-    
-    // Create order data
-    const orderData = {
-      orderId: orderId,
-      sessionId: sessionId,
-      userId: userId,
-      status: paymentMethod === 'cod' ? 'pending' : 'awaiting_payment',
-      paymentMethod: paymentMethod,
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'unpaid',
-      customer: {
-        name: customerName.trim(),
-        email: customerEmail.toLowerCase().trim(),
-        phone: cleanPhone
-      },
-      shipping: {
-        address: shippingAddress.trim(),
-        ward: ward.trim(),
-        district: district.trim(),
-        city: city || 'Hà Nội'
-      },
-      items: cart.items.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        productImage: item.productImage,
-        price: item.price,
-        quantity: item.quantity,
-        color: item.color || 'Mặc định',
-        size: item.size || 'Mặc định',
-        subtotal: item.subtotal
-      })),
-      totalItems: cart.totalItems,
-      totalPrice: cart.totalPrice,
-      shippingFee: cart.shippingFee,
-      finalTotal: cart.finalTotal,
-      notes: notes.trim(),
-      estimatedDelivery: deliveryDate,
-      orderHistory: [
-        {
-          status: 'pending',
-          timestamp: new Date(),
-          note: 'Đơn hàng đã được tạo'
-        }
-      ]
-    };
-    
-    console.log('📋 Creating order:', {
-      orderId: orderData.orderId,
-      customerName: orderData.customer.name,
-      totalItems: orderData.totalItems,
-      finalTotal: orderData.finalTotal
-    });
-    
-    // Save order to database
+  /**
+   * Xử lý thanh toán - CẢI TIẾN VỚI REDIRECT ĐẾN TRANG ĐƠN HÀNG TÀI KHOẢN
+   * POST /cart/checkout
+   */
+  static async processCheckout(req, res) {
     try {
-      const Order = require('../models/Order');
-      const savedOrder = await Order.createOrder(orderData);
+      const sessionId = req.sessionID || req.session.id;
+      const userId = req.session?.user?.id || null;
       
-      if (!savedOrder) {
-        throw new Error('Failed to save order to database');
-      }
+      const {
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress,
+        ward = '',
+        district,
+        city,
+        paymentMethod = 'cod',
+        notes = ''
+      } = req.body;
       
-      console.log('✅ Order saved successfully:', {
-        orderId: savedOrder.orderId,
-        mongoId: savedOrder._id,
-        status: savedOrder.status
+      console.log('💳 Processing checkout:', {
+        sessionId,
+        userId,
+        customerName,
+        paymentMethod
       });
       
-      // Clear cart after successful order
-      cart.clear();
-      await cart.save();
+      // Get current cart
+      const cart = await Cart.findBySessionId(sessionId, userId);
       
-      // Clear session cart
-      if (req.session.cartItems) {
-        req.session.cartItems = [];
-        req.session.cartCount = 0;
+      if (!cart || cart.items.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Giỏ hàng trống hoặc không tìm thấy'
+        });
       }
       
-      // Store order info in session for success page
-      req.session.lastOrder = {
-        orderId: savedOrder.orderId,
-        total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
-        paymentMethod: savedOrder.paymentMethod,
-        deliveryDate: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
-        customerName: savedOrder.customer.name,
-        status: savedOrder.status
+      // Validate required fields
+      if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !district) {
+        const missingFields = [];
+        if (!customerName) missingFields.push('Họ tên');
+        if (!customerEmail) missingFields.push('Email');
+        if (!customerPhone) missingFields.push('Số điện thoại');
+        if (!shippingAddress) missingFields.push('Địa chỉ giao hàng');
+        if (!district) missingFields.push('Quận/Huyện');
+        
+        return res.status(400).json({
+          success: false,
+          message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`
+        });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email không hợp lệ'
+        });
+      }
+      
+      // Validate phone number (Vietnam format)
+      const cleanPhone = customerPhone.replace(/\D/g, '');
+      if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+        return res.status(400).json({
+          success: false,
+          message: 'Số điện thoại không hợp lệ'
+        });
+      }
+      
+      // Generate order ID and delivery date
+      const orderId = `SP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-6)}`;
+      const deliveryDate = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+      
+      // Create order data
+      const orderData = {
+        orderId: orderId,
+        sessionId: sessionId,
+        userId: userId,
+        status: paymentMethod === 'cod' ? 'pending' : 'awaiting_payment',
+        paymentMethod: paymentMethod,
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'unpaid',
+        customer: {
+          name: customerName.trim(),
+          email: customerEmail.toLowerCase().trim(),
+          phone: cleanPhone
+        },
+        shipping: {
+          address: shippingAddress.trim(),
+          ward: ward.trim(),
+          district: district.trim(),
+          city: city || 'Hà Nội'
+        },
+        items: cart.items.map(item => ({
+          productId: item.productId,
+          productName: item.productName,
+          productImage: item.productImage,
+          price: item.price,
+          quantity: item.quantity,
+          color: item.color || 'Mặc định',
+          size: item.size || 'Mặc định',
+          subtotal: item.subtotal
+        })),
+        totalItems: cart.totalItems,
+        totalPrice: cart.totalPrice,
+        shippingFee: cart.shippingFee,
+        finalTotal: cart.finalTotal,
+        notes: notes.trim(),
+        estimatedDelivery: deliveryDate,
+        orderHistory: [
+          {
+            status: 'pending',
+            timestamp: new Date(),
+            note: 'Đơn hàng đã được tạo'
+          }
+        ]
       };
       
-      console.log('✅ Checkout completed and saved to DB:', {
-        orderId: savedOrder.orderId,
-        total: savedOrder.finalTotal
+      console.log('📋 Creating order:', {
+        orderId: orderData.orderId,
+        customerName: orderData.customer.name,
+        totalItems: orderData.totalItems,
+        finalTotal: orderData.finalTotal
       });
       
-      // Success response with redirect URL
-      res.json({
-        success: true,
-        message: 'Đặt hàng thành công!',
-        data: {
+      // Save order to database
+      try {
+        const Order = require('../models/Order');
+        const savedOrder = await Order.createOrder(orderData);
+        
+        if (!savedOrder) {
+          throw new Error('Failed to save order to database');
+        }
+        
+        console.log('✅ Order saved successfully:', {
           orderId: savedOrder.orderId,
-          estimatedDelivery: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
+          mongoId: savedOrder._id,
+          status: savedOrder.status
+        });
+        
+        // Clear cart after successful order
+        cart.clear();
+        await cart.save();
+        
+        // Clear session cart
+        if (req.session.cartItems) {
+          req.session.cartItems = [];
+          req.session.cartCount = 0;
+        }
+        
+        // Store order info in session for success page
+        req.session.lastOrder = {
+          orderId: savedOrder.orderId,
           total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
           paymentMethod: savedOrder.paymentMethod,
-          status: savedOrder.status,
-          redirectUrl: `/order-success?orderId=${savedOrder.orderId}&total=${encodeURIComponent(savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ')}&paymentMethod=${savedOrder.paymentMethod}&deliveryDate=${encodeURIComponent(savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'))}`
+          deliveryDate: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
+          customerName: savedOrder.customer.name,
+          status: savedOrder.status
+        };
+        
+        console.log('✅ Checkout completed and saved to DB:', {
+          orderId: savedOrder.orderId,
+          total: savedOrder.finalTotal
+        });
+        
+        // Success response với redirect đến trang đơn hàng trong tài khoản
+        res.json({
+          success: true,
+          message: 'Đặt hàng thành công! Chuyển đến trang đơn hàng của bạn...',
+          data: {
+            orderId: savedOrder.orderId,
+            estimatedDelivery: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
+            total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
+            paymentMethod: savedOrder.paymentMethod,
+            status: savedOrder.status
+          },
+          // Chuyển hướng đến trang đơn hàng trong tài khoản
+          redirect: userId ? '/user/orders' : '/auth/login?redirect=/user/orders'
+        });
+        
+      } catch (orderError) {
+        console.log('⚠️ Order model error:', orderError.message);
+        
+        // Fallback: Save to session if database save fails
+        if (!req.session.orders) {
+          req.session.orders = [];
         }
-      });
-      
-    } catch (orderError) {
-      console.log('⚠️ Order model error:', orderError.message);
-      
-      // Fallback: Save to session if database save fails
-      if (!req.session.orders) {
-        req.session.orders = [];
-      }
-      
-      req.session.orders.push(orderData);
-      req.session.lastOrder = {
-        orderId: orderData.orderId,
-        total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
-        paymentMethod: orderData.paymentMethod,
-        deliveryDate: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
-        customerName: orderData.customer.name,
-        status: orderData.status
-      };
-      
-      // Clear cart
-      cart.clear();
-      await cart.save();
-      
-      if (req.session.cartItems) {
-        req.session.cartItems = [];
-        req.session.cartCount = 0;
-      }
-      
-      // Success response with session fallback
-      res.json({
-        success: true,
-        message: 'Đặt hàng thành công!',
-        data: {
+        
+        req.session.orders.push(orderData);
+        req.session.lastOrder = {
           orderId: orderData.orderId,
-          estimatedDelivery: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
           total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
           paymentMethod: orderData.paymentMethod,
-          status: orderData.status,
-          redirectUrl: `/order-success?orderId=${orderData.orderId}&total=${encodeURIComponent(orderData.finalTotal.toLocaleString('vi-VN') + 'đ')}&paymentMethod=${orderData.paymentMethod}&deliveryDate=${encodeURIComponent(orderData.estimatedDelivery.toLocaleDateString('vi-VN'))}`
+          deliveryDate: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
+          customerName: orderData.customer.name,
+          status: orderData.status
+        };
+        
+        // Clear cart
+        cart.clear();
+        await cart.save();
+        
+        if (req.session.cartItems) {
+          req.session.cartItems = [];
+          req.session.cartCount = 0;
         }
+        
+        // Success response with session fallback
+        res.json({
+          success: true,
+          message: 'Đặt hàng thành công! Chuyển đến trang đơn hàng của bạn...',
+          data: {
+            orderId: orderData.orderId,
+            estimatedDelivery: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
+            total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
+            paymentMethod: orderData.paymentMethod,
+            status: orderData.status
+          },
+          // Chuyển hướng đến trang đơn hàng trong tài khoản
+          redirect: userId ? '/user/orders' : '/auth/login?redirect=/user/orders'
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Checkout error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.'
       });
     }
-    
-  } catch (error) {
-    console.error('❌ Checkout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.'
-    });
   }
-}
+
   /**
    * Merge guest cart khi user đăng nhập
    */

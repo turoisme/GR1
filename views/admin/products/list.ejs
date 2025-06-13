@@ -1,501 +1,1463 @@
-<!-- views/admin/products/list.ejs -->
-<div class="admin-card">
-    <div class="card-header">
-        <h2 class="card-title">
-            <i class="fas fa-box icon"></i>
-            Quản lý sản phẩm
-        </h2>
-        <div style="display: flex; gap: 12px;">
-            <button class="btn btn-outline" onclick="location.reload()">
-                <i class="fas fa-sync-alt"></i>
-                Làm mới
-            </button>
-            <a href="/admin/products/add" class="btn btn-primary">
-                <i class="fas fa-plus"></i>
-                Thêm sản phẩm
-            </a>
-        </div>
-    </div>
-    
-    <!-- Search and Filter Bar -->
-    <div style="padding: 24px 32px; background: var(--light); border-bottom: 1px solid var(--border);">
-        <div style="display: grid; grid-template-columns: 1fr auto auto auto; gap: 16px; align-items: center;">
-            <div style="position: relative;">
-                <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--secondary);"></i>
-                <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm, thương hiệu..." 
-                       style="padding-left: 40px; max-width: none;" id="searchInput">
-            </div>
-            
-            <select class="form-control" style="min-width: 150px;" id="categoryFilter">
-                <option value="">Tất cả danh mục</option>
-                <option value="shoes">👟 Giày</option>
-                <option value="clothing">👕 Quần áo</option>
-                <option value="accessories">🎒 Phụ kiện</option>
-                <option value="equipment">⚽ Dụng cụ</option>
-            </select>
-            
-            <select class="form-control" style="min-width: 150px;" id="brandFilter">
-                <option value="">Tất cả thương hiệu</option>
-                <option value="nike">Nike</option>
-                <option value="adidas">Adidas</option>
-                <option value="puma">Puma</option>
-                <option value="under armour">Under Armour</option>
-            </select>
-            
-            <select class="form-control" style="min-width: 130px;" id="statusFilter">
-                <option value="">Tất cả trạng thái</option>
-                <option value="active">Đang bán</option>
-                <option value="inactive">Ngừng bán</option>
-            </select>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm - SportShop Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <% if (products && products.length > 0) { %>
-        <!-- Products Grid View -->
-        <div id="productsGrid" style="display: none; padding: 32px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
-            <% products.forEach(product => { %>
-                <div class="product-card" style="background: white; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; transition: all 0.3s ease;">
-                    <div style="position: relative; height: 200px; background: var(--light);">
-                        <% if (product.images && product.images.length > 0) { %>
-                            <img src="/assets/products/<%= product.images[0] %>" 
-                                 alt="<%= product.name %>"
-                                 style="width: 100%; height: 100%; object-fit: cover;">
-                        <% } else { %>
-                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--secondary);">
-                                📦
-                            </div>
-                        <% } %>
-                        
-                        <!-- Status Badge -->
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <% if (product.isActive) { %>
-                                <span class="status-badge active">
-                                    <i class="fas fa-check-circle"></i>
-                                    Đang bán
-                                </span>
-                            <% } else { %>
-                                <span class="status-badge inactive">
-                                    <i class="fas fa-times-circle"></i>
-                                    Ngừng bán
-                                </span>
-                            <% } %>
-                        </div>
-                        
-                        <!-- Featured Badge -->
-                        <% if (product.isFeatured) { %>
-                            <div style="position: absolute; top: 12px; left: 12px;">
-                                <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase;">
-                                    <i class="fas fa-star"></i> Nổi bật
-                                </span>
-                            </div>
-                        <% } %>
-                    </div>
-                    
-                    <div style="padding: 20px;">
-                        <div style="margin-bottom: 12px;">
-                            <h4 style="font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.4;">
-                                <%= product.name %>
-                            </h4>
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--secondary);">
-                                <span><%= product.brand %></span>
-                                <span>•</span>
-                                <span>ID: <%= product._id.toString().slice(-6) %></span>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <div>
-                                <div style="font-size: 18px; font-weight: 800; color: var(--dark);">
-                                    <%= product.price.toLocaleString('vi-VN') %>₫
-                                </div>
-                                <% if (product.originalPrice && product.originalPrice > product.price) { %>
-                                    <div style="font-size: 12px; color: var(--secondary); text-decoration: line-through;">
-                                        <%= product.originalPrice.toLocaleString('vi-VN') %>₫
-                                    </div>
-                                <% } %>
-                            </div>
-                            
-                            <div style="text-align: right;">
-                                <div style="font-size: 14px; font-weight: 600; color: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;">
-                                    <%= product.stockQuantity > 0 ? product.stockQuantity + ' còn lại' : 'Hết hàng' %>
-                                </div>
-                                <div style="font-size: 11px; color: var(--secondary); text-transform: uppercase;">
-                                    <% 
-                                        let categoryName = 'Khác';
-                                        switch(product.category) {
-                                            case 'shoes': categoryName = 'Giày'; break;
-                                            case 'clothing': categoryName = 'Quần áo'; break;
-                                            case 'accessories': categoryName = 'Phụ kiện'; break;
-                                            case 'equipment': categoryName = 'Dụng cụ'; break;
-                                        }
-                                    %>
-                                    <%= categoryName %>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px;">
-                            <a href="/products/<%= product._id %>" target="_blank" 
-                               class="btn btn-outline btn-sm" style="flex: 1;" 
-                               title="Xem sản phẩm">
-                                <i class="fas fa-eye"></i>
-                                Xem
-                            </a>
-                            <a href="/admin/products/<%= product._id %>/edit" 
-                               class="btn btn-primary btn-sm" style="flex: 1;"
-                               title="Sửa sản phẩm">
-                                <i class="fas fa-edit"></i>
-                                Sửa
-                            </a>
-                            <button onclick="deleteItem('/admin/products/<%= product._id %>', 'Bạn có chắc chắn muốn xóa sản phẩm này?')" 
-                                    class="btn btn-danger btn-sm"
-                                    title="Xóa sản phẩm">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
-        </div>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #333;
+            line-height: 1.6;
+        }
 
-        <!-- Products Table View -->
-        <div id="productsTable" style="overflow-x: auto;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">Ảnh</th>
-                        <th>Sản phẩm</th>
-                        <th>Danh mục</th>
-                        <th>Thương hiệu</th>
-                        <th>Giá</th>
-                        <th>Kho</th>
-                        <th>Trạng thái</th>
-                        <th style="width: 200px;">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% products.forEach(product => { %>
-                        <tr>
-                            <td>
-                                <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background: var(--light);">
-                                    <% if (product.images && product.images.length > 0) { %>
-                                        <img src="/assets/products/<%= product.images[0] %>" 
-                                             alt="<%= product.name %>"
-                                             style="width: 100%; height: 100%; object-fit: cover;">
-                                    <% } else { %>
-                                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--secondary);">
-                                            📦
-                                        </div>
-                                    <% } %>
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <div style="font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.4;">
-                                        <%= product.name %>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--secondary);">
-                                        <span>ID: <%= product._id.toString().slice(-6) %></span>
-                                        <% if (product.isFeatured) { %>
-                                            <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600;">
-                                                <i class="fas fa-star"></i> NỔI BẬT
-                                            </span>
-                                        <% } %>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span style="background: var(--light); color: var(--dark); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-                                    <% 
-                                        let categoryIcon = '📦';
-                                        let categoryName = 'Khác';
-                                        switch(product.category) {
-                                            case 'shoes': 
-                                                categoryIcon = '👟';
-                                                categoryName = 'Giày'; 
-                                                break;
-                                            case 'clothing': 
-                                                categoryIcon = '👕';
-                                                categoryName = 'Quần áo'; 
-                                                break;
-                                            case 'accessories': 
-                                                categoryIcon = '🎒';
-                                                categoryName = 'Phụ kiện'; 
-                                                break;
-                                            case 'equipment': 
-                                                categoryIcon = '⚽';
-                                                categoryName = 'Dụng cụ'; 
-                                                break;
-                                        }
-                                    %>
-                                    <%= categoryIcon %> <%= categoryName %>
-                                </span>
-                            </td>
-                            <td>
-                                <div style="font-weight: 600; color: var(--dark);">
-                                    <%= product.brand %>
-                                </div>
-                            </td>
-                            <td>
-                                <div>
-                                    <div style="font-weight: 800; color: var(--dark); font-size: 16px;">
-                                        <%= product.price.toLocaleString('vi-VN') %>₫
-                                    </div>
-                                    <% if (product.originalPrice && product.originalPrice > product.price) { %>
-                                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                                            <span style="font-size: 12px; color: var(--secondary); text-decoration: line-through;">
-                                                <%= product.originalPrice.toLocaleString('vi-VN') %>₫
-                                            </span>
-                                            <span style="background: var(--danger); color: white; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: 600;">
-                                                -<%= Math.round((1 - product.price/product.originalPrice) * 100) %>%
-                                            </span>
-                                        </div>
-                                    <% } %>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;"></div>
-                                    <span style="font-weight: 600; color: <%= product.stockQuantity > 10 ? 'var(--success)' : product.stockQuantity > 0 ? 'var(--warning)' : 'var(--danger)' %>;">
-                                        <%= product.stockQuantity > 0 ? product.stockQuantity : 'Hết hàng' %>
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <% if (product.isActive) { %>
-                                    <span class="status-badge active">
-                                        <i class="fas fa-check-circle"></i>
-                                        Đang bán
-                                    </span>
-                                <% } else { %>
-                                    <span class="status-badge inactive">
-                                        <i class="fas fa-times-circle"></i>
-                                        Ngừng bán
-                                    </span>
-                                <% } %>
-                            </td>
-                            <td>
-                                <div style="display: flex; gap: 6px;">
-                                    <a href="/products/<%= product._id %>" target="_blank" 
-                                       class="btn btn-outline btn-sm" 
-                                       title="Xem sản phẩm">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="/admin/products/<%= product._id %>/edit" 
-                                       class="btn btn-primary btn-sm"
-                                       title="Sửa sản phẩm">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button onclick="deleteItem('/admin/products/<%= product._id %>', 'Bạn có chắc chắn muốn xóa sản phẩm này?')" 
-                                            class="btn btn-danger btn-sm"
-                                            title="Xóa sản phẩm">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        </div>
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
 
-        <!-- View Toggle & Pagination -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; background: var(--light); border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 14px; color: var(--secondary); font-weight: 500;">Hiển thị:</span>
-                <div style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-                    <button id="tableViewBtn" class="btn btn-outline btn-sm" style="border: none; border-radius: 0;" onclick="toggleView('table')">
-                        <i class="fas fa-list"></i>
-                        Bảng
-                    </button>
-                    <button id="gridViewBtn" class="btn btn-outline btn-sm" style="border: none; border-radius: 0; border-left: 1px solid var(--border);" onclick="toggleView('grid')">
-                        <i class="fas fa-th-large"></i>
-                        Lưới
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Pagination -->
-            <% if (pagination && pagination.totalPages > 1) { %>
-                <div class="pagination">
-                    <% if (pagination.hasPrev) { %>
-                        <a href="?page=<%= pagination.currentPage - 1 %>" class="pagination-btn">
-                            <i class="fas fa-chevron-left"></i>
-                            Trước
-                        </a>
-                    <% } %>
-                    
-                    <div class="pagination-info">
-                        Trang <%= pagination.currentPage %> / <%= pagination.totalPages %>
-                    </div>
-                    
-                    <% if (pagination.hasNext) { %>
-                        <a href="?page=<%= pagination.currentPage + 1 %>" class="pagination-btn">
-                            Sau
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    <% } %>
-                </div>
-            <% } %>
-        </div>
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-    <% } else { %>
-        <div class="card-body">
-            <div style="text-align: center; padding: 80px 20px; color: var(--secondary);">
-                <div style="font-size: 5rem; margin-bottom: 24px; opacity: 0.5;">
-                    <i class="fas fa-box-open"></i>
-                </div>
-                <h3 style="color: var(--secondary); margin-bottom: 12px; font-weight: 700; font-size: 24px;">
-                    Chưa có sản phẩm nào
-                </h3>
-                <p style="margin-bottom: 32px; font-size: 16px; line-height: 1.6;">
-                    Hãy thêm sản phẩm đầu tiên cho cửa hàng của bạn.<br>
-                    Bắt đầu bán hàng và phát triển kinh doanh ngay hôm nay!
-                </p>
-                <a href="/admin/products/add" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus"></i>
-                    Thêm sản phẩm đầu tiên
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-item a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .menu-item a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .menu-item a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 30px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Products Table */
+        .products-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 8px 35px 8px 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            width: 250px;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .product-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+
+        .product-details h4 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .product-details p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-featured {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .action-buttons-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .pagination-btn {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pagination-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #f1f5f9;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f1f5f9;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                font-size: 0.9rem;
+            }
+
+            .search-box input {
+                width: 200px;
+            }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 3000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>SportShop Admin</h2>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <div class="menu-item">
+                <a href="#" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
                 </a>
             </div>
+            <div class="menu-item">
+                <a href="#" class="active">
+                    <i class="fas fa-box"></i>
+                    <span>Quản lý sản phẩm</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="#" onclick="showSection('orders')">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Quản lý đơn hàng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="#" onclick="showSection('users')">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý người dùng</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="#" onclick="showSection('statistics')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Thống kê</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="#" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Quản lý sản phẩm</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="user-avatar">AS</div>
+                    <div>
+                        <div style="font-weight: 500;">Admin SportShop</div>
+                        <div style="font-size: 0.8rem; color: #666;">admin@sportshop.com</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="openAddProductModal()">
+                    <i class="fas fa-plus"></i>
+                    Thêm sản phẩm
+                </button>
+                <button class="btn btn-secondary" onclick="exportProducts()">
+                    <i class="fas fa-download"></i>
+                    Xuất Excel
+                </button>
+                <button class="btn btn-warning" onclick="bulkEdit()">
+                    <i class="fas fa-edit"></i>
+                    Chỉnh sửa hàng loạt
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Danh mục:</label>
+                    <select id="categoryFilter" onchange="filterProducts()">
+                        <option value="">Tất cả</option>
+                        <option value="shoes">Giày dép</option>
+                        <option value="tops">Áo</option>
+                        <option value="bottoms">Quần</option>
+                        <option value="accessories">Phụ kiện</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Thương hiệu:</label>
+                    <select id="brandFilter" onchange="filterProducts()">
+                        <option value="">Tất cả</option>
+                        <option value="Nike">Nike</option>
+                        <option value="Adidas">Adidas</option>
+                        <option value="Under Armour">Under Armour</option>
+                        <option value="Puma">Puma</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Trạng thái:</label>
+                    <select id="statusFilter" onchange="filterProducts()">
+                        <option value="">Tất cả</option>
+                        <option value="active">Hoạt động</option>
+                        <option value="inactive">Tạm dừng</option>
+                        <option value="featured">Nổi bật</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Giá từ:</label>
+                    <input type="number" id="minPrice" placeholder="0" onchange="filterProducts()">
+                </div>
+                <div class="filter-group">
+                    <label>đến:</label>
+                    <input type="number" id="maxPrice" placeholder="999999" onchange="filterProducts()">
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearFilters()">
+                    <i class="fas fa-times"></i>
+                    Xóa bộ lọc
+                </button>
+            </div>
+
+            <!-- Products Table -->
+            <div class="products-table">
+                <div class="table-header">
+                    <h3>Danh sách sản phẩm</h3>
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="searchProducts()">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <select id="itemsPerPage" onchange="changeItemsPerPage()">
+                            <option value="10">10 / trang</option>
+                            <option value="25" selected>25 / trang</option>
+                            <option value="50">50 / trang</option>
+                            <option value="100">100 / trang</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                </th>
+                                <th>Sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Thương hiệu</th>
+                                <th>Giá</th>
+                                <th>Tồn kho</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
         </div>
-    <% } %>
-</div>
+    </div>
 
-<script>
-    // View Toggle
-    let currentView = 'table';
-    
-    function toggleView(view) {
-        const tableView = document.getElementById('productsTable');
-        const gridView = document.getElementById('productsGrid');
-        const tableBtn = document.getElementById('tableViewBtn');
-        const gridBtn = document.getElementById('gridViewBtn');
-        
-        if (view === 'grid') {
-            tableView.style.display = 'none';
-            gridView.style.display = 'grid';
-            tableBtn.classList.remove('btn-primary');
-            tableBtn.classList.add('btn-outline');
-            gridBtn.classList.remove('btn-outline');
-            gridBtn.classList.add('btn-primary');
-            currentView = 'grid';
-        } else {
-            tableView.style.display = 'block';
-            gridView.style.display = 'none';
-            gridBtn.classList.remove('btn-primary');
-            gridBtn.classList.add('btn-outline');
-            tableBtn.classList.remove('btn-outline');
-            tableBtn.classList.add('btn-primary');
-            currentView = 'table';
+    <!-- Add/Edit Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thêm sản phẩm mới</h3>
+                <button class="close-btn" onclick="closeProductModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                
+                <div class="form-group">
+                    <label for="productName">Tên sản phẩm <span style="color: red;">*</span></label>
+                    <input type="text" id="productName" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productCategory">Danh mục <span style="color: red;">*</span></label>
+                        <select id="productCategory" required>
+                            <option value="">Chọn danh mục</option>
+                            <option value="shoes">Giày dép</option>
+                            <option value="tops">Áo</option>
+                            <option value="bottoms">Quần</option>
+                            <option value="accessories">Phụ kiện</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productBrand">Thương hiệu <span style="color: red;">*</span></label>
+                        <select id="productBrand" required>
+                            <option value="">Chọn thương hiệu</option>
+                            <option value="Nike">Nike</option>
+                            <option value="Adidas">Adidas</option>
+                            <option value="Under Armour">Under Armour</option>
+                            <option value="Puma">Puma</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productDescription">Mô tả sản phẩm</label>
+                    <textarea id="productDescription" rows="4" placeholder="Mô tả chi tiết về sản phẩm..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Giá bán <span style="color: red;">*</span></label>
+                        <input type="number" id="productPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productOriginalPrice">Giá gốc</label>
+                        <input type="number" id="productOriginalPrice" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productStock">Số lượng tồn kho <span style="color: red;">*</span></label>
+                        <input type="number" id="productStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productSizes">Kích thước (ngăn cách bằng dấu phẩy)</label>
+                        <input type="text" id="productSizes" placeholder="S, M, L, XL">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productColors">Màu sắc (ngăn cách bằng dấu phẩy)</label>
+                    <input type="text" id="productColors" placeholder="Đỏ, Xanh, Vàng">
+                </div>
+
+                <div class="form-group">
+                    <label for="productImages">Hình ảnh (URL, ngăn cách bằng dấu phẩy)</label>
+                    <input type="text" id="productImages" placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="productTags">Từ khóa (ngăn cách bằng dấu phẩy)</label>
+                    <input type="text" id="productTags" placeholder="thể thao, nam, nữ">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="productActive" checked>
+                    <label for="productActive">Kích hoạt sản phẩm</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="productFeatured">
+                    <label for="productFeatured">Sản phẩm nổi bật</label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Lưu sản phẩm
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">
+                        <i class="fas fa-times"></i>
+                        Hủy bỏ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample product data
+        let products = [
+            {
+                id: 1,
+                name: "Giày Nike Air Max 270",
+                category: "shoes",
+                brand: "Nike",
+                price: 2500000,
+                originalPrice: 3000000,
+                stock: 25,
+                image: "https://via.placeholder.com/50",
+                isActive: true,
+                isFeatured: true,
+                createdAt: "2024-01-15"
+            },
+            {
+                id: 2,
+                name: "Áo Adidas Originals",
+                category: "tops",
+                brand: "Adidas",
+                price: 890000,
+                originalPrice: 1200000,
+                stock: 15,
+                image: "https://via.placeholder.com/50",
+                isActive: true,
+                isFeatured: false,
+                createdAt: "2024-01-10"
+            },
+            {
+                id: 3,
+                name: "Quần Under Armour Training",
+                category: "bottoms",
+                brand: "Under Armour",
+                price: 1200000,
+                originalPrice: 1200000,
+                stock: 8,
+                image: "https://via.placeholder.com/50",
+                isActive: false,
+                isFeatured: false,
+                createdAt: "2024-01-05"
+            },
+            {
+                id: 4,
+                name: "Mũ Puma Cap",
+                category: "accessories",
+                brand: "Puma",
+                price: 450000,
+                originalPrice: 600000,
+                stock: 30,
+                image: "https://via.placeholder.com/50",
+                isActive: true,
+                isFeatured: false,
+                createdAt: "2024-01-12"
+            }
+        ];
+
+        let currentPage = 1;
+        let itemsPerPage = 25;
+        let filteredProducts = [...products];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Form submission
+            document.getElementById('productForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveProduct();
+            });
+
+            // Close modal on outside click
+            document.getElementById('productModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeProductModal();
+                }
+            });
         }
-        
-        localStorage.setItem('adminProductsView', view);
-    }
-    
-    // Restore saved view
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedView = localStorage.getItem('adminProductsView') || 'table';
-        toggleView(savedView);
-    });
 
-    // Real-time search
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        filterProducts();
-    });
+        // Load and display products
+        function loadProducts() {
+            const tableBody = document.getElementById('productsTableBody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    // Category filter
-    document.getElementById('categoryFilter').addEventListener('change', filterProducts);
+            tableBody.innerHTML = '';
 
-    // Brand filter
-    document.getElementById('brandFilter').addEventListener('change', filterProducts);
+            if (paginatedProducts.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <br>Không tìm thấy sản phẩm nào
+                        </td>
+                    </tr>
+                `;
+                updatePagination();
+                return;
+            }
 
-    // Status filter
-    document.getElementById('statusFilter').addEventListener('change', filterProducts);
-
-    function filterProducts() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
-        const brandFilter = document.getElementById('brandFilter').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
-        
-        // Filter table rows
-        const tableRows = document.querySelectorAll('#productsTable tbody tr');
-        const gridCards = document.querySelectorAll('#productsGrid .product-card');
-        
-        // Filter table view
-        tableRows.forEach(row => {
-            const productName = row.cells[1].textContent.toLowerCase();
-            const category = row.cells[2].textContent.toLowerCase();
-            const brand = row.cells[3].textContent.toLowerCase();
-            const statusElement = row.cells[6].querySelector('.status-badge');
-            const isActive = statusElement.textContent.includes('Đang bán');
-            
-            let shouldShow = true;
-            
-            // Search filter
-            if (searchTerm && !productName.includes(searchTerm) && !brand.includes(searchTerm)) {
-                shouldShow = false;
-            }
-            
-            // Category filter
-            if (categoryFilter && !category.includes(categoryFilter)) {
-                shouldShow = false;
-            }
-            
-            // Brand filter
-            if (brandFilter && !brand.includes(brandFilter)) {
-                shouldShow = false;
-            }
-            
-            // Status filter
-            if (statusFilter && 
-                ((statusFilter === 'active' && !isActive) || 
-                 (statusFilter === 'inactive' && isActive))) {
-                shouldShow = false;
-            }
-            
-            row.style.display = shouldShow ? '' : 'none';
-        });
-        
-        // Filter grid view
-        gridCards.forEach(card => {
-            const productName = card.querySelector('h4').textContent.toLowerCase();
-            const brand = card.querySelector('.product-brand')?.textContent.toLowerCase() || '';
-            const statusElement = card.querySelector('.status-badge');
-            const isActive = statusElement.textContent.includes('Đang bán');
-            
-            let shouldShow = true;
-            
-            // Search filter
-            if (searchTerm && !productName.includes(searchTerm) && !brand.includes(searchTerm)) {
-                shouldShow = false;
-            }
-            
-            // Status filter
-            if (statusFilter && 
-                ((statusFilter === 'active' && !isActive) || 
-                 (statusFilter === 'inactive' && isActive))) {
-                shouldShow = false;
-            }
-            
-            card.style.display = shouldShow ? 'block' : 'none';
-        });
-    }
-
-    // Add hover effects
-    document.addEventListener('DOMContentLoaded', function() {
-        const productCards = document.querySelectorAll('.product-card');
-        productCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-4px)';
-                this.style.boxShadow = 'var(--shadow-lg)';
+            paginatedProducts.forEach(product => {
+                const row = createProductRow(product);
+                tableBody.appendChild(row);
             });
+
+            updatePagination();
+        }
+
+        function createProductRow(product) {
+            const row = document.createElement('tr');
             
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'var(--shadow)';
+            // Status badges
+            const statusBadges = [];
+            if (product.isActive) {
+                statusBadges.push('<span class="status-badge status-active">Hoạt động</span>');
+            } else {
+                statusBadges.push('<span class="status-badge status-inactive">Tạm dừng</span>');
+            }
+            if (product.isFeatured) {
+                statusBadges.push('<span class="status-badge status-featured">Nổi bật</span>');
+            }
+
+            row.innerHTML = `
+                <td>
+                    <input type="checkbox" class="product-checkbox" value="${product.id}">
+                </td>
+                <td>
+                    <div class="product-info">
+                        <img src="${product.image}" alt="${product.name}" class="product-image">
+                        <div class="product-details">
+                            <h4>${product.name}</h4>
+                            <p>ID: #${product.id}</p>
+                        </div>
+                    </div>
+                </td>
+                <td>${getCategoryName(product.category)}</td>
+                <td>${product.brand}</td>
+                <td>
+                    <div>
+                        <strong>${formatPrice(product.price)}</strong>
+                        ${product.originalPrice && product.originalPrice > product.price ? 
+                            `<br><small style="text-decoration: line-through; color: #999;">${formatPrice(product.originalPrice)}</small>` : 
+                            ''
+                        }
+                    </div>
+                </td>
+                <td>
+                    <span style="color: ${product.stock > 10 ? '#28a745' : product.stock > 0 ? '#ffc107' : '#dc3545'}">
+                        ${product.stock} sản phẩm
+                    </span>
+                </td>
+                <td>
+                    ${statusBadges.join(' ')}
+                </td>
+                <td>${formatDate(product.createdAt)}</td>
+                <td>
+                    <div class="action-buttons-cell">
+                        <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})" title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="viewProduct(${product.id})" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.id})" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            return row;
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Previous button
+            paginationHTML += `
+                <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span>...</span>`;
+                }
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // Next button
+            paginationHTML += `
+                <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+            
+            // Update info
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, filteredProducts.length);
+            const totalItems = filteredProducts.length;
+            
+            pagination.innerHTML += `
+                <div style="margin-left: 20px; color: #666; font-size: 0.9rem;">
+                    Hiển thị ${startItem}-${endItem} trong ${totalItems} sản phẩm
+                </div>
+            `;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadProducts();
+        }
+
+        function changeItemsPerPage() {
+            itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
+            currentPage = 1;
+            loadProducts();
+        }
+
+        // Filter functions
+        function filterProducts() {
+            const category = document.getElementById('categoryFilter').value;
+            const brand = document.getElementById('brandFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+            const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+
+            filteredProducts = products.filter(product => {
+                const matchCategory = !category || product.category === category;
+                const matchBrand = !brand || product.brand === brand;
+                const matchPrice = product.price >= minPrice && product.price <= maxPrice;
+                
+                let matchStatus = true;
+                if (status === 'active') matchStatus = product.isActive;
+                else if (status === 'inactive') matchStatus = !product.isActive;
+                else if (status === 'featured') matchStatus = product.isFeatured;
+
+                return matchCategory && matchBrand && matchPrice && matchStatus;
             });
-        });
-    });
-</script>
+
+            currentPage = 1;
+            loadProducts();
+        }
+
+        function searchProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredProducts = [...products];
+            } else {
+                filteredProducts = products.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    product.brand.toLowerCase().includes(searchTerm) ||
+                    product.id.toString().includes(searchTerm)
+                );
+            }
+
+            currentPage = 1;
+            loadProducts();
+        }
+
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('brandFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+            document.getElementById('searchInput').value = '';
+            
+            filteredProducts = [...products];
+            currentPage = 1;
+            loadProducts();
+        }
+
+        // Select all functionality
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.product-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function getSelectedProducts() {
+            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        // Modal functions
+        function openAddProductModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm sản phẩm mới';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('productActive').checked = true;
+            document.getElementById('productModal').classList.add('show');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa sản phẩm';
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name || '';
+            document.getElementById('productCategory').value = product.category || '';
+            document.getElementById('productBrand').value = product.brand || '';
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.price || '';
+            document.getElementById('productOriginalPrice').value = product.originalPrice || '';
+            document.getElementById('productStock').value = product.stock || '';
+            document.getElementById('productSizes').value = product.sizes ? product.sizes.join(', ') : '';
+            document.getElementById('productColors').value = product.colors ? product.colors.join(', ') : '';
+            document.getElementById('productImages').value = product.images ? product.images.join(', ') : '';
+            document.getElementById('productTags').value = product.tags ? product.tags.join(', ') : '';
+            document.getElementById('productActive').checked = product.isActive || false;
+            document.getElementById('productFeatured').checked = product.isFeatured || false;
+            
+            document.getElementById('productModal').classList.add('show');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('show');
+        }
+
+        function saveProduct() {
+            const form = document.getElementById('productForm');
+            const formData = new FormData(form);
+            
+            // Get form data
+            const productData = {
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                brand: document.getElementById('productBrand').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                originalPrice: parseFloat(document.getElementById('productOriginalPrice').value) || parseFloat(document.getElementById('productPrice').value),
+                stock: parseInt(document.getElementById('productStock').value),
+                sizes: document.getElementById('productSizes').value.split(',').map(s => s.trim()).filter(s => s),
+                colors: document.getElementById('productColors').value.split(',').map(c => c.trim()).filter(c => c),
+                images: document.getElementById('productImages').value.split(',').map(i => i.trim()).filter(i => i),
+                tags: document.getElementById('productTags').value.split(',').map(t => t.trim()).filter(t => t),
+                isActive: document.getElementById('productActive').checked,
+                isFeatured: document.getElementById('productFeatured').checked
+            };
+
+            // Validation
+            if (!productData.name || !productData.category || !productData.brand || !productData.price || productData.stock < 0) {
+                showNotification('Vui lòng điền đầy đủ thông tin bắt buộc!', 'error');
+                return;
+            }
+
+            const productId = document.getElementById('productId').value;
+            
+            if (productId) {
+                // Update existing product
+                const index = products.findIndex(p => p.id === parseInt(productId));
+                if (index !== -1) {
+                    products[index] = { ...products[index], ...productData, updatedAt: new Date().toISOString().split('T')[0] };
+                    showNotification('Cập nhật sản phẩm thành công!', 'success');
+                }
+            } else {
+                // Add new product
+                const newProduct = {
+                    id: Math.max(...products.map(p => p.id)) + 1,
+                    ...productData,
+                    image: productData.images[0] || 'https://via.placeholder.com/50',
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                products.unshift(newProduct);
+                showNotification('Thêm sản phẩm thành công!', 'success');
+            }
+
+            closeProductModal();
+            filteredProducts = [...products];
+            loadProducts();
+        }
+
+        function viewProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            alert(`Chi tiết sản phẩm:\n\nTên: ${product.name}\nDanh mục: ${getCategoryName(product.category)}\nThương hiệu: ${product.brand}\nGiá: ${formatPrice(product.price)}\nTồn kho: ${product.stock}\nTrạng thái: ${product.isActive ? 'Hoạt động' : 'Tạm dừng'}`);
+        }
+
+        function deleteProduct(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
+
+            const index = products.findIndex(p => p.id === id);
+            if (index !== -1) {
+                products.splice(index, 1);
+                filteredProducts = [...products];
+                loadProducts();
+                showNotification('Xóa sản phẩm thành công!', 'success');
+            }
+        }
+
+        // Bulk operations
+        function bulkEdit() {
+            const selectedIds = getSelectedProducts();
+            if (selectedIds.length === 0) {
+                showNotification('Vui lòng chọn ít nhất một sản phẩm!', 'warning');
+                return;
+            }
+
+            const action = prompt('Chọn thao tác:\n1. Kích hoạt\n2. Tạm dừng\n3. Đặt nổi bật\n4. Bỏ nổi bật\n5. Xóa\n\nNhập số (1-5):');
+            
+            switch(action) {
+                case '1':
+                    selectedIds.forEach(id => {
+                        const product = products.find(p => p.id === id);
+                        if (product) product.isActive = true;
+                    });
+                    showNotification(`Đã kích hoạt ${selectedIds.length} sản phẩm!`, 'success');
+                    break;
+                case '2':
+                    selectedIds.forEach(id => {
+                        const product = products.find(p => p.id === id);
+                        if (product) product.isActive = false;
+                    });
+                    showNotification(`Đã tạm dừng ${selectedIds.length} sản phẩm!`, 'success');
+                    break;
+                case '3':
+                    selectedIds.forEach(id => {
+                        const product = products.find(p => p.id === id);
+                        if (product) product.isFeatured = true;
+                    });
+                    showNotification(`Đã đặt nổi bật ${selectedIds.length} sản phẩm!`, 'success');
+                    break;
+                case '4':
+                    selectedIds.forEach(id => {
+                        const product = products.find(p => p.id === id);
+                        if (product) product.isFeatured = false;
+                    });
+                    showNotification(`Đã bỏ nổi bật ${selectedIds.length} sản phẩm!`, 'success');
+                    break;
+                case '5':
+                    if (confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm?`)) {
+                        products = products.filter(p => !selectedIds.includes(p.id));
+                        filteredProducts = [...products];
+                        showNotification(`Đã xóa ${selectedIds.length} sản phẩm!`, 'success');
+                    }
+                    break;
+                default:
+                    return;
+            }
+
+            document.getElementById('selectAll').checked = false;
+            filteredProducts = [...products];
+            loadProducts();
+        }
+
+        function exportProducts() {
+            const selectedIds = getSelectedProducts();
+            const productsToExport = selectedIds.length > 0 ? 
+                products.filter(p => selectedIds.includes(p.id)) : 
+                filteredProducts;
+
+            if (productsToExport.length === 0) {
+                showNotification('Không có sản phẩm nào để xuất!', 'warning');
+                return;
+            }
+
+            // Simulate CSV export
+            let csv = 'ID,Tên sản phẩm,Danh mục,Thương hiệu,Giá,Giá gốc,Tồn kho,Trạng thái,Nổi bật,Ngày tạo\n';
+            
+            productsToExport.forEach(product => {
+                csv += `${product.id},"${product.name}","${getCategoryName(product.category)}","${product.brand}",${product.price},${product.originalPrice || product.price},${product.stock},"${product.isActive ? 'Hoạt động' : 'Tạm dừng'}","${product.isFeatured ? 'Có' : 'Không'}","${product.createdAt}"\n`;
+            });
+
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `san-pham-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification(`Đã xuất ${productsToExport.length} sản phẩm!`, 'success');
+        }
+
+        // Utility functions
+        function getCategoryName(category) {
+            const categories = {
+                'shoes': 'Giày dép',
+                'tops': 'Áo',
+                'bottoms': 'Quần',
+                'accessories': 'Phụ kiện'
+            };
+            return categories[category] || category;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        function showSection(section) {
+            // Navigate to different sections with actual page redirects
+            const routes = {
+                'dashboard': '/admin/',
+                'products': '/admin/products', 
+                'orders': '/admin/orders',
+                'users': '/admin/users',
+                'statistics': '/admin/statistics',
+                'settings': '/admin/settings'
+            };
+            
+            if (routes[section]) {
+                window.location.href = routes[section];
+            } else {
+                console.log('Navigating to:', section);
+                showNotification(`Chuyển đến ${section}`, 'success');
+            }
+        }
+    </script>
+</body>
+</html>
