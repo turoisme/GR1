@@ -1,6 +1,6 @@
 /**
  * Order Model - MongoDB Order Management
- * Quản lý đơn hàng với MongoDB
+ * Quản lý đơn hàng với MongoDB - Updated với Revenue Tracking
  */
 
 const mongoose = require('mongoose');
@@ -156,7 +156,91 @@ const OrderSchema = new mongoose.Schema({
   refundAmount: {
     type: Number,
     default: 0
-  }
+  },
+  
+  // ✨ NEW FIELDS FOR REVENUE TRACKING
+  isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  completedAt: {
+    type: Date,
+    default: null
+  },
+  deliveredAt: {
+    type: Date,
+    default: null
+  },
+  deliveredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  confirmedAt: {
+    type: Date,
+    default: null
+  },
+  confirmedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  shippedAt: {
+    type: Date,
+    default: null
+  },
+  shippedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  cancelledAt: {
+    type: Date,
+    default: null
+  },
+  cancelledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  revenueRecorded: {
+    type: Boolean,
+    default: false
+  },
+  trackingCode: {
+    type: String,
+    default: null
+  },
+  
+  // Order History for tracking status changes
+  orderHistory: [{
+    status: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    note: {
+      type: String,
+      default: ''
+    },
+    updatedBy: {
+      type: String,
+      enum: ['system', 'admin', 'user'],
+      default: 'system'
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    adminName: {
+      type: String,
+      default: null
+    }
+  }]
 }, {
   timestamps: true,
   collection: 'orders'
@@ -167,6 +251,8 @@ OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
 OrderSchema.index({ userId: 1, createdAt: -1 });
 OrderSchema.index({ sessionId: 1, createdAt: -1 });
+OrderSchema.index({ deliveredAt: -1 }); // ✨ NEW: For revenue queries
+OrderSchema.index({ isCompleted: 1, status: 1 }); // ✨ NEW: For revenue queries
 
 // Virtual for formatted total
 OrderSchema.virtual('formattedTotal').get(function() {
@@ -229,6 +315,19 @@ OrderSchema.statics = {
   async createOrder(orderData) {
     try {
       const order = new this(orderData);
+      
+      // Initialize order history
+      if (!order.orderHistory) {
+        order.orderHistory = [];
+      }
+      
+      order.orderHistory.push({
+        status: 'pending',
+        timestamp: new Date(),
+        note: 'Đơn hàng được tạo',
+        updatedBy: 'system'
+      });
+      
       await order.save();
       
       console.log('✅ Order saved to database:', {
@@ -245,15 +344,45 @@ OrderSchema.statics = {
   },
 
   /**
-   * Update order status
+   * Update order status with revenue tracking
    */
   async updateStatus(orderId, status, updateData = {}) {
     try {
       const updateFields = { status, ...updateData };
       
-      // Set delivery date if status is delivered
-      if (status === 'delivered' && !updateFields.actualDelivery) {
-        updateFields.actualDelivery = new Date();
+      // Handle status-specific updates
+      switch (status) {
+        case 'delivered':
+          if (!updateFields.actualDelivery) {
+            updateFields.actualDelivery = new Date();
+          }
+          if (!updateFields.deliveredAt) {
+            updateFields.deliveredAt = new Date();
+          }
+          updateFields.isCompleted = true;
+          updateFields.completedAt = new Date();
+          updateFields.paymentStatus = 'paid';
+          break;
+          
+        case 'cancelled':
+          updateFields.isCompleted = false;
+          updateFields.revenueRecorded = false;
+          if (!updateFields.cancelledAt) {
+            updateFields.cancelledAt = new Date();
+          }
+          break;
+          
+        case 'confirmed': 
+          if (!updateFields.confirmedAt) {
+            updateFields.confirmedAt = new Date();
+          }
+          break;
+          
+        case 'shipping':
+          if (!updateFields.shippedAt) {
+            updateFields.shippedAt = new Date();
+          }
+          break;
       }
       
       const order = await this.findOneAndUpdate(
@@ -268,7 +397,8 @@ OrderSchema.statics = {
       
       console.log('✅ Order status updated:', {
         orderId: order.orderId,
-        status: order.status
+        status: order.status,
+        isCompleted: order.isCompleted
       });
       
       return order;
@@ -327,6 +457,61 @@ OrderSchema.statics = {
         prevPage: page > 1 ? page - 1 : null
       }
     };
+  },
+
+  /**
+   * ✨ NEW: Get revenue statistics
+   */
+  async getRevenueStats(period = 'all') {
+    try {
+      const matchCondition = { 
+        status: 'delivered', 
+        isCompleted: true 
+      };
+      
+      // Add date filter based on period
+      if (period !== 'all') {
+        const now = new Date();
+        let startDate;
+        
+        switch (period) {
+          case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'week':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+        }
+        
+        if (startDate) {
+          matchCondition.deliveredAt = { $gte: startDate };
+        }
+      }
+      
+      const result = await this.aggregate([
+        { $match: matchCondition },
+        { 
+          $group: { 
+            _id: null, 
+            totalRevenue: { $sum: '$finalTotal' },
+            orderCount: { $sum: 1 },
+            avgOrderValue: { $avg: '$finalTotal' }
+          } 
+        }
+      ]);
+      
+      return result[0] || { totalRevenue: 0, orderCount: 0, avgOrderValue: 0 };
+      
+    } catch (error) {
+      console.error('❌ Error getting revenue stats:', error);
+      return { totalRevenue: 0, orderCount: 0, avgOrderValue: 0 };
+    }
   }
 };
 
@@ -346,6 +531,17 @@ OrderSchema.methods = {
     
     this.status = 'cancelled';
     this.cancelReason = reason;
+    this.cancelledAt = new Date();
+    this.isCompleted = false;
+    this.revenueRecorded = false;
+    
+    // Add to history
+    this.orderHistory.push({
+      status: 'cancelled',
+      timestamp: new Date(),
+      note: reason,
+      updatedBy: 'system'
+    });
     
     await this.save();
     
@@ -358,18 +554,30 @@ OrderSchema.methods = {
   },
 
   /**
-   * Mark as delivered
+   * Mark as delivered with revenue tracking
    */
   async markDelivered() {
     this.status = 'delivered';
     this.actualDelivery = new Date();
+    this.deliveredAt = new Date();
     this.paymentStatus = 'paid';
+    this.isCompleted = true;
+    this.completedAt = new Date();
+    
+    // Add to history
+    this.orderHistory.push({
+      status: 'delivered',
+      timestamp: new Date(),
+      note: 'Đơn hàng đã được giao thành công',
+      updatedBy: 'system'
+    });
     
     await this.save();
     
     console.log('✅ Order delivered:', {
       orderId: this.orderId,
-      deliveredAt: this.actualDelivery
+      deliveredAt: this.actualDelivery,
+      revenue: this.finalTotal
     });
     
     return this;
@@ -388,7 +596,9 @@ OrderSchema.methods = {
       createdAt: this.formattedDate,
       estimatedDelivery: this.estimatedDelivery.toLocaleDateString('vi-VN'),
       paymentMethod: this.paymentMethod,
-      address: this.fullAddress
+      address: this.fullAddress,
+      isCompleted: this.isCompleted,
+      revenueRecorded: this.revenueRecorded
     };
   }
 };

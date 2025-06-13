@@ -606,7 +606,208 @@ class AdminController {
     };
     return statusMap[status] || status;
   }
+static async getRevenueBreakdown(req, res) {
+  try {
+    const { period = 'month' } = req.query;
+    const now = new Date();
+    
+    let startDate;
+    switch (period) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
 
+    // ✅ GET REAL DATA FROM DATABASE
+    const [
+      deliveredOrders,
+      cancelledOrders, 
+      refundedOrders,
+      shippingFees,
+      paymentMethodBreakdown
+    ] = await Promise.all([
+      // 1. Doanh thu từ đơn hàng đã giao
+      Order.aggregate([
+        { 
+          $match: { 
+            status: 'delivered', 
+            isCompleted: true,
+            deliveredAt: { $gte: startDate }
+          } 
+        },
+        { 
+          $group: { 
+            _id: null, 
+            totalRevenue: { $sum: '$finalTotal' },
+            orderCount: { $sum: 1 },
+            totalShipping: { $sum: '$shippingFee' }
+          } 
+        }
+      ]),
+      
+      // 2. Tổng tiền từ đơn hàng đã hủy
+      Order.aggregate([
+        { 
+          $match: { 
+            status: 'cancelled',
+            createdAt: { $gte: startDate }
+          } 
+        },
+        { 
+          $group: { 
+            _id: null, 
+            totalCancelled: { $sum: '$finalTotal' },
+            cancelledCount: { $sum: 1 }
+          } 
+        }
+      ]),
+      
+      // 3. Tổng tiền hoàn trả
+      Order.aggregate([
+        { 
+          $match: { 
+            paymentStatus: 'refunded',
+            refundAmount: { $gt: 0 },
+            createdAt: { $gte: startDate }
+          } 
+        },
+        { 
+          $group: { 
+            _id: null, 
+            totalRefunded: { $sum: '$refundAmount' },
+            refundedCount: { $sum: 1 }
+          } 
+        }
+      ]),
+      
+      // 4. Tổng phí vận chuyển
+      Order.aggregate([
+        { 
+          $match: { 
+            status: { $in: ['delivered', 'shipping', 'confirmed'] },
+            createdAt: { $gte: startDate }
+          } 
+        },
+        { 
+          $group: { 
+            _id: null, 
+            totalShipping: { $sum: '$shippingFee' }
+          } 
+        }
+      ]),
+      
+      // 5. Phân tích theo phương thức thanh toán
+      Order.aggregate([
+        { 
+          $match: { 
+            status: 'delivered',
+            isCompleted: true,
+            deliveredAt: { $gte: startDate }
+          } 
+        },
+        { 
+          $group: { 
+            _id: '$paymentMethod', 
+            totalRevenue: { $sum: '$finalTotal' },
+            orderCount: { $sum: 1 }
+          } 
+        }
+      ])
+    ]);
+
+    // ✅ EXTRACT RESULTS
+    const grossRevenue = deliveredOrders[0]?.totalRevenue || 0;
+    const totalShipping = shippingFees[0]?.totalShipping || 0;
+    const cancelledAmount = cancelledOrders[0]?.totalCancelled || 0;
+    const refundedAmount = refundedOrders[0]?.totalRefunded || 0;
+    
+    // ✅ CALCULATE NET REVENUE
+    const netRevenue = grossRevenue - refundedAmount;
+    
+    // ✅ PAYMENT METHOD BREAKDOWN
+    const paymentBreakdown = {
+      cod: 0,
+      bank_transfer: 0,
+      momo: 0,
+      vnpay: 0
+    };
+    
+    paymentMethodBreakdown.forEach(method => {
+      if (paymentBreakdown.hasOwnProperty(method._id)) {
+        paymentBreakdown[method._id] = method.totalRevenue;
+      }
+    });
+
+    // ✅ RESPONSE WITH REAL DATA
+    res.json({
+      success: true,
+      data: {
+        period: period,
+        startDate: startDate,
+        
+        // Revenue numbers
+        grossRevenue: grossRevenue,
+        shippingFees: totalShipping,
+        cancelledOrders: cancelledAmount,
+        refundedAmount: refundedAmount,
+        netRevenue: netRevenue,
+        
+        // Payment method breakdown
+        paymentMethods: {
+          cod: paymentBreakdown.cod,
+          bankTransfer: paymentBreakdown.bank_transfer,
+          momo: paymentBreakdown.momo,
+          vnpay: paymentBreakdown.vnpay
+        },
+        
+        // Formatted strings for display
+        formatted: {
+          grossRevenue: grossRevenue.toLocaleString('vi-VN') + 'đ',
+          shippingFees: totalShipping.toLocaleString('vi-VN') + 'đ',
+          cancelledOrders: cancelledAmount.toLocaleString('vi-VN') + 'đ',
+          refundedAmount: refundedAmount.toLocaleString('vi-VN') + 'đ',
+          netRevenue: netRevenue.toLocaleString('vi-VN') + 'đ',
+          
+          paymentMethods: {
+            cod: paymentBreakdown.cod.toLocaleString('vi-VN') + 'đ',
+            bankTransfer: paymentBreakdown.bank_transfer.toLocaleString('vi-VN') + 'đ',
+            momo: paymentBreakdown.momo.toLocaleString('vi-VN') + 'đ',
+            vnpay: paymentBreakdown.vnpay.toLocaleString('vi-VN') + 'đ'
+          }
+        },
+        
+        // Statistics
+        stats: {
+          deliveredOrdersCount: deliveredOrders[0]?.orderCount || 0,
+          cancelledOrdersCount: cancelledOrders[0]?.cancelledCount || 0,
+          refundedOrdersCount: refundedOrders[0]?.refundedCount || 0,
+          cancellationRate: deliveredOrders[0]?.orderCount > 0 ? 
+            ((cancelledOrders[0]?.cancelledCount || 0) / (deliveredOrders[0]?.orderCount + cancelledOrders[0]?.cancelledCount || 1) * 100).toFixed(1) + '%' : '0%',
+          refundRate: deliveredOrders[0]?.orderCount > 0 ? 
+            ((refundedOrders[0]?.refundedCount || 0) / deliveredOrders[0]?.orderCount * 100).toFixed(1) + '%' : '0%'
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Revenue Breakdown Error:', error);
+    res.json({ 
+      success: false, 
+      message: 'Lỗi khi lấy chi tiết doanh thu: ' + error.message 
+    });
+  }
+}
   /**
    * 🎯 NEW: Get revenue statistics
    * GET /admin/api/revenue-stats

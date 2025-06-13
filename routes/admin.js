@@ -45,11 +45,11 @@ router.get('/statistics', AdminController.statistics);
 // API endpoints
 router.get('/api/stats/overview', AdminController.getStatsOverview);
 router.get('/api/stats/sales', AdminController.getSalesStats);
-router.get('/api/revenue-stats', AdminController.getRevenueStats); // 🎯 NEW: Revenue API
+router.get('/api/revenue-stats', AdminController.getRevenueStats);
+router.get('/api/revenue-breakdown', AdminController.getRevenueBreakdown); // ✅ NEW: Real breakdown data
 router.get('/api/quick-stats', AdminController.getQuickStats);
 router.get('/api/global-search', AdminController.globalSearch);
 router.get('/api/health-check', AdminController.healthCheck);
-
 // Export & Maintenance
 router.get('/export/all-data', AdminController.exportAllData);
 router.post('/maintenance/cleanup', AdminController.cleanupData);
