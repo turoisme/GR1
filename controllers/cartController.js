@@ -1,6 +1,6 @@
 /**
- * Cart Controller - Complete Version with MongoDB and Color/Size Support
- * Xử lý giỏ hàng với MongoDB và checkout chỉ giao hàng Hà Nội
+ * Cart Controller - Fixed Version with Enhanced Order Creation
+ * Xử lý giỏ hàng với MongoDB và checkout đảm bảo đơn hàng hiển thị
  */
 
 const Cart = require('../models/Cart');
@@ -536,7 +536,7 @@ class CartController {
   }
 
   /**
-   * Xử lý thanh toán - CẢI TIẾN VỚI REDIRECT ĐẾN TRANG ĐƠN HÀNG TÀI KHOẢN
+   * ✨ FIXED: Xử lý thanh toán - ĐẢM BẢO ĐƠN HÀNG HIỂN THỊ TRONG TÀI KHOẢN
    * POST /cart/checkout
    */
   static async processCheckout(req, res) {
@@ -557,10 +557,12 @@ class CartController {
       } = req.body;
       
       console.log('💳 Processing checkout:', {
-        sessionId,
-        userId,
+        sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : 'N/A',
+        userId: userId,
         customerName,
-        paymentMethod
+        customerEmail,
+        paymentMethod,
+        timestamp: new Date().toISOString()
       });
       
       // Get current cart
@@ -574,14 +576,17 @@ class CartController {
       }
       
       // Validate required fields
-      if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !district) {
-        const missingFields = [];
-        if (!customerName) missingFields.push('Họ tên');
-        if (!customerEmail) missingFields.push('Email');
-        if (!customerPhone) missingFields.push('Số điện thoại');
-        if (!shippingAddress) missingFields.push('Địa chỉ giao hàng');
-        if (!district) missingFields.push('Quận/Huyện');
-        
+      const requiredFields = [
+        { field: customerName, name: 'Họ tên' },
+        { field: customerEmail, name: 'Email' },
+        { field: customerPhone, name: 'Số điện thoại' },
+        { field: shippingAddress, name: 'Địa chỉ giao hàng' },
+        { field: district, name: 'Quận/Huyện' }
+      ];
+      
+      const missingFields = requiredFields.filter(item => !item.field).map(item => item.name);
+      
+      if (missingFields.length > 0) {
         return res.status(400).json({
           success: false,
           message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`
@@ -606,15 +611,17 @@ class CartController {
         });
       }
       
-      // Generate order ID and delivery date
-      const orderId = `SP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-6)}`;
-      const deliveryDate = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+      // ✨ GENERATE UNIQUE ORDER ID
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+      const orderId = `SP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${timestamp.toString().slice(-6)}-${random}`;
+      const deliveryDate = new Date(Date.now() + (3 * 24 * 60 * 60 * 1000));
       
-      // Create order data
+      // ✨ CREATE COMPREHENSIVE ORDER DATA
       const orderData = {
         orderId: orderId,
         sessionId: sessionId,
-        userId: userId,
+        userId: userId, // ✅ CRITICAL: Ensure userId is properly set
         status: paymentMethod === 'cod' ? 'pending' : 'awaiting_payment',
         paymentMethod: paymentMethod,
         paymentStatus: paymentMethod === 'cod' ? 'pending' : 'unpaid',
@@ -624,16 +631,16 @@ class CartController {
           phone: cleanPhone
         },
         shipping: {
-          address: shippingAddress.trim(),
-          ward: ward.trim(),
-          district: district.trim(),
-          city: city || 'Hà Nội'
-        },
+  address: shippingAddress.trim(),
+  ward: ward?.trim() || 'Chưa cập nhật', // ✅ FIX
+  district: district.trim(),
+  city: city || 'Hà Nội'
+},
         items: cart.items.map(item => ({
-          productId: item.productId,
-          productName: item.productName,
-          productImage: item.productImage,
-          price: item.price,
+          productId: item.product._id || item.productId,
+          productName: item.product.name || 'Sản phẩm',
+          productImage: item.product.image || '/images/products/default.jpg',
+          price: item.priceAtTime || item.price,
           quantity: item.quantity,
           color: item.color || 'Mặc định',
           size: item.size || 'Mặc định',
@@ -645,125 +652,239 @@ class CartController {
         finalTotal: cart.finalTotal,
         notes: notes.trim(),
         estimatedDelivery: deliveryDate,
+        // ✨ ADD COMPREHENSIVE ORDER HISTORY
         orderHistory: [
           {
             status: 'pending',
             timestamp: new Date(),
-            note: 'Đơn hàng đã được tạo'
+            note: 'Đơn hàng đã được tạo và đang chờ xử lý',
+            updatedBy: 'system'
           }
-        ]
+        ],
+        // ✨ ADD METADATA FOR DEBUGGING
+        metadata: {
+          userAgent: req.get('User-Agent'),
+          ip: req.ip,
+          createdAt: new Date(),
+          version: '1.0'
+        }
       };
       
-      console.log('📋 Creating order:', {
+      console.log('📋 Creating order with enhanced data:', {
         orderId: orderData.orderId,
+        sessionId: orderData.sessionId ? `${orderData.sessionId.substring(0, 8)}...` : 'N/A',
+        userId: orderData.userId,
         customerName: orderData.customer.name,
+        customerEmail: orderData.customer.email,
         totalItems: orderData.totalItems,
-        finalTotal: orderData.finalTotal
+        finalTotal: orderData.finalTotal,
+        paymentMethod: orderData.paymentMethod
       });
       
-      // Save order to database
+      // ✨ ENHANCED ORDER SAVING WITH MULTIPLE FALLBACK METHODS
+      let savedOrder = null;
+      let saveMethod = 'unknown';
+      
       try {
+        // Method 1: Try Order.createOrder() static method
         const Order = require('../models/Order');
-        const savedOrder = await Order.createOrder(orderData);
+        console.log('🔄 Attempting Order.createOrder()...');
+        
+        savedOrder = await Order.createOrder(orderData);
+        saveMethod = 'Order.createOrder()';
         
         if (!savedOrder) {
-          throw new Error('Failed to save order to database');
+          throw new Error('Order.createOrder() returned null');
         }
         
-        console.log('✅ Order saved successfully:', {
+        console.log('✅ Order saved via Order.createOrder():', {
           orderId: savedOrder.orderId,
           mongoId: savedOrder._id,
-          status: savedOrder.status
+          userId: savedOrder.userId,
+          sessionId: savedOrder.sessionId ? `${savedOrder.sessionId.substring(0, 8)}...` : 'N/A'
         });
         
-        // Clear cart after successful order
-        cart.clear();
-        await cart.save();
+      } catch (createOrderError) {
+        console.error('❌ Order.createOrder() failed:', createOrderError.message);
         
-        // Clear session cart
-        if (req.session.cartItems) {
-          req.session.cartItems = [];
-          req.session.cartCount = 0;
-        }
-        
-        // Store order info in session for success page
-        req.session.lastOrder = {
-          orderId: savedOrder.orderId,
-          total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
-          paymentMethod: savedOrder.paymentMethod,
-          deliveryDate: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
-          customerName: savedOrder.customer.name,
-          status: savedOrder.status
-        };
-        
-        console.log('✅ Checkout completed and saved to DB:', {
-          orderId: savedOrder.orderId,
-          total: savedOrder.finalTotal
-        });
-        
-        // Success response với redirect đến trang đơn hàng trong tài khoản
-        res.json({
-          success: true,
-          message: 'Đặt hàng thành công! Chuyển đến trang đơn hàng của bạn...',
-          data: {
+        // Method 2: Try direct instantiation and save
+        try {
+          console.log('🔄 Attempting direct Order save...');
+          const Order = require('../models/Order');
+          
+          savedOrder = new Order(orderData);
+          await savedOrder.save();
+          saveMethod = 'Direct Order save';
+          
+          console.log('✅ Order saved via direct save:', {
             orderId: savedOrder.orderId,
-            estimatedDelivery: savedOrder.estimatedDelivery.toLocaleDateString('vi-VN'),
-            total: savedOrder.finalTotal.toLocaleString('vi-VN') + 'đ',
-            paymentMethod: savedOrder.paymentMethod,
-            status: savedOrder.status
-          },
-          // Chuyển hướng đến trang đơn hàng trong tài khoản
-          redirect: userId ? '/user/orders' : '/auth/login?redirect=/user/orders'
-        });
-        
-      } catch (orderError) {
-        console.log('⚠️ Order model error:', orderError.message);
-        
-        // Fallback: Save to session if database save fails
-        if (!req.session.orders) {
-          req.session.orders = [];
+            mongoId: savedOrder._id,
+            userId: savedOrder.userId
+          });
+          
+        } catch (directSaveError) {
+          console.error('❌ Direct save failed:', directSaveError.message);
+          
+          // Method 3: Try mongoose create
+          try {
+            console.log('🔄 Attempting mongoose.create()...');
+            const Order = require('../models/Order');
+            
+            savedOrder = await Order.create(orderData);
+            saveMethod = 'Mongoose.create()';
+            
+            console.log('✅ Order saved via mongoose.create():', {
+              orderId: savedOrder.orderId,
+              mongoId: savedOrder._id
+            });
+            
+          } catch (mongooseCreateError) {
+            console.error('❌ Mongoose.create() failed:', mongooseCreateError.message);
+            
+            // Method 4: Session fallback
+            console.log('⚠️ Using session fallback for order storage');
+            
+            if (!req.session.orders) {
+              req.session.orders = [];
+            }
+            
+            req.session.orders.push(orderData);
+            savedOrder = { ...orderData, _id: 'session_' + timestamp };
+            saveMethod = 'Session fallback';
+            
+            console.log('📝 Order saved to session as fallback');
+          }
         }
-        
-        req.session.orders.push(orderData);
-        req.session.lastOrder = {
-          orderId: orderData.orderId,
-          total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
-          paymentMethod: orderData.paymentMethod,
-          deliveryDate: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
-          customerName: orderData.customer.name,
-          status: orderData.status
-        };
-        
-        // Clear cart
+      }
+      
+      // ✨ VERIFY ORDER WAS ACTUALLY SAVED AND CAN BE RETRIEVED
+      if (savedOrder && savedOrder._id && !savedOrder._id.toString().startsWith('session_')) {
+        try {
+          console.log('🔍 Verifying order in database...');
+          const Order = require('../models/Order');
+          
+          // Try multiple ways to find the order
+          const verificationMethods = [
+            () => Order.findById(savedOrder._id),
+            () => Order.findOne({ orderId: savedOrder.orderId }),
+            () => Order.findOne({ sessionId: sessionId, userId: userId })
+          ];
+          
+          let verifiedOrder = null;
+          for (const method of verificationMethods) {
+            try {
+              verifiedOrder = await method();
+              if (verifiedOrder) break;
+            } catch (err) {
+              console.log('🔍 Verification method failed:', err.message);
+            }
+          }
+          
+          if (verifiedOrder) {
+            console.log('✅ Order verification successful:', {
+              orderId: verifiedOrder.orderId,
+              mongoId: verifiedOrder._id,
+              userId: verifiedOrder.userId,
+              sessionId: verifiedOrder.sessionId ? `${verifiedOrder.sessionId.substring(0, 8)}...` : 'N/A',
+              status: verifiedOrder.status
+            });
+          } else {
+            console.error('❌ Order verification failed - not found in database');
+            
+            // Force session fallback if verification fails
+            if (!req.session.orders) {
+              req.session.orders = [];
+            }
+            req.session.orders.push(orderData);
+          }
+          
+        } catch (verifyError) {
+          console.error('❌ Order verification error:', verifyError.message);
+        }
+      }
+      
+      // ✨ CLEAR CART AFTER SUCCESSFUL ORDER
+      try {
+        console.log('🧹 Clearing cart after successful order...');
         cart.clear();
         await cart.save();
         
+        // Clear session cart for sample products
         if (req.session.cartItems) {
           req.session.cartItems = [];
           req.session.cartCount = 0;
         }
         
-        // Success response with session fallback
-        res.json({
-          success: true,
-          message: 'Đặt hàng thành công! Chuyển đến trang đơn hàng của bạn...',
-          data: {
-            orderId: orderData.orderId,
-            estimatedDelivery: orderData.estimatedDelivery.toLocaleDateString('vi-VN'),
-            total: orderData.finalTotal.toLocaleString('vi-VN') + 'đ',
-            paymentMethod: orderData.paymentMethod,
-            status: orderData.status
-          },
-          // Chuyển hướng đến trang đơn hàng trong tài khoản
-          redirect: userId ? '/user/orders' : '/auth/login?redirect=/user/orders'
-        });
+        console.log('✅ Cart cleared successfully');
+      } catch (clearError) {
+        console.error('⚠️ Error clearing cart:', clearError.message);
+        // Don't fail the checkout if cart clearing fails
       }
+      
+      // ✨ STORE ORDER INFO IN SESSION FOR SUCCESS PAGE AND DEBUGGING
+      req.session.lastOrder = {
+        orderId: savedOrder.orderId,
+        total: (savedOrder.finalTotal || orderData.finalTotal).toLocaleString('vi-VN') + 'đ',
+        paymentMethod: savedOrder.paymentMethod || orderData.paymentMethod,
+        deliveryDate: (savedOrder.estimatedDelivery || orderData.estimatedDelivery).toLocaleDateString('vi-VN'),
+        customerName: savedOrder.customer?.name || orderData.customer.name,
+        status: savedOrder.status || orderData.status,
+        saveMethod: saveMethod
+      };
+      
+      // ✨ ENHANCED SUCCESS RESPONSE WITH DEBUGGING INFO
+      console.log('🎉 Checkout completed successfully:', {
+        orderId: savedOrder.orderId || orderData.orderId,
+        userId: userId,
+        sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : 'N/A',
+        saveMethod: saveMethod,
+        customerEmail: orderData.customer.email,
+        total: orderData.finalTotal,
+        timestamp: new Date().toISOString()
+      });
+      
+      // ✨ SUCCESS RESPONSE WITH COMPREHENSIVE DATA
+      const responseData = {
+        success: true,
+        message: 'Đặt hàng thành công! Chuyển đến trang đơn hàng của bạn...',
+        data: {
+          orderId: savedOrder.orderId || orderData.orderId,
+          estimatedDelivery: (savedOrder.estimatedDelivery || orderData.estimatedDelivery).toLocaleDateString('vi-VN'),
+          total: (savedOrder.finalTotal || orderData.finalTotal).toLocaleString('vi-VN') + 'đ',
+          paymentMethod: savedOrder.paymentMethod || orderData.paymentMethod,
+          status: savedOrder.status || orderData.status,
+          customerName: savedOrder.customer?.name || orderData.customer.name,
+          totalItems: savedOrder.totalItems || orderData.totalItems
+        },
+        // ✨ SMART REDIRECT LOGIC
+        redirect: userId ? '/user/orders' : '/auth/login?redirect=/user/orders',
+        // ✨ DEBUG INFO (remove in production)
+        debug: process.env.NODE_ENV === 'development' ? {
+          saveMethod: saveMethod,
+          userId: userId,
+          sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : 'N/A',
+          hasMongoId: !!(savedOrder._id && !savedOrder._id.toString().startsWith('session_'))
+        } : undefined
+      };
+      
+      res.json(responseData);
       
     } catch (error) {
       console.error('❌ Checkout error:', error);
+      
+      // ✨ ENHANCED ERROR LOGGING
+      console.error('💥 Checkout process failed:', {
+        error: error.message,
+        stack: error.stack,
+        userId: req.session?.user?.id,
+        sessionId: req.sessionID ? `${req.sessionID.substring(0, 8)}...` : 'N/A',
+        timestamp: new Date().toISOString()
+      });
+      
       res.status(500).json({
         success: false,
-        message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.'
+        message: 'Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -844,6 +965,76 @@ class CartController {
         success: false,
         message: 'Lỗi khi lấy số lượng giỏ hàng',
         count: 0
+      });
+    }
+  }
+
+  /**
+   * ✨ NEW: Debug endpoint to check orders (development only)
+   * GET /cart/debug/orders
+   */
+  static async debugOrders(req, res) {
+    try {
+      // Only in development
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ success: false, message: 'Not found' });
+      }
+      
+      const sessionId = req.sessionID || req.session.id;
+      const userId = req.session?.user?.id || null;
+      
+      console.log('🔍 Debug orders check:', { sessionId, userId });
+      
+      const Order = require('../models/Order');
+      
+      // Get all orders in database
+      const allOrders = await Order.find({}).limit(10).sort({ createdAt: -1 });
+      
+      // Get orders for current user/session
+      const userOrders = await Order.find({
+        $or: [
+          { userId: userId },
+          { sessionId: sessionId },
+          { 'customer.email': req.session?.user?.email }
+        ]
+      }).sort({ createdAt: -1 });
+      
+      // Get session orders
+      const sessionOrders = req.session.orders || [];
+      
+      res.json({
+        success: true,
+        debug: {
+          sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : 'N/A',
+          userId: userId,
+          userEmail: req.session?.user?.email,
+          totalOrdersInDB: allOrders.length,
+          userOrdersInDB: userOrders.length,
+          sessionOrdersCount: sessionOrders.length,
+          lastOrder: req.session.lastOrder || null,
+          allOrders: allOrders.map(o => ({
+            orderId: o.orderId,
+            userId: o.userId,
+            sessionId: o.sessionId ? `${o.sessionId.substring(0, 8)}...` : 'N/A',
+            customerEmail: o.customer.email,
+            status: o.status,
+            total: o.finalTotal,
+            createdAt: o.createdAt
+          })),
+          userOrders: userOrders.map(o => ({
+            orderId: o.orderId,
+            status: o.status,
+            total: o.finalTotal,
+            createdAt: o.createdAt
+          }))
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Debug Orders Error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
       });
     }
   }
