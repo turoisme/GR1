@@ -711,6 +711,65 @@
                 padding: 30px 15px;
             }
         }
+        /* ✅ ADDED: CSS for real product images on products page */
+
+/* Real product image wrapper */
+.product-image-wrapper {
+    width: 100%;
+    height: 150px;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* Real product image styles */
+.product-image-real {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 15px;
+}
+
+/* Hover effect for real images */
+.product-card:hover .product-image-real {
+    transform: scale(1.05);
+}
+
+/* Keep existing emoji styles */
+.product-image {
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    color: white;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* No products message */
+.no-products-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-products-message h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #999;
+}
+
+.no-products-message p {
+    font-size: 1rem;
+    color: #aaa;
+}
     </style>
 </head>
 <body>
@@ -831,84 +890,71 @@
             </div>
             
             <div class="products-grid">
-                <% if (typeof products !== 'undefined' && products.length > 0) { %>
-                    <% products.forEach(product => { %>
-                        <div class="product-card" data-product="<%= product._id || product.id %>">
-                            <div class="product-image"><%= product.image %></div>
-                            <div class="product-info">
-                                <div class="product-brand"><%= product.brand %></div>
-                                <h3 class="product-name"><%= product.name %></h3>
-                                <p class="product-description"><%= product.description && product.description.substring ? product.description.substring(0, 60) + '...' : 'Sản phẩm chất lượng cao' %></p>
-                                <p class="product-price"><%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ') %></p>
-                                
-                                <!-- Product Options -->
-                                <div class="product-options">
-                                    <div class="option-group">
-                                        <label class="option-label">Màu sắc *</label>
-                                        <div class="color-options">
-                                            <% 
-                                            const defaultColors = ['Đen', 'Trắng', 'Xanh dương', 'Đỏ'];
-                                            const productColors = product.colors || defaultColors;
-                                            %>
-                                            <% productColors.forEach(color => { %>
-                                                <div class="color-option <%= 
-                                                    color === 'Đen' ? 'color-black' : 
-                                                    color === 'Trắng' ? 'color-white' :
-                                                    color === 'Đỏ' ? 'color-red' :
-                                                    color === 'Xanh dương' ? 'color-blue' :
-                                                    color === 'Xanh lá' ? 'color-green' :
-                                                    color === 'Vàng' ? 'color-yellow' : 'color-black'
-                                                %>" 
-                                                     title="<%= color %>"
-                                                     onclick="selectColor('<%= product._id || product.id %>', '<%= color %>', this)">
-                                                </div>
-                                            <% }) %>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="option-group">
-                                        <label class="option-label">Kích thước *</label>
-                                        <div class="size-options">
-                                            <% 
-                                            let defaultSizes;
-                                            if (product.category === 'shoes') {
-                                                defaultSizes = ['39', '40', '41', '42', '43'];
-                                            } else {
-                                                defaultSizes = ['S', 'M', 'L', 'XL'];
-                                            }
-                                            const productSizes = product.sizes || defaultSizes;
-                                            %>
-                                            <% productSizes.forEach(size => { %>
-                                                <div class="size-option" 
-                                                     onclick="selectSize('<%= product._id || product.id %>', '<%= size %>', this)">
-                                                    <%= size %>
-                                                </div>
-                                            <% }) %>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="quantity-selector">
-                                    <button class="quantity-btn" onclick="changeQuantity('<%= product._id || product.id %>', -1)">−</button>
-                                    <span class="quantity-display" id="quantity-<%= product._id || product.id %>">1</span>
-                                    <button class="quantity-btn" onclick="changeQuantity('<%= product._id || product.id %>', 1)">+</button>
-                                </div>
-                                
-                                <button class="add-to-cart-btn" id="add-btn-<%= product._id || product.id %>" onclick="addToCart('<%= product._id || product.id %>')">
-                                    🛒 Thêm vào giỏ hàng
-                                </button>
-                                
-                                <div class="validation-message" id="validation-<%= product._id || product.id %>"></div>
-                            </div>
-                        </div>
-                    <% }) %>
-                <% } else { %>
-                    <div class="no-products">
-                        <p>🔍 Không tìm thấy sản phẩm nào phù hợp</p>
-                        <a href="/products" class="btn">🔄 Xem tất cả sản phẩm</a>
+    <% if (typeof products !== 'undefined' && products.length > 0) { %>
+        <% products.forEach(product => { %>
+            <div class="product-card" data-product="<%= product._id || product.id %>">
+                
+                <!-- ✅ FIXED: Proper image display logic -->
+                <% if (product.imageUrl && product.imageUrl.startsWith('http')) { %>
+                    <!-- External URL image -->
+                    <div class="product-image-wrapper">
+                        <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image-real" 
+                             onerror="this.parentNode.innerHTML='<div class=&quot;product-image&quot;><%= product.image || '📦' %></div>'">
                     </div>
+                <% } else if (product.imageUrl && (product.imageUrl.startsWith('/assets') || product.imageUrl.startsWith('/uploads'))) { %>
+                    <!-- ✅ Local image from /assets or /uploads -->
+                    <div class="product-image-wrapper">
+                        <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image-real"
+                             onerror="this.parentNode.innerHTML='<div class=&quot;product-image&quot;><%= product.image || '📦' %></div>'">
+                    </div>
+                <% } else if (product.images && product.images.length > 0) { %>
+                    <!-- ✅ Use first image from images array -->
+                    <% 
+                    const firstImage = product.images.find(img => img.isMain) || product.images[0];
+                    let imageUrl;
+                    
+                    if (typeof firstImage === 'string') {
+                        imageUrl = firstImage;
+                    } else if (firstImage && firstImage.url) {
+                        imageUrl = firstImage.url;
+                    } else {
+                        imageUrl = null;
+                    }
+                    %>
+                    
+                    <% if (imageUrl) { %>
+                        <div class="product-image-wrapper">
+                            <img src="<%= imageUrl %>" alt="<%= product.name %>" class="product-image-real"
+                                 onerror="this.parentNode.innerHTML='<div class=&quot;product-image&quot;><%= product.image || '📦' %></div>'">
+                        </div>
+                    <% } else { %>
+                        <!-- Fallback to emoji -->
+                        <div class="product-image"><%= product.image || '📦' %></div>
+                    <% } %>
+                <% } else { %>
+                    <!-- Fallback to emoji -->
+                    <div class="product-image"><%= product.image || '📦' %></div>
                 <% } %>
+                
+                <div class="product-info">
+                    <div class="product-brand"><%= product.brand %></div>
+                    <h3 class="product-name"><%= product.name %></h3>
+                    <p class="product-description"><%= product.description && product.description.substring ? product.description.substring(0, 60) + '...' : 'Sản phẩm chất lượng cao' %></p>
+                    <p class="product-price"><%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %></p>
+                    <button class="add-to-cart-btn" onclick="openProductModal('<%= product._id %>', '<%= product.name.replace(/'/g, '\\\'') %>', '<%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>', '<%= product.image || '📦' %>', '<%= product.colors ? product.colors.join(',') : '' %>', '<%= product.sizes ? product.sizes.join(',') : '' %>')">
+                        🛒 Thêm vào giỏ
+                    </button>
+                </div>
             </div>
+        <% }) %>
+    <% } else { %>
+        <!-- No products message -->
+        <div class="no-products-message">
+            <h3>🔍 Không tìm thấy sản phẩm nào</h3>
+            <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+        </div>
+    <% } %>
+</div>
             
             <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
                 <div class="pagination">

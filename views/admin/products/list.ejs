@@ -1687,85 +1687,124 @@
             updatePagination();
         }
 
-        function createProductRow(product) {
-            const row = document.createElement('tr');
-            
-            // Status badges
-            const statusBadges = [];
-            if (product.inStock !== false) {
-                statusBadges.push('<span class="status-badge status-active">Hoạt động</span>');
-            } else {
-                statusBadges.push('<span class="status-badge status-inactive">Tạm dừng</span>');
-            }
-            if (product.isFeatured) {
-                statusBadges.push('<span class="status-badge status-featured">Nổi bật</span>');
-            }
+        // ✅ FIXED: createProductRow function trong views/admin/products/list.ejs
 
-            // Format date
-            const createdDate = product.createdAt ? new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A';
-            
-            // Format price
-            const formattedPrice = typeof product.getFormattedPrice === 'function' ? 
-                product.getFormattedPrice() : 
-                (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ');
-                
-            const formattedOriginalPrice = product.originalPrice && product.originalPrice > product.price ?
-                product.originalPrice.toLocaleString('vi-VN') + 'đ' : null;
+function createProductRow(product) {
+    const row = document.createElement('tr');
+    
+    // Status badges
+    const statusBadges = [];
+    if (product.inStock !== false) {
+        statusBadges.push('<span class="status-badge status-active">Hoạt động</span>');
+    } else {
+        statusBadges.push('<span class="status-badge status-inactive">Tạm dừng</span>');
+    }
+    if (product.isFeatured) {
+        statusBadges.push('<span class="status-badge status-featured">Nổi bật</span>');
+    }
 
-            row.innerHTML = `
-                <td>
-                    <input type="checkbox" class="product-checkbox" value="${product._id}">
-                </td>
-                <td>
-                    <div class="product-info">
-                        ${product.imageUrl && product.imageUrl.startsWith('http') ? 
-                            `<img src="${product.imageUrl}" alt="${product.name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                             <div class="product-emoji" style="display: none;">${product.image || '📦'}</div>` :
-                            `<div class="product-emoji">${product.image || '📦'}</div>`
-                        }
-                        <div class="product-details">
-                            <h4>${product.name}</h4>
-                            <p>ID: ${product._id}</p>
-                        </div>
-                    </div>
-                </td>
-                <td>${getCategoryName(product.category)}</td>
-                <td>${product.brand}</td>
-                <td>
-                    <div>
-                        <strong>${formattedPrice}</strong>
-                        ${formattedOriginalPrice ? 
-                            `<br><small style="text-decoration: line-through; color: #999;">${formattedOriginalPrice}</small>` : 
-                            ''
-                        }
-                    </div>
-                </td>
-                <td>
-                    <span style="color: ${product.stockQuantity > 10 ? '#28a745' : product.stockQuantity > 0 ? '#ffc107' : '#dc3545'}">
-                        ${product.stockQuantity || 0} sản phẩm
-                    </span>
-                </td>
-                <td>
-                    ${statusBadges.join(' ')}
-                </td>
-                <td>${createdDate}</td>
-                <td>
-                    <div class="action-buttons-cell">
-                        <button class="btn btn-sm btn-primary" onclick="editProduct('${product._id}')" title="Chỉnh sửa">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-success" onclick="viewProduct('${product._id}')" title="Xem chi tiết">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteProductFromServer('${product._id}')" title="Xóa">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
+    // Format date
+    const createdDate = product.createdAt ?
+        new Date(product.createdAt).toLocaleDateString('vi-VN') : 'N/A';
+    
+    // Format price
+    const formattedPrice = typeof product.getFormattedPrice === 'function' ? 
+        product.getFormattedPrice() : 
+        (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ');
+        
+    const formattedOriginalPrice = product.originalPrice && product.originalPrice > product.price ?
+        product.originalPrice.toLocaleString('vi-VN') + 'đ' : null;
 
-            return row;
+    // ✅ FIXED: Proper image display logic for admin table
+    let imageHtml = '';
+    
+    if (product.imageUrl && product.imageUrl.startsWith('http')) {
+        // External URL
+        imageHtml = `
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="product-emoji" style="display: none;">${product.image || '📦'}</div>
+        `;
+    } else if (product.imageUrl && (product.imageUrl.startsWith('/assets') || product.imageUrl.startsWith('/uploads'))) {
+        // ✅ Local image from /assets or /uploads
+        imageHtml = `
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="product-emoji" style="display: none;">${product.image || '📦'}</div>
+        `;
+    } else if (product.images && product.images.length > 0) {
+        // ✅ Handle images array (both string and object format)
+        const firstImage = product.images.find(img => img.isMain) || product.images[0];
+        let imageUrl = null;
+        
+        if (typeof firstImage === 'string') {
+            imageUrl = firstImage;
+        } else if (firstImage && firstImage.url) {
+            imageUrl = firstImage.url;
         }
+        
+        if (imageUrl) {
+            imageHtml = `
+                <img src="${imageUrl}" alt="${product.name}" class="product-image" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="product-emoji" style="display: none;">${product.image || '📦'}</div>
+            `;
+        } else {
+            imageHtml = `<div class="product-emoji">${product.image || '📦'}</div>`;
+        }
+    } else {
+        // Fallback to emoji
+        imageHtml = `<div class="product-emoji">${product.image || '📦'}</div>`;
+    }
+
+    row.innerHTML = `
+        <td>
+            <input type="checkbox" class="product-checkbox" value="${product._id}">
+        </td>
+        <td>
+            <div class="product-info">
+                ${imageHtml}
+                <div class="product-details">
+                    <h4>${product.name}</h4>
+                    <p>ID: ${product._id}</p>
+                </div>
+            </div>
+        </td>
+        <td>${getCategoryName(product.category)}</td>
+        <td>${product.brand}</td>
+        <td>
+            <div>
+                <strong>${formattedPrice}</strong>
+                ${formattedOriginalPrice ? 
+                    `<br><small style="text-decoration: line-through; color: #999;">${formattedOriginalPrice}</small>` : 
+                    ''
+                }
+            </div>
+        </td>
+        <td>
+            <span style="color: ${product.stockQuantity > 10 ? '#28a745' : product.stockQuantity > 0 ? '#ffc107' : '#dc3545'};">
+                ${product.stockQuantity || 0} sản phẩm
+            </span>
+        </td>
+        <td>${statusBadges.join(' ')}</td>
+        <td>${createdDate}</td>
+        <td>
+            <div class="action-buttons-cell">
+                <button class="action-btn edit-btn" onclick="editProduct('${product._id}')" title="Sửa">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn view-btn" onclick="viewProduct('${product._id}')" title="Xem">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn delete-btn" onclick="deleteProduct('${product._id}')" title="Xóa">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+
+    return row;
+}
 
         function updatePagination() {
             const pagination = document.getElementById('pagination');

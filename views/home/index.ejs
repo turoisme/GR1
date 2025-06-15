@@ -936,25 +936,50 @@
                     <!-- ✅ HIỂN THỊ SẢN PHẨM THỰC TỪ DATABASE -->
                     <% featuredProducts.forEach(product => { %>
                         <div class="product-card" data-product-id="<%= product._id %>">
-                            <!-- ✅ Hiển thị hình ảnh sản phẩm đúng cách -->
-                            <% if (product.imageUrl && product.imageUrl.startsWith('http')) { %>
-                                <!-- Real image from URL -->
-                                <div class="product-image-wrapper">
-                                    <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image" 
-                                         onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
-                                </div>
-                            <% } else if (product.imageUrl && product.imageUrl.startsWith('/assets')) { %>
-                                <!-- Local image from assets -->
-                                <div class="product-image-wrapper">
-                                    <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image"
-                                         onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
-                                </div>
-                            <% } else { %>
-                                <!-- Fallback to emoji -->
-                                <div class="product-image-emoji">
-                                    <%= product.image || '📦' %>
-                                </div>
-                            <% } %>
+                            <!-- ✅ FIXED: Hiển thị hình ảnh sản phẩm đúng cách -->
+<% if (product.imageUrl && product.imageUrl.startsWith('http')) { %>
+    <!-- External URL image -->
+    <div class="product-image-wrapper">
+        <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image" 
+             onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
+    </div>
+<% } else if (product.imageUrl && (product.imageUrl.startsWith('/assets') || product.imageUrl.startsWith('/uploads'))) { %>
+    <!-- ✅ FIXED: Handle both /assets and /uploads paths -->
+    <div class="product-image-wrapper">
+        <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image"
+             onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
+    </div>
+<% } else if (product.images && product.images.length > 0) { %>
+    <!-- ✅ FIXED: Handle images array (both string and object format) -->
+    <% 
+    const firstImage = product.images.find(img => img.isMain) || product.images[0];
+    let imageUrl;
+    
+    if (typeof firstImage === 'string') {
+        imageUrl = firstImage;
+    } else if (firstImage && firstImage.url) {
+        imageUrl = firstImage.url;
+    } else {
+        imageUrl = null;
+    }
+    %>
+    
+    <% if (imageUrl) { %>
+        <div class="product-image-wrapper">
+            <img src="<%= imageUrl %>" alt="<%= product.name %>" class="product-image"
+                 onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
+        </div>
+    <% } else { %>
+        <div class="product-image-emoji">
+            <%= product.image || '📦' %>
+        </div>
+    <% } %>
+<% } else { %>
+    <!-- Fallback to emoji -->
+    <div class="product-image-emoji">
+        <%= product.image || '📦' %>
+    </div>
+<% } %>
                             
                             <div class="product-info">
                                 <!-- ✅ Hiển thị thông tin sản phẩm từ database -->

@@ -73,37 +73,32 @@ router.post('/upload/product-image', uploadSingle, handleUploadError, async (req
  * Upload multiple product images
  * POST /admin/upload/product-images
  */
-router.post('/upload/product-images', uploadMultiple, handleUploadError, async (req, res) => {
+router.post('/upload/product-image', uploadSingle, handleUploadError, async (req, res) => {
   try {
-    console.log('📤 Admin uploading multiple product images:', {
-      fileCount: req.files ? req.files.length : 0
-    });
-
-    if (!req.files || req.files.length === 0) {
+    if (!req.file) {
       return res.status(400).json({
         success: false,
         message: 'Không có file được upload',
-        error: 'NO_FILES'
+        error: 'NO_FILE'
       });
     }
 
-    // Process uploaded files
-    const uploadedImages = req.files.map(file => ({
-      imageUrl: `/uploads/products/${file.filename}`,
-      originalName: file.originalname,
-      size: file.size,
-      filename: file.filename
-    }));
-
+    // ✅ FIX: Sử dụng cùng format với ảnh cũ (/assets)
+    // Thay vì: `/uploads/products/${req.file.filename}`
+    // Dùng: `/assets/products/${req.file.filename}`
+    const imageUrl = `/assets/uploads/products/${req.file.filename}`;
+    
     res.json({
       success: true,
-      message: `Upload ${req.files.length} ảnh thành công`,
-      images: uploadedImages,
-      count: req.files.length
+      message: 'Upload ảnh thành công',
+      imageUrl: imageUrl,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      filename: req.file.filename
     });
 
   } catch (error) {
-    console.error('❌ Admin Multiple Upload Error:', error);
+    console.error('❌ Admin Upload Error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi upload ảnh: ' + error.message,
@@ -111,7 +106,6 @@ router.post('/upload/product-images', uploadMultiple, handleUploadError, async (
     });
   }
 });
-
 /**
  * Delete uploaded image
  * DELETE /admin/upload/product-image/:filename

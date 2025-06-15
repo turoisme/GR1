@@ -1014,36 +1014,63 @@ static async getRevenueBreakdown(req, res) {
    * Add new product
    * POST /admin/products/add
    */
-  static async addProduct(req, res) {
-    try {
-      const productData = {
-        name: req.body.name,
-        description: req.body.description,
-        price: parseFloat(req.body.price),
-        originalPrice: parseFloat(req.body.originalPrice) || parseFloat(req.body.price),
-        category: req.body.category,
-        brand: req.body.brand,
-        sizes: req.body.sizes ? req.body.sizes.split(',').map(s => s.trim()) : [],
-        colors: req.body.colors ? req.body.colors.split(',').map(c => c.trim()) : [],
-        stockQuantity: parseInt(req.body.stockQuantity) || 0,
-        images: req.body.images ? req.body.images.split(',').map(img => img.trim()) : [],
-        tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
-        isActive: req.body.isActive === 'true',
-        isFeatured: req.body.isFeatured === 'true'
-      };
+ static async addProduct(req, res) {
+  try {
+    console.log('📤 Admin Add Product - Request body:', req.body);
+    
+    // ✅ Process images array and convert to proper format
+    const imagesArray = req.body.images ? req.body.images.split(',').map(img => img.trim()).filter(img => img) : [];
+    
+    console.log('📸 Raw images array:', imagesArray);
+    
+    // ✅ FIX: Convert string URLs to image objects
+    const imagesObjects = imagesArray.map((url, index) => ({
+      url: url,
+      alt: req.body.name || 'Product image',
+      isMain: index === 0 // First image is main
+    }));
+    
+    console.log('📸 Images objects processed:', imagesObjects);
+    
+    const productData = {
+      name: req.body.name,
+      description: req.body.description,
+      price: parseFloat(req.body.price),
+      originalPrice: parseFloat(req.body.originalPrice) || parseFloat(req.body.price),
+      category: req.body.category,
+      brand: req.body.brand,
+      sizes: req.body.sizes ? req.body.sizes.split(',').map(s => s.trim()) : [],
+      colors: req.body.colors ? req.body.colors.split(',').map(c => c.trim()) : [],
+      stockQuantity: parseInt(req.body.stockQuantity) || 0,
+      images: imagesObjects, // ✅ FIX: Use objects instead of strings
+      tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
+      isActive: req.body.isActive === 'true',
+      isFeatured: req.body.isFeatured === 'true'
+    };
 
-      const product = new Product(productData);
-      await product.save();
-
-      req.flash('success', 'Thêm sản phẩm thành công!');
-      res.redirect('/admin/products');
-
-    } catch (error) {
-      console.error('❌ Admin Add Product Error:', error);
-      req.flash('error', 'Lỗi thêm sản phẩm: ' + error.message);
-      res.redirect('/admin/products/add');
+    // ✅ FIX: Set imageUrl to first uploaded image if available
+    if (imagesArray.length > 0) {
+      productData.imageUrl = imagesArray[0]; // First image becomes main image
+      console.log('📸 Set imageUrl to:', productData.imageUrl);
     }
+
+    console.log('📦 Final product data:', productData);
+
+    const product = new Product(productData);
+    await product.save();
+
+    console.log('✅ Product saved successfully:', product._id);
+    console.log('📸 Product imageUrl saved as:', product.imageUrl);
+    
+    req.flash('success', 'Thêm sản phẩm thành công!');
+    res.redirect('/admin/products');
+
+  } catch (error) {
+    console.error('❌ Admin Add Product Error:', error);
+    req.flash('error', 'Lỗi thêm sản phẩm: ' + error.message);
+    res.redirect('/admin/products/add');
   }
+}
 
   /**
    * Show edit product form
@@ -1074,36 +1101,71 @@ static async getRevenueBreakdown(req, res) {
    * Update product
    * POST /admin/products/:id/edit
    */
-  static async editProduct(req, res) {
-    try {
-      const productId = req.params.id;
-      const updateData = {
-        name: req.body.name,
-        description: req.body.description,
-        price: parseFloat(req.body.price),
-        originalPrice: parseFloat(req.body.originalPrice) || parseFloat(req.body.price),
-        category: req.body.category,
-        brand: req.body.brand,
-        sizes: req.body.sizes ? req.body.sizes.split(',').map(s => s.trim()) : [],
-        colors: req.body.colors ? req.body.colors.split(',').map(c => c.trim()) : [],
-        stockQuantity: parseInt(req.body.stockQuantity) || 0,
-        images: req.body.images ? req.body.images.split(',').map(img => img.trim()) : [],
-        tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
-        isActive: req.body.isActive === 'true',
-        isFeatured: req.body.isFeatured === 'true',
-        updatedAt: new Date()
-      };
+ static async editProduct(req, res) {
+  try {
+    const productId = req.params.id;
+    
+    console.log('📤 Admin Edit Product - ID:', productId);
+    console.log('📤 Admin Edit Product - Request body:', req.body);
+    
+    // ✅ Process images array and convert to proper format
+    const imagesArray = req.body.images ? req.body.images.split(',').map(img => img.trim()).filter(img => img) : [];
+    
+    console.log('📸 Raw images array:', imagesArray);
+    
+    // ✅ FIX: Convert string URLs to image objects
+    const imagesObjects = imagesArray.map((url, index) => ({
+      url: url,
+      alt: req.body.name || 'Product image',
+      isMain: index === 0 // First image is main
+    }));
+    
+    console.log('📸 Images objects processed:', imagesObjects);
+    
+    const updateData = {
+      name: req.body.name,
+      description: req.body.description,
+      price: parseFloat(req.body.price),
+      originalPrice: parseFloat(req.body.originalPrice) || parseFloat(req.body.price),
+      category: req.body.category,
+      brand: req.body.brand,
+      sizes: req.body.sizes ? req.body.sizes.split(',').map(s => s.trim()) : [],
+      colors: req.body.colors ? req.body.colors.split(',').map(c => c.trim()) : [],
+      stockQuantity: parseInt(req.body.stockQuantity) || 0,
+      images: imagesObjects, // ✅ FIX: Use objects instead of strings
+      tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
+      isActive: req.body.isActive === 'true',
+      isFeatured: req.body.isFeatured === 'true',
+      updatedAt: new Date()
+    };
 
-      await Product.findByIdAndUpdate(productId, updateData);
-      req.flash('success', 'Cập nhật sản phẩm thành công!');
-      res.redirect('/admin/products');
-
-    } catch (error) {
-      console.error('❌ Admin Edit Product Error:', error);
-      req.flash('error', 'Lỗi cập nhật sản phẩm: ' + error.message);
-      res.redirect(`/admin/products/${req.params.id}/edit`);
+    // ✅ FIX: Update imageUrl if new images provided
+    if (imagesArray.length > 0) {
+      updateData.imageUrl = imagesArray[0]; // First image becomes main image
+      console.log('📸 Updated imageUrl to:', updateData.imageUrl);
     }
+
+    console.log('📦 Final update data:', updateData);
+
+    const updatedProduct = await Product.findByIdAndUpdate(productId, updateData, { new: true });
+    
+    if (!updatedProduct) {
+      req.flash('error', 'Không tìm thấy sản phẩm');
+      return res.redirect('/admin/products');
+    }
+
+    console.log('✅ Product updated successfully:', updatedProduct._id);
+    console.log('📸 Product imageUrl after update:', updatedProduct.imageUrl);
+    
+    req.flash('success', 'Cập nhật sản phẩm thành công!');
+    res.redirect('/admin/products');
+
+  } catch (error) {
+    console.error('❌ Admin Edit Product Error:', error);
+    req.flash('error', 'Lỗi cập nhật sản phẩm: ' + error.message);
+    res.redirect(`/admin/products/${req.params.id}/edit`);
   }
+}
 
   /**
    * Delete product
