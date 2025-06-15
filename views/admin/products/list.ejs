@@ -547,6 +547,209 @@
             border-top: 2px solid #f1f5f9;
         }
 
+        /* ✅ UPLOAD STYLES - Added for image upload */
+        .image-upload-section {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .image-upload-section.dragover {
+            border-color: #667eea;
+            background: #f0f8ff;
+            transform: scale(1.02);
+        }
+
+        .upload-area {
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: #667eea;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-text strong {
+            color: #667eea;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .file-input-hidden {
+            display: none;
+        }
+
+        .image-preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .image-preview {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .image-preview:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .preview-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .preview-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .preview-btn-delete {
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+
+        .preview-btn-delete:hover {
+            background: #dc3545;
+            transform: scale(1.1);
+        }
+
+        .preview-btn-primary {
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+        }
+
+        .preview-btn-primary:hover {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        .image-info {
+            padding: 8px;
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .upload-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .upload-error {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .url-input-section {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .url-input-section label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .uploaded-images-list {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .uploaded-images-list.show {
+            display: block;
+        }
+
+        .uploaded-image-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .uploaded-image-thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .uploaded-image-url {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #666;
+            word-break: break-all;
+        }
+
         /* ✅ Debug info */
         .debug-info {
             background: rgba(255, 193, 7, 0.1);
@@ -613,6 +816,15 @@
 
             .search-box input {
                 width: 200px;
+            }
+
+            .image-preview-container {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10px;
             }
         }
 
@@ -913,9 +1125,51 @@
                     <input type="text" id="productColors" name="colors" placeholder="Đỏ, Xanh, Vàng">
                 </div>
 
+                <!-- ✅ NEW: Image Upload Section -->
                 <div class="form-group">
-                    <label for="productImages">Hình ảnh (URL, ngăn cách bằng dấu phẩy)</label>
-                    <input type="text" id="productImages" name="images" placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg">
+                    <label for="productImages">Hình ảnh sản phẩm</label>
+                    
+                    <!-- Upload Area -->
+                    <div class="image-upload-section" id="imageUploadArea">
+                        <div class="upload-area" onclick="document.getElementById('imageFiles').click()">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">
+                                <strong>Kéo thả ảnh vào đây</strong> hoặc <strong>click để chọn file</strong>
+                            </div>
+                            <div class="upload-hint">
+                                Hỗ trợ: JPG, PNG, GIF (tối đa 5MB mỗi file)
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden File Input -->
+                        <input type="file" id="imageFiles" class="file-input-hidden" 
+                               multiple accept="image/*" onchange="handleFileSelect(event)">
+                        
+                        <!-- Image Preview Container -->
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <!-- Uploaded images will appear here -->
+                        </div>
+                        
+                        <!-- Uploaded Images List -->
+                        <div class="uploaded-images-list" id="uploadedImagesList">
+                            <strong>Ảnh đã upload:</strong>
+                            <div id="uploadedImagesContainer">
+                                <!-- Uploaded image URLs will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Input Section (Backup) -->
+                    <div class="url-input-section">
+                        <label for="productImageUrls">Hoặc nhập URL ảnh (ngăn cách bằng dấu phẩy)</label>
+                        <input type="text" id="productImageUrls" name="images" 
+                               placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg">
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            💡 Bạn có thể upload file hoặc nhập URL. Ảnh upload sẽ được ưu tiên.
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -953,12 +1207,14 @@
         let filteredProducts = [];
         let currentPage = 1;
         let itemsPerPage = 25;
+        let uploadedImages = []; // Store uploaded image URLs
 
         // ✅ Initialize page with real data from server
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔄 Admin Products page loading...');
             loadProductsFromServer();
             setupEventListeners();
+            setupImageUpload();
         });
 
         function setupEventListeners() {
@@ -974,6 +1230,236 @@
                     closeProductModal();
                 }
             });
+        }
+
+        // ✅ IMAGE UPLOAD FUNCTIONALITY
+        function setupImageUpload() {
+            const uploadArea = document.getElementById('imageUploadArea');
+            const fileInput = document.getElementById('imageFiles');
+
+            // Drag and Drop events
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+
+        async function handleFiles(files) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            for (let file of files) {
+                // Validate file type
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification(`File ${file.name} không đúng định dạng! Chỉ hỗ trợ JPG, PNG, GIF.`, 'error');
+                    continue;
+                }
+                
+                // Validate file size
+                if (file.size > maxSize) {
+                    showNotification(`File ${file.name} quá lớn! Tối đa 5MB.`, 'error');
+                    continue;
+                }
+                
+                // Upload file
+                await uploadSingleImage(file);
+            }
+        }
+
+        async function uploadSingleImage(file) {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            
+            // Create preview element
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'image-preview';
+            previewDiv.innerHTML = `
+                <img class="preview-image" src="${URL.createObjectURL(file)}" alt="Preview">
+                <div class="preview-actions">
+                    <button type="button" class="preview-btn preview-btn-delete" onclick="removePreview(this)" title="Xóa">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="image-info">${file.name}</div>
+                <div class="upload-progress">
+                    <div class="progress-bar" id="progress-${Date.now()}"></div>
+                </div>
+            `;
+            
+            previewContainer.appendChild(previewDiv);
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const progressBar = previewDiv.querySelector('.progress-bar');
+            
+            try {
+                console.log('📤 Uploading image:', file.name);
+                
+                const response = await fetch('/admin/upload/product-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Simulate progress for demo
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                    if (progress >= 90) {
+                        clearInterval(progressInterval);
+                    }
+                }, 100);
+                
+                const result = await response.json();
+                
+                // Complete progress
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                if (result.success) {
+                    console.log('✅ Image uploaded:', result.imageUrl);
+                    
+                    // Store uploaded image URL
+                    uploadedImages.push(result.imageUrl);
+                    
+                    // Update preview with uploaded URL
+                    const img = previewDiv.querySelector('.preview-image');
+                    img.src = result.imageUrl;
+                    
+                    // Update image info
+                    const imageInfo = previewDiv.querySelector('.image-info');
+                    imageInfo.innerHTML = `
+                        <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                        Upload thành công
+                    `;
+                    
+                    // Add to uploaded images list
+                    addToUploadedList(result.imageUrl, file.name);
+                    
+                    // Update main images input
+                    updateImagesInput();
+                    
+                    showNotification('Upload ảnh thành công!', 'success');
+                    
+                } else {
+                    throw new Error(result.message || 'Upload failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Upload error:', error);
+                
+                // Show error in preview
+                previewDiv.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <div>Upload thất bại</div>
+                        <div class="upload-error">${error.message}</div>
+                        <button type="button" class="preview-btn preview-btn-delete" onclick="removePreview(this)" style="margin-top: 10px;">
+                            <i class="fas fa-times"></i> Xóa
+                        </button>
+                    </div>
+                `;
+                
+                showNotification(`Upload thất bại: ${error.message}`, 'error');
+            }
+        }
+
+        function removePreview(button) {
+            const previewDiv = button.closest('.image-preview');
+            const img = previewDiv.querySelector('.preview-image');
+            
+            if (img && img.src) {
+                // Remove from uploaded images array
+                const imageUrl = img.src;
+                uploadedImages = uploadedImages.filter(url => url !== imageUrl);
+                
+                // Remove from uploaded list
+                removeFromUploadedList(imageUrl);
+                
+                // Update main images input
+                updateImagesInput();
+            }
+            
+            previewDiv.remove();
+        }
+
+        function addToUploadedList(imageUrl, filename) {
+            const uploadedList = document.getElementById('uploadedImagesList');
+            const container = document.getElementById('uploadedImagesContainer');
+            
+            const item = document.createElement('div');
+            item.className = 'uploaded-image-item';
+            item.innerHTML = `
+                <img src="${imageUrl}" class="uploaded-image-thumbnail" alt="Uploaded">
+                <div class="uploaded-image-url">${filename}</div>
+                <button type="button" class="preview-btn preview-btn-delete" onclick="removeUploadedImage('${imageUrl}', this)" title="Xóa">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(item);
+            uploadedList.classList.add('show');
+        }
+
+        function removeFromUploadedList(imageUrl) {
+            const items = document.querySelectorAll('.uploaded-image-item');
+            items.forEach(item => {
+                const img = item.querySelector('.uploaded-image-thumbnail');
+                if (img && img.src === imageUrl) {
+                    item.remove();
+                }
+            });
+            
+            // Hide list if empty
+            const container = document.getElementById('uploadedImagesContainer');
+            if (container.children.length === 0) {
+                document.getElementById('uploadedImagesList').classList.remove('show');
+            }
+        }
+
+        function removeUploadedImage(imageUrl, button) {
+            // Remove from array
+            uploadedImages = uploadedImages.filter(url => url !== imageUrl);
+            
+            // Remove from DOM
+            button.closest('.uploaded-image-item').remove();
+            
+            // Update input
+            updateImagesInput();
+            
+            // Hide list if empty
+            const container = document.getElementById('uploadedImagesContainer');
+            if (container.children.length === 0) {
+                document.getElementById('uploadedImagesList').classList.remove('show');
+            }
+        }
+
+        function updateImagesInput() {
+            const imageUrlsInput = document.getElementById('productImageUrls');
+            const currentUrls = imageUrlsInput.value.split(',').map(url => url.trim()).filter(url => url);
+            
+            // Combine uploaded images with manual URLs (uploaded takes priority)
+            const allImages = [...uploadedImages, ...currentUrls.filter(url => !uploadedImages.includes(url))];
+            
+            imageUrlsInput.value = allImages.join(', ');
         }
 
         // ✅ LOAD PRODUCTS FROM DATABASE
@@ -1059,7 +1545,7 @@
                 stockQuantity: parseInt(document.getElementById('productStock').value),
                 sizes: document.getElementById('productSizes').value,
                 colors: document.getElementById('productColors').value,
-                images: document.getElementById('productImages').value,
+                images: document.getElementById('productImageUrls').value, // This includes uploaded images
                 tags: document.getElementById('productTags').value,
                 isActive: document.getElementById('productActive').checked,
                 isFeatured: document.getElementById('productFeatured').checked
@@ -1428,12 +1914,16 @@
             return Array.from(checkboxes).map(cb => cb.value);
         }
 
-        // ✅ Modal functions with real data
+        // ✅ Modal functions with real data and image upload reset
         function openAddProductModal() {
             document.getElementById('modalTitle').textContent = 'Thêm sản phẩm mới';
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
             document.getElementById('productActive').checked = true;
+            
+            // ✅ Reset upload area
+            resetImageUpload();
+            
             document.getElementById('productModal').classList.add('show');
         }
 
@@ -1459,17 +1949,84 @@
             // Handle arrays
             document.getElementById('productSizes').value = Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || '');
             document.getElementById('productColors').value = Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || '');
-            document.getElementById('productImages').value = Array.isArray(product.images) ? product.images.join(', ') : (product.images || '');
+            document.getElementById('productImageUrls').value = Array.isArray(product.images) ? product.images.join(', ') : (product.images || '');
             document.getElementById('productTags').value = Array.isArray(product.tags) ? product.tags.join(', ') : (product.tags || '');
             
             document.getElementById('productActive').checked = product.inStock !== false;
             document.getElementById('productFeatured').checked = product.isFeatured === true;
             
+            // ✅ Reset upload area for editing
+            resetImageUpload();
+            
+            // ✅ Show existing images if any
+            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                showExistingImages(product.images);
+            }
+            
             document.getElementById('productModal').classList.add('show');
+        }
+
+        function resetImageUpload() {
+            // Clear uploaded images array
+            uploadedImages = [];
+            
+            // Clear preview container
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            
+            // Clear uploaded images list
+            document.getElementById('uploadedImagesContainer').innerHTML = '';
+            document.getElementById('uploadedImagesList').classList.remove('show');
+            
+            // Reset file input
+            document.getElementById('imageFiles').value = '';
+        }
+
+        function showExistingImages(images) {
+            const container = document.getElementById('uploadedImagesContainer');
+            const uploadedList = document.getElementById('uploadedImagesList');
+            
+            images.forEach((imageUrl, index) => {
+                if (imageUrl && imageUrl.trim()) {
+                    const item = document.createElement('div');
+                    item.className = 'uploaded-image-item';
+                    item.innerHTML = `
+                        <img src="${imageUrl}" class="uploaded-image-thumbnail" alt="Existing image" onerror="this.src='/images/placeholder.jpg'">
+                        <div class="uploaded-image-url">Ảnh hiện tại ${index + 1}</div>
+                        <button type="button" class="preview-btn preview-btn-delete" onclick="removeExistingImage('${imageUrl}', this)" title="Xóa">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    container.appendChild(item);
+                }
+            });
+            
+            if (container.children.length > 0) {
+                uploadedList.classList.add('show');
+            }
+        }
+
+        function removeExistingImage(imageUrl, button) {
+            // Remove from display
+            button.closest('.uploaded-image-item').remove();
+            
+            // Update the images input by removing this URL
+            const imageUrlsInput = document.getElementById('productImageUrls');
+            const currentUrls = imageUrlsInput.value.split(',').map(url => url.trim()).filter(url => url);
+            const filteredUrls = currentUrls.filter(url => url !== imageUrl);
+            imageUrlsInput.value = filteredUrls.join(', ');
+            
+            // Hide list if empty
+            const container = document.getElementById('uploadedImagesContainer');
+            if (container.children.length === 0) {
+                document.getElementById('uploadedImagesList').classList.remove('show');
+            }
+            
+            showNotification('Đã xóa ảnh khỏi danh sách', 'success');
         }
 
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('show');
+            // Don't reset on close in case user wants to reopen
         }
 
         function viewProduct(id) {

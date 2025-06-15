@@ -81,7 +81,14 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files serving
 app.use(express.static(path.join(__dirname, 'public')));
+// ✅ SERVE UPLOADED FILES
+app.use('/uploads', express.static(path.join(__dirname, 'data/uploads'), {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
+console.log('📁 Upload directory served at /uploads');
 // 🖼️ STATIC FILE SERVING FOR DATA FOLDER
 app.use('/assets', express.static(path.join(__dirname, 'data/images'), {
   maxAge: '1d',
