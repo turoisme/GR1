@@ -1,15 +1,19 @@
-// routes/admin.js - FIXED VERSION WITH PRODUCT IMPORT
+// routes/admin.js - FIXED VERSION WITH UPLOAD FUNCTIONALITY
 
 const express = require('express');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
 const AdminController = require('../controllers/adminController');
 
+// ✅ IMPORT UPLOAD MIDDLEWARE
+const { uploadSingle, uploadMultiple, handleUploadError } = require('../middleware/upload');
+
 // ✅ CRITICAL: Import Product model
 const Product = require('../models/Product');
 
 console.log('🔄 Admin routes loading...');
 console.log('📦 Product model imported:', !!Product);
+console.log('📤 Upload middleware imported:', !!uploadSingle);
 
 // Tất cả routes admin đều yêu cầu phân quyền admin
 router.use(requireAdmin);
@@ -18,7 +22,141 @@ router.use(requireAdmin);
 router.get('/', AdminController.dashboard);
 router.get('/dashboard', AdminController.dashboard);
 
-// Quản lý sản phẩm
+// ✅ NEW: UPLOAD ROUTES - THÊM SECTION NÀY
+// ==============================================
+// IMAGE UPLOAD ENDPOINTS
+// ==============================================
+
+/**
+ * Upload single product image
+ * POST /admin/upload/product-image
+ */
+router.post('/upload/product-image', uploadSingle, handleUploadError, async (req, res) => {
+  try {
+    console.log('📤 Admin uploading product image:', {
+      file: req.file ? req.file.filename : 'No file',
+      originalName: req.file ? req.file.originalname : 'N/A',
+      size: req.file ? req.file.size : 0
+    });
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có file được upload',
+        error: 'NO_FILE'
+      });
+    }
+
+    // Return the uploaded file info
+    const imageUrl = `/uploads/products/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      message: 'Upload ảnh thành công',
+      imageUrl: imageUrl,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      filename: req.file.filename
+    });
+
+  } catch (error) {
+    console.error('❌ Admin Upload Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi upload ảnh: ' + error.message,
+      error: 'UPLOAD_ERROR'
+    });
+  }
+});
+
+/**
+ * Upload multiple product images
+ * POST /admin/upload/product-images
+ */
+router.post('/upload/product-images', uploadMultiple, handleUploadError, async (req, res) => {
+  try {
+    console.log('📤 Admin uploading multiple product images:', {
+      fileCount: req.files ? req.files.length : 0
+    });
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có file được upload',
+        error: 'NO_FILES'
+      });
+    }
+
+    // Process uploaded files
+    const uploadedImages = req.files.map(file => ({
+      imageUrl: `/uploads/products/${file.filename}`,
+      originalName: file.originalname,
+      size: file.size,
+      filename: file.filename
+    }));
+
+    res.json({
+      success: true,
+      message: `Upload ${req.files.length} ảnh thành công`,
+      images: uploadedImages,
+      count: req.files.length
+    });
+
+  } catch (error) {
+    console.error('❌ Admin Multiple Upload Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi upload ảnh: ' + error.message,
+      error: 'UPLOAD_ERROR'
+    });
+  }
+});
+
+/**
+ * Delete uploaded image
+ * DELETE /admin/upload/product-image/:filename
+ */
+router.delete('/upload/product-image/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+    
+    const filePath = path.join(__dirname, '../data/uploads/products', filename);
+    
+    // Check if file exists and delete
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log('🗑️ Deleted uploaded image:', filename);
+      
+      res.json({
+        success: true,
+        message: 'Xóa ảnh thành công',
+        filename: filename
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy file',
+        error: 'FILE_NOT_FOUND'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Admin Delete Image Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi xóa ảnh: ' + error.message,
+      error: 'DELETE_ERROR'
+    });
+  }
+});
+
+// ==============================================
+// END UPLOAD ROUTES
+// ==============================================
+
+// Quản lý sản phẩm (existing routes)
 router.get('/products', AdminController.listProducts);
 router.get('/products/add', AdminController.showAddProduct);
 router.post('/products/add', AdminController.addProduct);
@@ -58,11 +196,7 @@ router.get('/api/quick-stats', AdminController.getQuickStats);
 router.get('/api/global-search', AdminController.globalSearch);
 router.get('/api/health-check', AdminController.healthCheck);
 
-// ✅ NEW: API ENDPOINTS FOR PRODUCTS
-/**
- * API: Get products list for admin
- * GET /admin/api/products
- */
+// ✅ EXISTING API ENDPOINTS FOR PRODUCTS
 router.get('/api/products', async (req, res) => {
   try {
     console.log('📡 Admin API: Getting products list');
@@ -121,10 +255,6 @@ router.get('/api/products', async (req, res) => {
   }
 });
 
-/**
- * API: Get single product for admin
- * GET /admin/api/products/:id
- */
 router.get('/api/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
