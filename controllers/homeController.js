@@ -1,58 +1,115 @@
 /**
- * Home Controller - MongoDB Version
- * Xử lý các trang chính của website
+ * Home Controller - MongoDB Version FIXED
+ * Xử lý các trang chính của website với dữ liệu thực từ DB
  */
 
 const Product = require('../models/Product');
 
 class HomeController {
   /**
-   * Trang chủ
+   * Trang chủ - FIXED để load dữ liệu thực từ DB
    * GET /
    */
   static async index(req, res) {
     try {
-      console.log('HomeController.index called - MongoDB version');
+      console.log('🏠 HomeController.index called - Loading real data from MongoDB');
       
-      // Lấy sản phẩm nổi bật từ MongoDB
-      const featuredProducts = await Product.getFeaturedProducts(6);
+      // ✅ FIX 1: Sử dụng query trực tiếp với field name đúng
+      let featuredProducts = await Product.find({ 
+        isFeatured: true,    // ✅ Sử dụng isFeatured thay vì featured
+        inStock: true 
+      })
+      .limit(6)
+      .sort({ createdAt: -1 });
       
-      // Lấy danh mục sản phẩm
-      const categories = Product.getCategories();
+      console.log('📊 Featured products loaded:', {
+        count: featuredProducts.length,
+        products: featuredProducts.map(p => ({
+          id: p._id,
+          name: p.name,
+          price: p.price
+        }))
+      });
       
-      // Lấy một vài sản phẩm cho mỗi danh mục (optional)
-      const productsByCategory = {};
-      for (const category of categories) {
-        const categoryProducts = await Product.getProductsByCategory(category.id, 4);
-        productsByCategory[category.id] = categoryProducts;
+      // ✅ FIX 2: Nếu không có featured products, lấy sản phẩm mới nhất
+      if (featuredProducts.length === 0) {
+        console.log('⚠️ No featured products found, getting latest products instead...');
+        featuredProducts = await Product.find({ inStock: true })
+          .limit(6)
+          .sort({ createdAt: -1 });
+        
+        console.log('📦 Latest products loaded:', featuredProducts.length);
       }
       
-      // Lấy thương hiệu
+      // ✅ FIX 3: Lấy danh mục sản phẩm
+      const categories = Product.getCategories();
+      
+      // ✅ FIX 4: Lấy sản phẩm cho mỗi danh mục với error handling
+      const productsByCategory = {};
+      for (const category of categories) {
+        try {
+          const categoryProducts = await Product.find({ 
+            category: category.id, 
+            inStock: true 
+          })
+          .limit(4)
+          .sort({ createdAt: -1 });
+          
+          productsByCategory[category.id] = categoryProducts;
+          console.log(`📂 Category ${category.id}:`, categoryProducts.length, 'products');
+        } catch (error) {
+          console.error(`❌ Error loading category ${category.id}:`, error);
+          productsByCategory[category.id] = [];
+        }
+      }
+      
+      // ✅ FIX 5: Lấy thương hiệu
       const brands = Product.getBrands();
       
-      res.render('home/index', {
+      // ✅ FIX 6: Debug total products in database
+      const totalProducts = await Product.countDocuments();
+      const activeProducts = await Product.countDocuments({ inStock: true });
+      console.log('📊 Database stats:', {
+        totalProducts,
+        activeProducts,
+        featuredCount: featuredProducts.length
+      });
+      
+      // ✅ FIX 7: Render với dữ liệu thực
+      const renderData = {
         title: 'SportShop - Thời trang thể thao chất lượng cao',
         metaDescription: 'Khám phá bộ sưu tập quần áo thể thao hiện đại, chất lượng cao từ các thương hiệu nổi tiếng như Nike, Adidas, Under Armour.',
-        featuredProducts: featuredProducts,
+        featuredProducts: featuredProducts, // ✅ Dữ liệu thực từ MongoDB
         categories: categories,
         productsByCategory: productsByCategory,
         brands: brands,
         currentPage: 'home',
         showHero: true
+      };
+      
+      console.log('✅ Rendering home page with real data:', {
+        featuredProductsCount: renderData.featuredProducts.length,
+        categoriesCount: renderData.categories.length,
+        hasRealData: renderData.featuredProducts.length > 0
       });
       
-    } catch (error) {
-      console.error('Home Controller Index Error:', error);
+      res.render('home/index', renderData);
       
-      // Fallback với dữ liệu rỗng
+    } catch (error) {
+      console.error('❌ Home Controller Index Error:', error);
+      console.error('Error stack:', error.stack);
+      
+      // ✅ FIX 8: Fallback với logging rõ ràng
+      console.log('🔄 Falling back to empty data due to error');
       res.render('home/index', {
         title: 'SportShop - Thời trang thể thao chất lượng cao',
-        featuredProducts: [],
+        featuredProducts: [], // ✅ Mảng rỗng để view hiển thị fallback
         categories: Product.getCategories(),
         productsByCategory: {},
         brands: Product.getBrands(),
         currentPage: 'home',
-        showHero: true
+        showHero: true,
+        errorMessage: 'Không thể tải sản phẩm từ cơ sở dữ liệu'
       });
     }
   }
@@ -112,15 +169,28 @@ class HomeController {
       if (query.length >= 2) {
         searchPerformed = true;
         
-        // Tìm kiếm sản phẩm
-        let searchResults = await Product.searchProducts(query);
-        
-        // Lọc theo category và brand nếu có
-        products = searchResults.filter(product => {
-          if (category && category !== 'all' && product.category !== category) return false;
-          if (brand && brand !== 'all' && product.brand !== brand) return false;
-          return true;
-        });
+        // ✅ Tìm kiếm sản phẩm với error handling
+        try {
+          let searchResults = await Product.find({
+            inStock: true,
+            $or: [
+              { name: { $regex: query, $options: 'i' } },
+              { brand: { $regex: query, $options: 'i' } },
+              { description: { $regex: query, $options: 'i' } },
+              { tags: { $in: [new RegExp(query, 'i')] } }
+            ]
+          });
+          
+          // Lọc theo category và brand nếu có
+          products = searchResults.filter(product => {
+            if (category && category !== 'all' && product.category !== category) return false;
+            if (brand && brand !== 'all' && product.brand !== brand) return false;
+            return true;
+          });
+        } catch (searchError) {
+          console.error('Search error:', searchError);
+          products = [];
+        }
       }
       
       const categories = Product.getCategories();
@@ -166,14 +236,20 @@ class HomeController {
         });
       }
       
-      // Tìm kiếm sản phẩm để lấy gợi ý
-      const products = await Product.searchProducts(q.trim());
+      // ✅ Tìm kiếm sản phẩm để lấy gợi ý
+      const products = await Product.find({
+        inStock: true,
+        $or: [
+          { name: { $regex: q.trim(), $options: 'i' } },
+          { brand: { $regex: q.trim(), $options: 'i' } }
+        ]
+      }).limit(5);
       
       // Tạo danh sách gợi ý từ tên sản phẩm và thương hiệu
       const suggestions = [];
       const seenSuggestions = new Set();
       
-      products.slice(0, 5).forEach(product => {
+      products.forEach(product => {
         // Gợi ý từ tên sản phẩm
         if (!seenSuggestions.has(product.name.toLowerCase())) {
           suggestions.push({
@@ -249,7 +325,7 @@ class HomeController {
   static async getStats(req, res) {
     try {
       const totalProducts = await Product.countDocuments({ inStock: true });
-      const featuredProducts = await Product.countDocuments({ featured: true, inStock: true });
+      const featuredProducts = await Product.countDocuments({ isFeatured: true, inStock: true }); // ✅ Fixed field name
       const categories = await Product.distinct('category', { inStock: true });
       const brands = await Product.distinct('brand', { inStock: true });
       

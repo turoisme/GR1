@@ -319,7 +319,26 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
         
+        /* ✅ REAL PRODUCT IMAGE STYLES */
+        .product-image-wrapper {
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+        }
+        
         .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        
+        /* Fallback emoji style */
+        .product-image-emoji {
             height: 250px;
             background: linear-gradient(45deg, #f093fb, #f5576c);
             display: flex;
@@ -331,7 +350,7 @@
             overflow: hidden;
         }
         
-        .product-image::before {
+        .product-image-emoji::before {
             content: '';
             position: absolute;
             top: 0;
@@ -343,7 +362,7 @@
             transition: opacity 0.3s ease;
         }
         
-        .product-card:hover .product-image::before {
+        .product-card:hover .product-image-emoji::before {
             opacity: 1;
         }
         
@@ -351,11 +370,28 @@
             padding: 25px;
         }
         
+        .product-brand {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
         .product-name {
             font-size: 1.2rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #333;
+            line-height: 1.4;
+        }
+        
+        .product-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 12px;
+            line-height: 1.4;
         }
         
         .product-price {
@@ -363,6 +399,13 @@
             font-weight: 700;
             color: #667eea;
             margin-bottom: 15px;
+        }
+        
+        .product-original-price {
+            font-size: 1rem;
+            color: #999;
+            text-decoration: line-through;
+            margin-left: 8px;
         }
         
         .add-to-cart {
@@ -380,6 +423,21 @@
         .add-to-cart:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* ✅ NO DATA MESSAGE */
+        .no-data-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            margin: 20px;
+        }
+        
+        .no-data-message h3 {
+            color: #333;
+            margin-bottom: 10px;
         }
         
         /* Call to Action Section */
@@ -872,51 +930,109 @@
         </section>
 
         <section class="products-section">
-            <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
-            
+            <h2 class="section-title">Sản Phẩm Nổi Bật</h2> 
             <div class="products-grid">
-                <% if (typeof featuredProducts !== 'undefined' && featuredProducts.length > 0) { %>
+                <% if (featuredProducts && featuredProducts.length > 0) { %>
+                    <!-- ✅ HIỂN THỊ SẢN PHẨM THỰC TỪ DATABASE -->
                     <% featuredProducts.forEach(product => { %>
-                        <div class="product-card">
-                            <div class="product-image"><%= product.image %></div>
+                        <div class="product-card" data-product-id="<%= product._id %>">
+                            <!-- ✅ Hiển thị hình ảnh sản phẩm đúng cách -->
+                            <% if (product.imageUrl && product.imageUrl.startsWith('http')) { %>
+                                <!-- Real image from URL -->
+                                <div class="product-image-wrapper">
+                                    <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image" 
+                                         onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
+                                </div>
+                            <% } else if (product.imageUrl && product.imageUrl.startsWith('/assets')) { %>
+                                <!-- Local image from assets -->
+                                <div class="product-image-wrapper">
+                                    <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image"
+                                         onerror="this.parentNode.innerHTML='<div class=&quot;product-image-emoji&quot;><%= product.image || '📦' %></div>'">
+                                </div>
+                            <% } else { %>
+                                <!-- Fallback to emoji -->
+                                <div class="product-image-emoji">
+                                    <%= product.image || '📦' %>
+                                </div>
+                            <% } %>
+                            
                             <div class="product-info">
+                                <!-- ✅ Hiển thị thông tin sản phẩm từ database -->
+                                <div class="product-brand"><%= product.brand || 'SportShop' %></div>
                                 <h3 class="product-name"><%= product.name %></h3>
-                                <p class="product-price"><%= product.getFormattedPrice() %></p>
-                                <button class="add-to-cart" onclick="openProductModal('<%= product._id || product.id %>', '<%= product.name.replace(/'/g, '&quot;') %>', '<%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>', '<%= product.image %>')">
-                                    Thêm vào giỏ
+                                
+                                <% if (product.description) { %>
+                                    <p class="product-description">
+                                        <%= product.description.length > 60 ? product.description.substring(0, 60) + '...' : product.description %>
+                                    </p>
+                                <% } %>
+                                
+                                <!-- ✅ Giá sản phẩm với giá gốc nếu có -->
+                                <div class="product-price">
+                                    <%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>
+                                    <% if (product.originalPrice && product.originalPrice > product.price) { %>
+                                        <span class="product-original-price">
+                                            <%= product.originalPrice.toLocaleString('vi-VN') %>đ
+                                        </span>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- ✅ Button thêm vào giỏ hàng -->
+                                <button class="add-to-cart" onclick="openProductModal('<%= product._id %>', '<%= product.name.replace(/'/g, '\\\'') %>', '<%= typeof product.getFormattedPrice === 'function' ? product.getFormattedPrice() : (product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ') %>', '<%= product.image || '📦' %>', '<%= product.colors ? product.colors.join(',') : '' %>', '<%= product.sizes ? product.sizes.join(',') : '' %>')">
+                                    🛒 Thêm vào giỏ
                                 </button>
                             </div>
                         </div>
                     <% }) %>
                 <% } else { %>
-                    <!-- Sản phẩm mẫu khi chưa có dữ liệu -->
+                    <!-- ✅ THÔNG BÁO KHI KHÔNG CÓ DỮ LIỆU -->
+                    <div class="no-data-message">
+                        <h3>🔍 Chưa có sản phẩm nổi bật</h3>
+                        <p>Hệ thống đang cập nhật sản phẩm. Vui lòng quay lại sau!</p>
+                        <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                            <p style="color: #dc3545; font-size: 0.9rem; margin-top: 10px;">
+                                <strong>Lỗi:</strong> <%= errorMessage %>
+                            </p>
+                        <% } %>
+                        <a href="/products" class="cta-btn primary" style="display: inline-block; margin-top: 15px;">
+                            📦 Xem tất cả sản phẩm
+                        </a>
+                    </div>
+                    
+                    <!-- ✅ FALLBACK: Hiển thị một vài sản phẩm mẫu để demo -->
                     <div class="product-card">
-                        <div class="product-image">👟</div>
+                        <div class="product-image-emoji">👟</div>
                         <div class="product-info">
+                            <div class="product-brand">Nike</div>
                             <h3 class="product-name">Giày chạy bộ Nike Air Max</h3>
+                            <p class="product-description">Giày chạy bộ chất lượng cao với công nghệ đệm khí</p>
                             <p class="product-price">2.500.000đ</p>
                             <button class="add-to-cart" onclick="openProductModal('sample1', 'Giày chạy bộ Nike Air Max', '2.500.000đ', '👟')">
-                                Thêm vào giỏ
+                                🛒 Thêm vào giỏ
                             </button>
                         </div>
                     </div>
                     <div class="product-card">
-                        <div class="product-image">👕</div>
+                        <div class="product-image-emoji">👕</div>
                         <div class="product-info">
+                            <div class="product-brand">Adidas</div>
                             <h3 class="product-name">Áo thể thao Adidas</h3>
+                            <p class="product-description">Áo thể thao thoáng khí, phù hợp cho mọi hoạt động</p>
                             <p class="product-price">850.000đ</p>
                             <button class="add-to-cart" onclick="openProductModal('sample2', 'Áo thể thao Adidas', '850.000đ', '👕')">
-                                Thêm vào giỏ
+                                🛒 Thêm vào giỏ
                             </button>
                         </div>
                     </div>
                     <div class="product-card">
-                        <div class="product-image">🩳</div>
+                        <div class="product-image-emoji">🩳</div>
                         <div class="product-info">
+                            <div class="product-brand">Nike</div>
                             <h3 class="product-name">Quần short Nike</h3>
+                            <p class="product-description">Quần short thể thao co giãn, thoải mái</p>
                             <p class="product-price">650.000đ</p>
                             <button class="add-to-cart" onclick="openProductModal('sample3', 'Quần short Nike', '650.000đ', '🩳')">
-                                Thêm vào giỏ
+                                🛒 Thêm vào giỏ
                             </button>
                         </div>
                     </div>
@@ -950,26 +1066,19 @@
                 </div>
             </div>
             
-            <div class="modal-option">
+            <!-- ✅ Dynamic color options based on product -->
+            <div class="modal-option" id="colorSection">
                 <label>Màu sắc <span class="required-star">*</span></label>
-                <div class="option-grid" style="grid-template-columns: repeat(6, 1fr); justify-items: center;">
-                    <div class="color-option color-black" data-color="Đen" onclick="selectColor(this)"></div>
-                    <div class="color-option color-white" data-color="Trắng" onclick="selectColor(this)"></div>
-                    <div class="color-option color-red" data-color="Đỏ" onclick="selectColor(this)"></div>
-                    <div class="color-option color-blue" data-color="Xanh dương" onclick="selectColor(this)"></div>
-                    <div class="color-option color-green" data-color="Xanh lá" onclick="selectColor(this)"></div>
-                    <div class="color-option color-yellow" data-color="Vàng" onclick="selectColor(this)"></div>
+                <div class="option-grid" style="grid-template-columns: repeat(6, 1fr); justify-items: center;" id="colorOptions">
+                    <!-- Colors will be populated by JavaScript -->
                 </div>
             </div>
             
-            <div class="modal-option">
+            <!-- ✅ Dynamic size options based on product -->
+            <div class="modal-option" id="sizeSection">
                 <label>Kích thước <span class="required-star">*</span></label>
-                <div class="option-grid">
-                    <button class="option-btn" data-size="S" onclick="selectSize(this)">S</button>
-                    <button class="option-btn" data-size="M" onclick="selectSize(this)">M</button>
-                    <button class="option-btn" data-size="L" onclick="selectSize(this)">L</button>
-                    <button class="option-btn" data-size="XL" onclick="selectSize(this)">XL</button>
-                    <button class="option-btn" data-size="XXL" onclick="selectSize(this)">XXL</button>
+                <div class="option-grid" id="sizeOptions">
+                    <!-- Sizes will be populated by JavaScript -->
                 </div>
             </div>
             
@@ -1001,11 +1110,15 @@
         let currentProductId = '';
         let selectedColor = '';
         let selectedSize = '';
+        let availableColors = [];
+        let availableSizes = [];
 
         // Toggle user dropdown menu
         function toggleUserMenu() {
             const menu = document.getElementById('userDropdownMenu');
-            menu.classList.toggle('show');
+            if (menu) {
+                menu.classList.toggle('show');
+            }
         }
 
         // Close dropdown when clicking outside
@@ -1013,13 +1126,13 @@
             const dropdown = document.querySelector('.user-dropdown');
             const menu = document.getElementById('userDropdownMenu');
             
-            if (dropdown && !dropdown.contains(event.target)) {
+            if (dropdown && menu && !dropdown.contains(event.target)) {
                 menu.classList.remove('show');
             }
         });
 
-        // Open product modal
-        function openProductModal(productId, productName, productPrice, productImage) {
+        // ✅ ENHANCED: Open product modal with dynamic options
+        function openProductModal(productId, productName, productPrice, productImage, colors = '', sizes = '') {
             <% if (typeof user !== 'undefined' && user) { %>
                 // User đã đăng nhập - hiển thị modal chọn options
                 currentProductId = productId;
@@ -1029,18 +1142,20 @@
                 document.getElementById('modalProductName').textContent = productName;
                 document.getElementById('modalProductPrice').textContent = productPrice;
                 
+                // ✅ Parse available colors and sizes
+                availableColors = colors ? colors.split(',').map(c => c.trim()).filter(c => c) : [];
+                availableSizes = sizes ? sizes.split(',').map(s => s.trim()).filter(s => s) : [];
+                
+                // ✅ Populate color options
+                populateColorOptions();
+                
+                // ✅ Populate size options
+                populateSizeOptions();
+                
                 // Reset selections
                 selectedColor = '';
                 selectedSize = '';
                 document.getElementById('modalQuantity').value = 1;
-                
-                // Clear previous selections
-                document.querySelectorAll('.color-option.selected').forEach(el => {
-                    el.classList.remove('selected');
-                });
-                document.querySelectorAll('.option-btn.selected').forEach(el => {
-                    el.classList.remove('selected');
-                });
                 
                 // Show modal
                 document.getElementById('productModal').classList.add('show');
@@ -1049,6 +1164,61 @@
                 // User chưa đăng nhập - hiển thị modal đăng nhập
                 showLoginModal();
             <% } %>
+        }
+
+        // ✅ Populate color options dynamically
+        function populateColorOptions() {
+            const colorSection = document.getElementById('colorSection');
+            const colorOptions = document.getElementById('colorOptions');
+            
+            if (availableColors.length === 0) {
+                colorSection.style.display = 'none';
+                return;
+            }
+            
+            colorSection.style.display = 'block';
+            colorOptions.innerHTML = '';
+            
+            const colorMap = {
+                'Đen': 'color-black',
+                'Trắng': 'color-white', 
+                'Đỏ': 'color-red',
+                'Xanh dương': 'color-blue',
+                'Xanh lá': 'color-green',
+                'Vàng': 'color-yellow'
+            };
+            
+            availableColors.forEach(color => {
+                const colorClass = colorMap[color] || 'color-black';
+                const colorDiv = document.createElement('div');
+                colorDiv.className = `color-option ${colorClass}`;
+                colorDiv.setAttribute('data-color', color);
+                colorDiv.onclick = function() { selectColor(this); };
+                colorOptions.appendChild(colorDiv);
+            });
+        }
+
+        // ✅ Populate size options dynamically
+        function populateSizeOptions() {
+            const sizeSection = document.getElementById('sizeSection');
+            const sizeOptions = document.getElementById('sizeOptions');
+            
+            if (availableSizes.length === 0) {
+                sizeSection.style.display = 'none';
+                return;
+            }
+            
+            sizeSection.style.display = 'block';
+            sizeOptions.innerHTML = '';
+            
+            availableSizes.forEach(size => {
+                const sizeBtn = document.createElement('button');
+                sizeBtn.className = 'option-btn';
+                sizeBtn.setAttribute('data-size', size);
+                sizeBtn.textContent = size;
+                sizeBtn.onclick = function() { selectSize(this); };
+                sizeOptions.appendChild(sizeBtn);
+            });
         }
 
         // Close product modal
@@ -1092,15 +1262,15 @@
             quantityInput.value = quantity;
         }
 
-        // Add to cart with options
+        // ✅ ENHANCED: Add to cart with validation
         function addToCartWithOptions() {
-            // Validate selections
-            if (!selectedColor) {
+            // Validate selections only if options are available
+            if (availableColors.length > 0 && !selectedColor) {
                 showNotification('Vui lòng chọn màu sắc', 'error');
                 return;
             }
             
-            if (!selectedSize) {
+            if (availableSizes.length > 0 && !selectedSize) {
                 showNotification('Vui lòng chọn kích thước', 'error');
                 return;
             }
@@ -1112,24 +1282,29 @@
             addBtn.disabled = true;
             addBtn.textContent = 'Đang thêm...';
             
+            // Prepare request data
+            const requestData = {
+                productId: currentProductId,
+                quantity: quantity
+            };
+            
+            // Add color and size if selected
+            if (selectedColor) requestData.color = selectedColor;
+            if (selectedSize) requestData.size = selectedSize;
+            
             // Send request
             fetch('/cart/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    productId: currentProductId,
-                    quantity: quantity,
-                    color: selectedColor,
-                    size: selectedSize
-                })
+                body: JSON.stringify(requestData)
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showNotification('Đã thêm sản phẩm vào giỏ hàng!', 'success');
-                    updateCartCount(data.cartItemCount || 0);
+                    updateCartCount(data.data?.cartItemCount || 0);
                     closeProductModal();
                 } else {
                     showNotification(data.message || 'Có lỗi xảy ra', 'error');
@@ -1167,19 +1342,20 @@
             notification.className = `flash-message ${type}`;
             notification.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
             
-            const container = document.querySelector('.flash-messages');
-            if (container) {
-                container.appendChild(notification);
-            } else {
-                const newContainer = document.createElement('div');
-                newContainer.className = 'flash-messages';
-                newContainer.appendChild(notification);
-                document.body.appendChild(newContainer);
+            let container = document.querySelector('.flash-messages');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'flash-messages';
+                document.body.appendChild(container);
             }
+            
+            container.appendChild(notification);
             
             // Auto remove after 5 seconds
             setTimeout(() => {
-                notification.remove();
+                if (notification.parentNode) {
+                    notification.remove();
+                }
             }, 5000);
         }
 
@@ -1202,13 +1378,18 @@
             const flashMessages = document.querySelectorAll('.flash-message');
             flashMessages.forEach(message => {
                 setTimeout(() => {
-                    message.style.animation = 'slideIn 0.3s ease reverse';
-                    setTimeout(() => {
-                        message.remove();
-                    }, 300);
+                    if (message.parentNode) {
+                        message.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => {
+                            if (message.parentNode) {
+                                message.remove();
+                            }
+                        }, 300);
+                    }
                 }, 5000);
             });
         });
+
     </script>
 </body>
 </html>
