@@ -1624,7 +1624,7 @@
         }
 
         // ✅ DELETE PRODUCT FROM SERVER
-        async function deleteProductFromServer(id) {
+        async function deleteProduct(id) {
             if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
 
             try {
@@ -2021,28 +2021,67 @@ function createProductRow(product) {
         }
 
         function showExistingImages(images) {
-            const container = document.getElementById('uploadedImagesContainer');
-            const uploadedList = document.getElementById('uploadedImagesList');
-            
-            images.forEach((imageUrl, index) => {
-                if (imageUrl && imageUrl.trim()) {
-                    const item = document.createElement('div');
-                    item.className = 'uploaded-image-item';
-                    item.innerHTML = `
-                        <img src="${imageUrl}" class="uploaded-image-thumbnail" alt="Existing image" onerror="this.src='/images/placeholder.jpg'">
-                        <div class="uploaded-image-url">Ảnh hiện tại ${index + 1}</div>
-                        <button type="button" class="preview-btn preview-btn-delete" onclick="removeExistingImage('${imageUrl}', this)" title="Xóa">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    container.appendChild(item);
-                }
-            });
-            
-            if (container.children.length > 0) {
-                uploadedList.classList.add('show');
+    console.log('📸 showExistingImages called with:', images);
+    
+    const container = document.getElementById('uploadedImagesContainer');
+    const uploadedList = document.getElementById('uploadedImagesList');
+    
+    // Clear existing content
+    container.innerHTML = '';
+    
+    if (!images || !Array.isArray(images)) {
+        console.log('❌ Images is not an array or is null');
+        return;
+    }
+    
+    images.forEach((imageItem, index) => {
+        let imageUrl = '';
+        
+        // ✅ FIX: Handle both string and object formats
+        if (typeof imageItem === 'string') {
+            // imageItem is a string URL
+            imageUrl = imageItem.trim();
+        } else if (imageItem && typeof imageItem === 'object') {
+            // imageItem is an object with url property
+            if (imageItem.url) {
+                imageUrl = imageItem.url.trim();
+            } else {
+                console.log('❌ Image object missing url property:', imageItem);
+                return; // Skip this item
             }
+        } else {
+            console.log('❌ Invalid image format:', imageItem);
+            return; // Skip this item
         }
+        
+        // Only process if we have a valid URL
+        if (imageUrl) {
+            console.log(`📸 Processing image ${index + 1}:`, imageUrl);
+            
+            const item = document.createElement('div');
+            item.className = 'uploaded-image-item';
+            item.innerHTML = `
+                <img src="${imageUrl}" class="uploaded-image-thumbnail" alt="Existing image" 
+                     onerror="this.src='/images/placeholder.jpg'; console.log('❌ Image load failed:', '${imageUrl}');">
+                <div class="uploaded-image-url">Ảnh hiện tại ${index + 1}</div>
+                <button type="button" class="preview-btn preview-btn-delete" 
+                        onclick="removeExistingImage('${imageUrl.replace(/'/g, "\\'")}', this)" 
+                        title="Xóa">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(item);
+        }
+    });
+    
+    // Show the list if we have items
+    if (container.children.length > 0) {
+        uploadedList.classList.add('show');
+        console.log('✅ Displayed', container.children.length, 'existing images');
+    } else {
+        console.log('⚠️ No valid images to display');
+    }
+}
 
         function removeExistingImage(imageUrl, button) {
             // Remove from display
