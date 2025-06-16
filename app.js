@@ -13,6 +13,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash'); // 📦 NEW: Flash messages
 const adminRoutes = require('./routes/admin');
+const virtualTryOnRoutes = require('./routes/virtualTryOn');
 // Import database connection
 const connectDB = require('./config/database');
 
@@ -236,6 +237,8 @@ console.log('✅ Auth routes mounted at /auth');
 // 👤 User account routes
 app.use('/user', userRoutes);
 console.log('✅ User routes mounted at /user');
+app.use('/virtual-tryon', virtualTryOnRoutes); // 
+console.log('✅ Virtual Try-On routes mounted at /virtual-tryon');
 app.use('/admin', adminRoutes);
 console.log('✅ Admin routes mounted at /admin');
 // 📱 API routes
