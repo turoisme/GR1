@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/virtual-tryon.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="virtual-tryon-page">
+        <div class="container">
+            <div class="page-header">
+                <h1>🎭 Thử đồ ảo với AI</h1>
+                <p>Upload ảnh của bạn và xem kết quả thử đồ ngay lập tức!</p>
+            </div>
+
+            <div class="tryon-container">
+                <!-- Product Info -->
+                <div class="product-section">
+                    <div class="product-card">
+                        <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+                        <div class="product-info">
+                            <h3><%= product.name %></h3>
+                            <p class="price"><%= product.price.toLocaleString('vi-VN') %>đ</p>
+                            <p class="description"><%= product.description %></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="upload-section">
+                    <h3>📸 Upload ảnh của bạn</h3>
+                    
+                    <div class="image-upload-area" id="imageDropZone">
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                        
+                        <div class="upload-placeholder" id="uploadPlaceholder">
+                            <div class="upload-icon">📷</div>
+                            <p>Kéo thả ảnh vào đây hoặc click để chọn</p>
+                            <small>Hỗ trợ: JPG, PNG, WEBP (tối đa 10MB)</small>
+                        </div>
+                        
+                        <img id="imagePreview" style="display: none;" alt="Preview">
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="tryon-settings">
+                        <h4>⚙️ Cài đặt nâng cao</h4>
+                        
+                        <div class="setting-group">
+                            <label for="strength">Cường độ hiệu ứng: <span id="strengthValue">0.8</span></label>
+                            <input type="range" id="strength" min="0.1" max="1.0" step="0.1" value="0.8">
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="guidance_scale">Độ chính xác: <span id="guidance_scaleValue">7.5</span></label>
+                            <input type="range" id="guidance_scale" min="1" max="20" step="0.5" value="7.5">
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="steps">Số bước xử lý: <span id="stepsValue">20</span></label>
+                            <input type="range" id="steps" min="10" max="50" step="5" value="20">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="startTryOn" class="btn btn-primary btn-large" disabled>
+                            ✨ Bắt đầu thử đồ
+                        </button>
+                        
+                        <button id="viewHistory" class="btn btn-secondary" onclick="window.location.href='/user/try-on-history'">
+                            📱 Lịch sử thử đồ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Status -->
+            <div id="processingStatus" class="processing-status" style="display: none;">
+                <!-- Content will be filled by JavaScript -->
+            </div>
+
+            <!-- Results -->
+            <div id="tryOnResult" class="result-section" style="display: none;">
+                <!-- Content will be filled by JavaScript -->
+            </div>
+
+            <!-- Batch Try-On Section -->
+            <div class="batch-section">
+                <h3>🛍️ Thử nhiều sản phẩm cùng lúc</h3>
+                <p>Chọn các sản phẩm khác để thử cùng với ảnh đã upload:</p>
+                
+                <div class="product-grid">
+                    <% if (typeof relatedProducts !== 'undefined' && relatedProducts.length > 0) { %>
+                        <% relatedProducts.forEach(product => { %>
+                            <div class="product-item">
+                                <input type="checkbox" class="product-checkbox" value="<%= product._id %>" id="product_<%= product._id %>">
+                                <label for="product_<%= product._id %>">
+                                    <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+                                    <div class="product-name"><%= product.name %></div>
+                                    <div class="product-price"><%= product.price.toLocaleString('vi-VN') %>đ</div>
+                                </label>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+                
+                <button id="batchTryOn" class="btn btn-outline">
+                    🎨 Thử tất cả sản phẩm đã chọn
+                </button>
+            </div>
+
+            <!-- Batch Results -->
+            <div id="batchResults" class="batch-results" style="display: none;">
+                <!-- Content will be filled by JavaScript -->
+            </div>
+
+            <!-- Tips Section -->
+            <div class="tips-section">
+                <h3>💡 Mẹo để có kết quả tốt nhất</h3>
+                <div class="tips-grid">
+                    <div class="tip-item">
+                        <div class="tip-icon">🧍</div>
+                        <h4>Tư thế đứng thẳng</h4>
+                        <p>Đứng thẳng, mặt hướng về phía trước để AI có thể xử lý tốt nhất</p>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-icon">💡</div>
+                        <h4>Ánh sáng tốt</h4>
+                        <p>Chụp ảnh trong điều kiện ánh sáng tự nhiên, tránh bóng mờ</p>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-icon">👕</div>
+                        <h4>Trang phục đơn giản</h4>
+                        <p>Mặc quần áo đơn giản, tránh họa tiết phức tạp</p>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-icon">🖼️</div>
+                        <h4>Ảnh chất lượng cao</h4>
+                        <p>Sử dụng ảnh độ phân giải cao, rõ nét để kết quả tốt hơn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/virtual-tryon.js"></script>
+    <script>
+        // Set current product ID
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.VirtualTryOn) {
+                window.VirtualTryOn.currentProductId = '<%= product._id %>';
+            }
+        });
+    </script>
+</body>
+</html>
